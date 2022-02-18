@@ -1,5 +1,6 @@
 mod analysis;
 mod file_structure;
+mod graph;
 
 use anyhow::Result;
 use std::env;
@@ -11,7 +12,7 @@ fn main() -> Result<()> {
     let analyzer = Analyzer::new(&path);
     let modules = analyzer.analyze(&path)?;
 
-    println!("{}", modules.len());
+    println!("{}", graph::modules_graph(&modules));
 
     Ok(())
 }

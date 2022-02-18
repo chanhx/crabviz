@@ -8,6 +8,12 @@ pub struct RItem {
     // pub visiblity: Visibility
 }
 
+impl RItem {
+    pub fn id(&self) -> String {
+        format!("{}_{}", self.pos.file_id, self.pos.offset)
+    }
+}
+
 pub struct FilePosition {
     pub file_id: u32,
     pub offset: u32,
