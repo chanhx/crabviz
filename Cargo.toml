@@ -1,0 +1,15 @@
+[package]
+name = "callviz"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0"
+
+ra_rust-analyzer = { package = "ra_ap_rust-analyzer", version = "0.0.96" }
+ra_ide = { package = "ra_ap_ide", version = "0.0.96" }
+ra_ide_db = { package = "ra_ap_ide_db", version = "0.0.96" }
+ra_vfs = { package = "ra_ap_vfs", version = "0.0.96" }
+ra_project_model = { package = "ra_ap_project_model", version = "0.0.96" }
