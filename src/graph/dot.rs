@@ -1,4 +1,10 @@
-use std::iter;
+use std::{
+    io::Write,
+    iter,
+    process::{Command, Stdio},
+};
+
+use anyhow::Result;
 
 use crate::file_structure::{Module, RItem};
 
@@ -60,7 +66,7 @@ fn module_node(m: &Module) -> String {
     )
 }
 
-pub(crate) fn modules_graph(modules: &Vec<Module>) -> String {
+pub(super) fn modules_graph(modules: &Vec<Module>) -> String {
     format!(
         r#"
 digraph graphviz {{
@@ -84,4 +90,21 @@ digraph graphviz {{
             .collect::<Vec<_>>()
             .join("\n"),
     )
+}
+
+pub(super) fn render_svg(graph: String) -> Result<String> {
+    let mut cmd = Command::new("dot")
+        .arg("-Tsvg")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .spawn()?;
+
+    let cmd_stdin = cmd.stdin.as_mut().unwrap();
+    cmd_stdin.write_all(graph.as_bytes())?;
+    drop(cmd_stdin);
+
+    let output = cmd.wait_with_output()?;
+    let output = String::from_utf8(output.stdout)?;
+
+    Ok(output)
 }

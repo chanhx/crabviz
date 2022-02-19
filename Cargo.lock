@@ -71,6 +71,7 @@ dependencies = [
  "ra_ap_project_model",
  "ra_ap_rust-analyzer",
  "ra_ap_vfs",
+ "vial",
 ]
 
 [[package]]
@@ -471,6 +472,15 @@ name = "libc"
 version = "0.2.118"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "06e509672465a0504304aa87f9f176f2b2b716ed8fb105ebe5c02dc6dce96a94"
+
+[[package]]
+name = "libc-strftime"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3badb12f3d8623017f2cff9de476ff32f426ef45419253366fa088b8df6364cf"
+dependencies = [
+ "libc",
+]
 
 [[package]]
 name = "libloading"
@@ -1749,6 +1759,16 @@ name = "version_check"
 version = "0.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
+
+[[package]]
+name = "vial"
+version = "0.1.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1e550624ebee7735849255e1f4461387e5f0dda5876f8421c73c921009259e82"
+dependencies = [
+ "libc-strftime",
+ "threadpool",
+]
 
 [[package]]
 name = "walkdir"
