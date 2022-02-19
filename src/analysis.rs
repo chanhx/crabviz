@@ -116,6 +116,30 @@ impl Analyzer {
 
         Ok(ritems)
     }
+
+    pub(crate) fn find_callers(&self, fn_pos: &FilePosition) -> Result<Vec<FilePosition>> {
+        let position = ra_ide::FilePosition {
+            file_id: ra_ide::FileId(fn_pos.file_id),
+            offset: ra_ide::TextSize::from(fn_pos.offset),
+        };
+
+        let callers_pos = self
+            .host
+            .analysis()
+            .incoming_calls(position)?
+            .unwrap_or(Vec::new())
+            .iter()
+            .filter_map(|item| match item.target.focus_range {
+                Some(caller_pos) => Some(FilePosition {
+                    file_id: item.target.file_id.0,
+                    offset: u32::from(caller_pos.start()),
+                }),
+                None => None,
+            })
+            .collect();
+
+        Ok(callers_pos)
+    }
 }
 
 fn structure_node_to_ritem(

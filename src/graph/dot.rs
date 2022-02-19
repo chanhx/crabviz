@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     io::Write,
     iter,
     process::{Command, Stdio},
@@ -6,14 +7,14 @@ use std::{
 
 use anyhow::Result;
 
-use crate::file_structure::{Module, RItem};
+use crate::file_structure::{FilePosition, Module, RItem};
 
 const MIN_WIDTH: u32 = 230;
 
 fn ritem_cell(item: &RItem) -> String {
     format!(
-        r#"<TR><TD PORT="{id}">{name}</TD></TR>"#,
-        id = item.id(),
+        r#"<TR><TD PORT="{port}">{name}</TD></TR>"#,
+        port = item.pos.offset,
         name = item.ident,
     )
 }
@@ -66,7 +67,30 @@ fn module_node(m: &Module) -> String {
     )
 }
 
-pub(super) fn modules_graph(modules: &Vec<Module>) -> String {
+pub(crate) type CallMap = HashMap<FilePosition, Vec<FilePosition>>;
+
+fn call_edges(calls: &CallMap) -> String {
+    let calls = calls
+        .iter()
+        .flat_map(|(k, v)| {
+            v.iter()
+                .map(|pos| {
+                    format!(
+                        "{}{pt} -> {}{pt}",
+                        pos,
+                        k,
+                        pt = if k.file_id == pos.file_id { ":w" } else { "" },
+                    )
+                })
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>()
+        .join("\n    ");
+
+    calls
+}
+
+pub(super) fn modules_graph(modules: &Vec<Module>, calls: &CallMap) -> String {
     format!(
         r#"
 digraph graphviz {{
@@ -82,6 +106,8 @@ digraph graphviz {{
     ];
 
     {}
+
+    {}
 }}
         "#,
         modules
@@ -89,6 +115,7 @@ digraph graphviz {{
             .map(|m| module_node(m))
             .collect::<Vec<_>>()
             .join("\n"),
+        call_edges(calls),
     )
 }
 

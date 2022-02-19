@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{fmt, hash::Hash, path::PathBuf};
 
 pub struct RItem {
     pub ident: String,
@@ -8,15 +8,16 @@ pub struct RItem {
     // pub visiblity: Visibility
 }
 
-impl RItem {
-    pub fn id(&self) -> String {
-        format!("{}_{}", self.pos.file_id, self.pos.offset)
-    }
-}
-
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub struct FilePosition {
     pub file_id: u32,
     pub offset: u32,
+}
+
+impl fmt::Display for FilePosition {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}:{}", self.file_id, self.offset)
+    }
 }
 
 // pub enum Visibility {
