@@ -1,0 +1,27 @@
+@import "variables.css";
+
+.edge {
+  cursor: pointer;
+}
+
+.edge path {
+  stroke: var(--edge-color);
+  stroke-width: 3;
+}
+.edge polygon {
+  stroke: var(--edge-color);
+  fill: var(--edge-color);
+}
+
+.edge:hover path:not(.hover-path) {
+  stroke: var(--highlight-edge-color);;
+}
+.edge:hover polygon {
+  stroke: var(--highlight-edge-color);;
+  fill: var(--highlight-edge-color);;
+}
+
+.edge path.hover-path {
+  stroke: transparent;
+  stroke-width: 15;
+}

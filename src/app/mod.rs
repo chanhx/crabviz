@@ -16,6 +16,10 @@ routes! {
         let context = req.state::<Context>();
         handler::serve_svg(&context.modules, &context.calls)
     };
+    GET "/assets/*path" => |req| {
+        let path = req.arg("path").unwrap_or("");
+        Response::from_asset(path)
+    };
 
     GET "/*path" => |req|
         Response::from(404).with_body(format!(
@@ -57,6 +61,7 @@ pub(crate) fn run(path: &Path) -> Result<()> {
 
     use_state!(Context { modules, calls });
 
+    asset_dir!("./src/app/assets");
     run!("localhost:8090")?;
 
     Ok(())
