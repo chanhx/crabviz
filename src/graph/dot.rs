@@ -75,12 +75,13 @@ fn call_edges(calls: &CallMap) -> String {
         .flat_map(|(k, v)| {
             v.iter()
                 .map(|pos| {
-                    format!(
-                        "{}{pt} -> {}{pt}",
-                        pos,
-                        k,
-                        pt = if k.file_id == pos.file_id { ":w" } else { "" },
-                    )
+                    let (pt, attr) = if k.file_id == pos.file_id {
+                        (":w", r#"[class="modify-me"]"#)
+                    } else {
+                        ("", "")
+                    };
+
+                    format!("{}{pt} -> {}{pt} {attr}", pos, k, pt = pt, attr = attr,)
                 })
                 .collect::<Vec<_>>()
         })
