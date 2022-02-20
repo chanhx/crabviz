@@ -8,7 +8,7 @@ use ra_vfs::Vfs;
 
 use std::path::{Path, PathBuf};
 
-use crate::file_structure::{FilePosition, Module, RItem, RItemType};
+use crate::file_structure::{File, FilePosition, RItem, RItemType};
 
 pub(crate) struct Analyzer {
     host: AnalysisHost,
@@ -43,7 +43,7 @@ impl Analyzer {
         Ok((host, analysis, vfs))
     }
 
-    pub(crate) fn analyze(&self, root: &Path) -> Result<Vec<Module>> {
+    pub(crate) fn analyze(&self, root: &Path) -> Result<Vec<File>> {
         let db = self.host.raw_database();
 
         let mut file_ids = Vec::new();
@@ -60,20 +60,20 @@ impl Analyzer {
             }
         }
 
-        let modules = file_ids
+        let files = file_ids
             .into_iter()
             .map(|(path, file_id)| {
-                let mut module = Module::new(path, file_id.0);
-                module.items = self.module_ritems(file_id).unwrap();
+                let mut file = File::new(path, file_id.0);
+                file.items = self.file_ritems(file_id).unwrap();
 
-                module
+                file
             })
             .collect();
 
-        Ok(modules)
+        Ok(files)
     }
 
-    fn module_ritems(&self, file_id: FileId) -> Result<Vec<RItem>> {
+    fn file_ritems(&self, file_id: FileId) -> Result<Vec<RItem>> {
         struct WrappedNode {
             node: StructureNode,
             children: Option<Vec<WrappedNode>>,

@@ -2,11 +2,11 @@ mod dot;
 
 use anyhow::Result;
 
-use crate::file_structure::Module;
+use crate::file_structure::File;
 
 pub(crate) use dot::CallMap;
 
-pub(crate) fn gen_graph(m: &Vec<Module>, calls: &CallMap) -> Result<String> {
-    let dot_graph = dot::modules_graph(m, calls);
+pub(crate) fn gen_graph(m: &Vec<File>, calls: &CallMap) -> Result<String> {
+    let dot_graph = dot::files_graph(m, calls);
     dot::render_svg(dot_graph)
 }

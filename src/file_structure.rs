@@ -46,15 +46,15 @@ pub enum RItemType {
     Func,
 }
 
-pub struct Module {
+pub struct File {
     pub path: PathBuf,
     pub file_id: u32,
     pub items: Vec<RItem>,
 }
 
-impl Module {
+impl File {
     pub fn new(path: PathBuf, file_id: u32) -> Self {
-        Module {
+        File {
             path,
             file_id,
             items: Vec::new(),

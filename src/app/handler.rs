@@ -1,10 +1,10 @@
 use crate::{
-    file_structure::Module,
+    file_structure::File,
     graph::{self, CallMap},
 };
 
-pub(super) fn serve_svg(modules: &Vec<Module>, calls: &CallMap) -> String {
-    let contents = graph::gen_graph(modules, calls).unwrap();
+pub(super) fn serve_svg(files: &Vec<File>, calls: &CallMap) -> String {
+    let contents = graph::gen_graph(files, calls).unwrap();
 
     format!(
         r#"

@@ -7,7 +7,7 @@ use std::{
 
 use anyhow::Result;
 
-use crate::file_structure::{FilePosition, Module, RItem};
+use crate::file_structure::{File, FilePosition, RItem};
 
 const MIN_WIDTH: u32 = 230;
 
@@ -39,7 +39,7 @@ fn ritem_table(item: &RItem) -> String {
     )
 }
 
-fn module_node(m: &Module) -> String {
+fn file_node(m: &File) -> String {
     let groups = m
         .items
         .iter()
@@ -91,7 +91,7 @@ fn call_edges(calls: &CallMap) -> String {
     calls
 }
 
-pub(super) fn modules_graph(modules: &Vec<Module>, calls: &CallMap) -> String {
+pub(super) fn files_graph(files: &Vec<File>, calls: &CallMap) -> String {
     format!(
         r#"
 digraph graphviz {{
@@ -111,9 +111,9 @@ digraph graphviz {{
     {}
 }}
         "#,
-        modules
+        files
             .iter()
-            .map(|m| module_node(m))
+            .map(|m| file_node(m))
             .collect::<Vec<_>>()
             .join("\n"),
         call_edges(calls),

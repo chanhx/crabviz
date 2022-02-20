@@ -7,14 +7,14 @@ use vial::prelude::*;
 
 use crate::{
     analysis::Analyzer,
-    file_structure::{Module, RItemType},
+    file_structure::{File, RItemType},
     graph::CallMap,
 };
 
 routes! {
     GET "/" => |req| {
         let context = req.state::<Context>();
-        handler::serve_svg(&context.modules, &context.calls)
+        handler::serve_svg(&context.files, &context.calls)
     };
     GET "/assets/*path" => |req| {
         let path = req.arg("path").unwrap_or("");
@@ -29,21 +29,21 @@ routes! {
 }
 
 struct Context {
-    modules: Vec<Module>,
+    files: Vec<File>,
     calls: CallMap,
 }
 
 pub(crate) fn run(path: &Path) -> Result<()> {
     let analyzer = Analyzer::new(&path);
-    let modules = analyzer.analyze(&path)?;
+    let files = analyzer.analyze(&path)?;
 
-    let funcs = modules
+    let funcs = files
         .iter()
         .flat_map(|m| m.items.iter())
         .filter(|ritem| matches!(ritem.ty, RItemType::Func))
         .collect::<Vec<_>>();
 
-    let methods = modules
+    let methods = files
         .iter()
         .flat_map(|m| m.items.iter())
         .filter(|ritem| matches!(ritem.ty, RItemType::Impl))
@@ -59,7 +59,7 @@ pub(crate) fn run(path: &Path) -> Result<()> {
         .map(|f| (f.pos.clone(), analyzer.find_callers(&f.pos).unwrap()))
         .collect::<CallMap>();
 
-    use_state!(Context { modules, calls });
+    use_state!(Context { files, calls });
 
     asset_dir!("./src/app/assets");
     run!("localhost:8090")?;
