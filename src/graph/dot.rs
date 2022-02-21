@@ -1,7 +1,8 @@
 use std::{
-    collections::HashMap,
+    collections::{BTreeMap, HashMap},
     io::Write,
     iter,
+    path::Path,
     process::{Command, Stdio},
 };
 
@@ -91,6 +92,47 @@ fn call_edges(calls: &CallMap) -> String {
     calls
 }
 
+fn subgraph(files: &Vec<File>) -> String {
+    let mut dirs = BTreeMap::<&Path, Vec<u32>>::default();
+    for f in files {
+        let parent = f.path.parent().unwrap();
+        if let Some(v) = dirs.get_mut(parent) {
+            (*v).push(f.file_id);
+        } else {
+            dirs.insert(parent, vec![f.file_id]);
+        }
+    }
+
+    fn subgraph_recursive(parent: &Path, dirs: &BTreeMap<&Path, Vec<u32>>) -> String {
+        dirs.iter()
+            .filter(|(dir, _)| dir.parent().unwrap() == parent)
+            .map(|(dir, v)| {
+                format!(
+                    r#"
+    subgraph cluster_{name} {{
+        label = "{name}";
+
+        {nodes}
+
+        {subgraph}
+    }}
+                    "#,
+                    name = dir.file_name().unwrap().to_str().unwrap(),
+                    nodes = v
+                        .iter()
+                        .map(|id| format!("{}", id))
+                        .collect::<Vec<_>>()
+                        .join(" "),
+                    subgraph = subgraph_recursive(dir, dirs),
+                )
+            })
+            .collect::<Vec<_>>()
+            .join("\n")
+    }
+
+    subgraph_recursive(dirs.keys().next().unwrap(), &dirs)
+}
+
 pub(super) fn files_graph(files: &Vec<File>, calls: &CallMap) -> String {
     format!(
         r#"
@@ -109,6 +151,8 @@ digraph graphviz {{
     {}
 
     {}
+
+    {}
 }}
         "#,
         files
@@ -116,6 +160,7 @@ digraph graphviz {{
             .map(|m| file_node(m))
             .collect::<Vec<_>>()
             .join("\n"),
+        subgraph(files),
         call_edges(calls),
     )
 }
