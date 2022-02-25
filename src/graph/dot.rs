@@ -8,14 +8,21 @@ use std::{
 
 use anyhow::Result;
 
-use crate::file_structure::{File, FilePosition, RItem};
+use crate::file_structure::{File, FilePosition, RItem, RItemType};
 
 const MIN_WIDTH: u32 = 230;
 
 fn ritem_cell(item: &RItem) -> String {
+    let class = match item.ty {
+        RItemType::Func => ".fn",
+        _ => "",
+    };
+
     format!(
-        r#"<TR><TD PORT="{port}">{name}</TD></TR>"#,
+        r#"<TR><TD PORT="{port}" ID="{id}" HREF="remove_me_url.cell{class}">{name}</TD></TR>"#,
         port = item.pos.offset,
+        id = item.pos,
+        class = class,
         name = item.ident,
     )
 }
@@ -31,7 +38,7 @@ fn ritem_table(item: &RItem) -> String {
     format!(
         r#"
         <TR><TD>
-        <TABLE BORDER="1" CELLBORDER="0" ROWS="*">
+        <TABLE BORDER="1">
         {}
         </TABLE>
         </TD></TR>
@@ -41,7 +48,7 @@ fn ritem_table(item: &RItem) -> String {
 }
 
 fn file_node(m: &File) -> String {
-    let groups = m
+    let cells = m
         .items
         .iter()
         .map(|ritem| ritem_table(ritem))
@@ -56,15 +63,17 @@ fn file_node(m: &File) -> String {
 
     format!(
         r#"
-    "{}" [label=<
+    "{id}" [id="{id}", label=<
         <TABLE BORDER="0" CELLBORDER="0">
-        {}
-        {}
+        {header}
+        {cells}
         <TR><TD BORDER="0"></TD></TR>
         </TABLE>
     >]
         "#,
-        m.file_id, node_header, groups,
+        id = m.file_id,
+        header = node_header,
+        cells = cells,
     )
 }
 
@@ -76,13 +85,21 @@ fn call_edges(calls: &CallMap) -> String {
         .flat_map(|(k, v)| {
             v.iter()
                 .map(|pos| {
-                    let (pt, attr) = if k.file_id == pos.file_id {
-                        (":w", r#"[class="modify-me"]"#)
+                    let mut attrs = vec![format!(r#"id="{} -> {}""#, pos, k)];
+                    let pt = if k.file_id == pos.file_id {
+                        attrs.push(r#"class="modify-me""#.to_string());
+                        ":w"
                     } else {
-                        ("", "")
+                        ""
                     };
 
-                    format!("{}{pt} -> {}{pt} {attr}", pos, k, pt = pt, attr = attr,)
+                    format!(
+                        "{}{pt} -> {}{pt} [{attrs}]",
+                        pos,
+                        k,
+                        pt = pt,
+                        attrs = attrs.join(", "),
+                    )
                 })
                 .collect::<Vec<_>>()
         })
