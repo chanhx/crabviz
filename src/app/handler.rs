@@ -15,7 +15,6 @@ pub(super) fn serve_svg(files: &Vec<File>, calls: &CallMap) -> String {
 </head>
 <body>
     {}
-    <script src="assets/path-data-polyfill.js"></script>
     <script src="assets/preprocess.js"></script>
 </body>
 </html>
