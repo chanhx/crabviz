@@ -16,7 +16,7 @@
 /* Cell */
 
 .cell polygon {
-  fill: lightgray;
+  fill: var(--node-color);
 }
 
 .cell.selected polygon {
@@ -83,8 +83,18 @@
 
 /* Node */
 
+.node path {
+  fill: var(--node-color);
+}
+.node polygon {
+  stroke: var(--node-content-color);
+}
+.node text {
+  fill: var(--node-content-color);
+}
+
 .node.selected path {
-  stroke: red;
+  stroke: var(--node-highlight-color);
 }
 
 /* selection fade */

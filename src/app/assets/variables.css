@@ -8,4 +8,8 @@
   --incoming-edge-color: blue;
   --outgoing-edge-color: green;
   --recurse-edge-color: black;
+
+  --node-color: lightgray;
+  --node-content-color: black;
+  --node-highlight-color: red;
 }
