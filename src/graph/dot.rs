@@ -38,7 +38,7 @@ fn ritem_table(item: &RItem) -> String {
     format!(
         r#"
         <TR><TD>
-        <TABLE BORDER="1" CELLSPACING="0" CELLPADDING="4">
+        <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="4" CELLBORDER="1">
         {}
         </TABLE>
         </TD></TR>
