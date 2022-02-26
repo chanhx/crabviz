@@ -172,7 +172,7 @@ fn structure_node_to_ritem(
                 children
                     .unwrap_or(Vec::new())
                     .into_iter()
-                    .map(|node| structure_node_to_ritem(node, None, file_id).unwrap())
+                    .filter_map(|node| structure_node_to_ritem(node, None, file_id))
                     .collect(),
             ),
             _ => None,
