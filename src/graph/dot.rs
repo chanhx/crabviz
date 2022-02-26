@@ -12,6 +12,13 @@ use crate::file_structure::{File, FilePosition, RItem, RItemType};
 
 const MIN_WIDTH: u32 = 230;
 
+fn escape_html(s: &str) -> String {
+    s.replace("&", "&amp;")
+        .replace("\"", "&quot;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+}
+
 fn ritem_cell(item: &RItem) -> String {
     let class = match item.ty {
         RItemType::Func => ".fn",
@@ -23,7 +30,7 @@ fn ritem_cell(item: &RItem) -> String {
         port = item.pos.offset,
         id = item.pos,
         class = class,
-        name = item.ident,
+        name = escape_html(&item.ident),
     )
 }
 
