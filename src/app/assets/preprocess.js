@@ -3,23 +3,23 @@ const forEachNode = (parent, selector, fn) => {
 };
 
 const getParent = (elem, className) => {
-  while (elem && elem.tagName !== 'svg') {
+  while (elem && elem.tagName !== "svg") {
     if (elem.classList.contains(className)) return elem;
     elem = elem.parentNode;
   }
 
   return null;
-}
+};
 
 const isCell = (elem) => {
   return getParent(elem, "cell") != null;
-}
+};
 const isEdge = (elem) => {
   return getParent(elem, "edge") != null;
-}
+};
 const isNode = (elem) => {
   return getParent(elem, "node") != null;
-}
+};
 
 const preprocessSVG = (svg) => {
   forEachNode(svg, "g.edge.modify-me path", (path) => {
@@ -61,7 +61,7 @@ const preprocessSVG = (svg) => {
     path.parentNode.appendChild(newPath);
   });
 
-  forEachNode(svg, 'a', (a) => {
+  forEachNode(svg, "a", (a) => {
     let urlComps = a.href.baseVal.split(".");
     if (urlComps[0] != "remove_me_url") {
       return;
@@ -72,7 +72,7 @@ const preprocessSVG = (svg) => {
 
     let g = a.parentNode;
     g.replaceChild(docFrag, a);
-    g.id = g.id.replace(/^a_/, '');
+    g.id = g.id.replace(/^a_/, "");
 
     if (urlComps.length > 1) {
       g.classList.add(...urlComps.slice(1));
@@ -80,10 +80,10 @@ const preprocessSVG = (svg) => {
   });
 
   forEachNode(svg, "g.edge", (edge) => {
-    let [from, to] = edge.id.split(' -> ');
+    let [from, to] = edge.id.split(" -> ");
 
-    edge.setAttribute('edge-from', from);
-    edge.setAttribute('edge-to', to);
+    edge.setAttribute("edge-from", from);
+    edge.setAttribute("edge-to", to);
   });
 
   forEachNode(svg, "title", (el) => el.remove());
@@ -98,9 +98,13 @@ const onSelectEdge = (svg, target) => {
     svg.state.selectedEdgeID = null;
   } else {
     edge.classList.add("selected");
+    forEachNode(svg, "g.edge:not(.selected)", (elem) => {
+      elem.classList.add("fade");
+    });
+
     svg.state.selectedEdgeID = id;
   }
-}
+};
 
 const onSelectCell = (svg, target) => {
   let cell = getParent(target, "cell");
@@ -127,7 +131,7 @@ const onSelectCell = (svg, target) => {
     cell.classList.add("selected");
     svg.state.selectedCellID = id;
   }
-}
+};
 
 const onSelectNode = (svg, target) => {
   let node = getParent(target, "node");
@@ -151,7 +155,7 @@ const onSelectNode = (svg, target) => {
 
     svg.state.selectedNodeID = id;
   }
-}
+};
 
 const reset = (svg) => {
   forEachNode(svg, "g.cell.selected", (elem) => {
@@ -164,8 +168,8 @@ const reset = (svg) => {
 
   forEachNode(svg, "g.node", (elem) => {
     elem.classList.remove("fade", "selected");
-  })
-}
+  });
+};
 
 const addListeners = (svg) => {
   svg.addEventListener("mouseup", (event) => {
@@ -188,7 +192,7 @@ svg.state = {
   selectedCellID: null,
   selectedEdgeID: null,
   selectedNodeID: null,
-}
+};
 
 preprocessSVG(svg);
 addListeners(svg);
