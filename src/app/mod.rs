@@ -46,11 +46,9 @@ pub(crate) fn run(path: &Path) -> Result<()> {
     let methods = files
         .iter()
         .flat_map(|m| m.items.iter())
-        .filter(|ritem| matches!(ritem.ty, RItemType::Impl))
-        .flat_map(|ritem| {
-            let children = ritem.children.as_ref().unwrap();
-            children.iter().collect::<Vec<_>>()
-        })
+        .filter_map(|ritem| ritem.children.as_ref())
+        .flatten()
+        .filter(|ritem| matches!(ritem.ty, RItemType::Func))
         .collect::<Vec<_>>();
 
     let calls = [funcs, methods]

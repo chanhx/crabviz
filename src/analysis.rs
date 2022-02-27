@@ -167,16 +167,18 @@ fn structure_node_to_ritem(
             offset: u32::from(node.navigation_range.start()),
         };
 
-        let children = match ty {
-            RItemType::Impl => Some(
-                children
-                    .unwrap_or(Vec::new())
-                    .into_iter()
-                    .filter_map(|node| structure_node_to_ritem(node, None, file_id))
-                    .collect(),
-            ),
-            _ => None,
-        };
+        let children = children.and_then(|children| {
+            let children = children
+                .into_iter()
+                .filter_map(|node| structure_node_to_ritem(node, None, file_id))
+                .collect::<Vec<_>>();
+
+            if children.len() > 0 {
+                Some(children)
+            } else {
+                None
+            }
+        });
 
         Some(RItem {
             ident: node.label,
