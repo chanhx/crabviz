@@ -2,6 +2,17 @@ const forEachNode = (parent, selector, fn) => {
   parent.querySelectorAll(selector).forEach(fn);
 };
 
+const addClass = (parent, selector, ...classes) => {
+  forEachNode(parent, selector, (elem) => {
+    elem.classList.add(...classes);
+  });
+};
+const removeClass = (parent, selector, ...classes) => {
+  forEachNode(parent, selector, (elem) => {
+    elem.classList.remove(...classes);
+  });
+};
+
 const getParent = (elem, className) => {
   while (elem && elem.tagName !== "svg") {
     if (elem.classList.contains(className)) return elem;
@@ -98,9 +109,7 @@ const onSelectEdge = (svg, target) => {
     svg.state.selectedEdgeID = null;
   } else {
     edge.classList.add("selected");
-    forEachNode(svg, "g.edge:not(.selected)", (elem) => {
-      elem.classList.add("fade");
-    });
+    addClass(svg, "g.edge:not(.selected)", "fade");
 
     svg.state.selectedEdgeID = id;
   }
@@ -118,15 +127,9 @@ const onSelectCell = (svg, target) => {
   if (selectedCellID == id) {
     svg.state.selectedCellID = null;
   } else {
-    forEachNode(svg, `g.edge[edge-from="${id}"]`, (elem) => {
-      elem.classList.add("incoming");
-    });
-    forEachNode(svg, `g.edge[edge-to="${id}"]`, (elem) => {
-      elem.classList.add("outgoing");
-    });
-    forEachNode(svg, "g.edge:not(.incoming):not(.outgoing)", (elem) => {
-      elem.classList.add("fade");
-    });
+    addClass(svg, `g.edge[edge-from="${id}"]`, "incoming");
+    addClass(svg, `g.edge[edge-to="${id}"]`, "outgoing");
+    addClass(svg, "g.edge:not(.incoming):not(.outgoing)", "fade");
 
     cell.classList.add("selected");
     svg.state.selectedCellID = id;
@@ -141,15 +144,9 @@ const onSelectNode = (svg, target) => {
   if (selectedNodeID == id) {
     svg.state.selectedNodeID = null;
   } else {
-    forEachNode(svg, `g.edge[edge-from^="${id}"]`, (elem) => {
-      elem.classList.add("incoming");
-    });
-    forEachNode(svg, `g.edge[edge-to^="${id}"]`, (elem) => {
-      elem.classList.add("outgoing");
-    });
-    forEachNode(svg, "g.edge:not(.incoming):not(.outgoing)", (elem) => {
-      elem.classList.add("fade");
-    });
+    addClass(svg, `g.edge[edge-from^="${id}"]`, "incoming");
+    addClass(svg, `g.edge[edge-to^="${id}"]`, "outgoing");
+    addClass(svg, "g.edge:not(.incoming):not(.outgoing)", "fade");
 
     node.classList.add("selected");
 
@@ -158,17 +155,9 @@ const onSelectNode = (svg, target) => {
 };
 
 const reset = (svg) => {
-  forEachNode(svg, "g.cell.selected", (elem) => {
-    elem.classList.remove("selected");
-  });
-
-  forEachNode(svg, "g.edge", (elem) => {
-    elem.classList.remove("fade", "incoming", "outgoing", "selected");
-  });
-
-  forEachNode(svg, "g.node", (elem) => {
-    elem.classList.remove("fade", "selected");
-  });
+  removeClass(svg, "g.cell.selected", "selected");
+  removeClass(svg, "g.edge", "fade", "incoming", "outgoing", "selected");
+  removeClass(svg, "g.node", "selected");
 };
 
 const addListeners = (svg) => {
