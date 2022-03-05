@@ -12,6 +12,7 @@ pub(super) fn serve_svg(files: &Vec<File>, calls: &CallMap) -> String {
 <html>
 <head>
     <link rel="stylesheet" type="text/css" href="assets/styles.css">
+    <script src="assets/svg-pan-zoom.min.js"></script>
 </head>
 <body>
     {}

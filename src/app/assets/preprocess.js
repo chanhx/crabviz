@@ -185,3 +185,10 @@ svg.state = {
 
 preprocessSVG(svg);
 addListeners(svg);
+
+svgPanZoom(svg, {
+  zoomEnabled: true,
+  controlIconsEnabled: true,
+  fit: true,
+  center: true,
+});
