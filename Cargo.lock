@@ -62,20 +62,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
-name = "callviz"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap",
- "ra_ap_ide",
- "ra_ap_ide_db",
- "ra_ap_project_model",
- "ra_ap_rust-analyzer",
- "ra_ap_vfs",
- "vial",
-]
-
-[[package]]
 name = "camino"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -210,6 +196,20 @@ name = "cov-mark"
 version = "2.0.0-pre.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0d48d8f76bd9331f19fe2aaf3821a9f9fb32c3963e1e3d6ce82a8c09cef7444a"
+
+[[package]]
+name = "crabviz"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "ra_ap_ide",
+ "ra_ap_ide_db",
+ "ra_ap_project_model",
+ "ra_ap_rust-analyzer",
+ "ra_ap_vfs",
+ "vial",
+]
 
 [[package]]
 name = "crossbeam-channel"
