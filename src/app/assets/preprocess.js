@@ -34,33 +34,23 @@ const isNode = (elem) => {
 
 const preprocessSVG = (svg) => {
   forEachNode(svg, "g.edge.modify-me path", (path) => {
-    let re = /(-?\d+\.?\d+)/g;
-    let d = path.attributes.d.value;
+    let [m, c1, c2] = path.getPathData();
+    let [mX, mY] = m.values;
 
-    let [
-      mX, mY,
-      x11, y11, x12, y12, x1, y1,
-      x21, y21, x22, y22, x2, y2,
-    ] = d.match(re).map(Number);
+    c1.values[0] = (c1.values[0] - mX) / 4 + mX;
+    c1.values[2] = (c1.values[2] - mX) / 4 + mX;
+    c1.values[4] = (c1.values[4] - mX) / 4 + mX;
 
-    x11 = (x11 - mX) / 4 + mX;
-    x12 = (x12 - mX) / 4 + mX;
-    x1 = (x1 - mX) / 4 + mX;
+    c2.values[0] = (c2.values[0] - mX) / 4 + mX;
+    c2.values[2] = (c2.values[2] - mX) / 4 + mX;
 
-    x21 = (x21 - mX) / 4 + mX;
-    x22 = (x22 - mX) / 4 + mX;
+    c1.values[1] = (c1.values[1] + mY) / 2;
+    c1.values[3] = (c1.values[3] + mY) / 2;
 
-    y11 = (y11 + mY) / 2;
-    y12 = (y12 + mY) / 2;
+    c2.values[1] = (c2.values[1] + c2.values[5]) / 2;
+    c2.values[3] = (c2.values[3] + c2.values[5]) / 2;
 
-    y21 = (y21 + y2) / 2;
-    y22 = (y22 + y2) / 2;
-
-    let m = `M ${mX} ${mY}`;
-    let c1 = `C ${x11} ${y11} ${x12} ${y12} ${x1} ${y1}`;
-    let c2 = `C ${x21} ${y21} ${x22} ${y22} ${x2} ${y2}`;
-
-    path.setAttribute("d", `${m} ${c1} ${c2}`);
+    path.setPathData([m, c1, c2]);
 
     path.parentNode.classList.remove("modify-me");
   });
