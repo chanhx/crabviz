@@ -2,7 +2,7 @@ mod dot;
 
 use anyhow::Result;
 
-use crate::file_structure::File;
+use crate::analysis::File;
 
 pub(crate) use dot::CallMap;
 

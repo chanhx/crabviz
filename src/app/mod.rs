@@ -1,20 +1,19 @@
 mod handler;
 
-use std::path::Path;
+use std::{collections::HashMap, path::Path, time::Instant};
 
 use anyhow::Result;
 use vial::prelude::*;
 
 use crate::{
-    analysis::Analyzer,
-    file_structure::{File, RItemType},
+    analysis::{Analyzer, File},
     graph::CallMap,
 };
 
 routes! {
     GET "/" => |req| {
         let context = req.state::<Context>();
-        handler::serve_svg(&context.files, &context.calls)
+        handler::serve_svg(&context.files, &context.refs)
     };
     GET "/assets/*path" => |req| {
         let path = req.arg("path").unwrap_or("");
@@ -30,35 +29,28 @@ routes! {
 
 struct Context {
     files: Vec<File>,
-    calls: CallMap,
+    refs: CallMap,
 }
 
 pub(crate) fn run(path: &Path) -> Result<()> {
-    let analyzer = Analyzer::new(&path);
-    let files = analyzer.analyze(&path)?;
+    let now = Instant::now();
 
-    let funcs = files
+    let analyzer = Analyzer::new(path);
+
+    let files_id = analyzer.files_id(path);
+    let files = files_id
         .iter()
-        .flat_map(|m| m.items.iter())
-        .filter(|ritem| matches!(ritem.ty, RItemType::Func))
+        .map(|&id| analyzer.file_structure(id))
         .collect::<Vec<_>>();
-
-    let methods = files
+    let refs = files
         .iter()
-        .flat_map(|m| m.items.iter())
-        .filter_map(|ritem| ritem.children.as_ref())
-        .flatten()
-        .filter(|ritem| matches!(ritem.ty, RItemType::Func))
-        .collect::<Vec<_>>();
+        .flat_map(|file| analyzer.file_references(file))
+        .collect::<HashMap<_, _>>();
 
-    let calls = [funcs, methods]
-        .concat()
-        .iter()
-        .map(|f| (f.pos.clone(), analyzer.find_callers(&f.pos).unwrap()))
-        .collect::<CallMap>();
+    let elapsed = now.elapsed();
+    println!("elapsed {} seconds", elapsed.as_secs());
 
-    use_state!(Context { files, calls });
-
+    use_state!(Context { files, refs });
     asset_dir!("./src/app/assets");
     run!("localhost:8090")?;
 

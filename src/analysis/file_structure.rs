@@ -1,6 +1,6 @@
 use std::{fmt, hash::Hash, path::PathBuf};
 
-pub struct RItem {
+pub(crate) struct RItem {
     pub ident: String,
     pub ty: RItemType,
     pub pos: FilePosition,
@@ -8,8 +8,8 @@ pub struct RItem {
     // pub visiblity: Visibility
 }
 
-#[derive(Clone, PartialEq, Eq, Hash)]
-pub struct FilePosition {
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+pub(crate) struct FilePosition {
     pub file_id: u32,
     pub offset: u32,
 }
@@ -35,7 +35,7 @@ impl fmt::Display for FilePosition {
 //     pub is_async: bool,
 // }
 
-pub enum RItemType {
+pub(crate) enum RItemType {
     Macro,
     // TypeAlias { original_type: String },
     Enum,
@@ -46,18 +46,8 @@ pub enum RItemType {
     Func,
 }
 
-pub struct File {
+pub(crate) struct File {
     pub path: PathBuf,
     pub file_id: u32,
     pub items: Vec<RItem>,
-}
-
-impl File {
-    pub fn new(path: PathBuf, file_id: u32) -> Self {
-        File {
-            path,
-            file_id,
-            items: Vec::new(),
-        }
-    }
 }

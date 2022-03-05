@@ -1,6 +1,5 @@
 mod analysis;
 mod app;
-mod file_structure;
 mod graph;
 
 use std::{fs, path::PathBuf};

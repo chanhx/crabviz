@@ -1,5 +1,5 @@
 use crate::{
-    file_structure::File,
+    analysis::File,
     graph::{self, CallMap},
 };
 

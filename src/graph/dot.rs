@@ -8,7 +8,7 @@ use std::{
 
 use anyhow::Result;
 
-use crate::file_structure::{File, FilePosition, RItem, RItemType};
+use crate::analysis::{File, FilePosition, RItem, RItemType};
 
 const MIN_WIDTH: u32 = 230;
 
@@ -20,28 +20,33 @@ fn escape_html(s: &str) -> String {
 }
 
 fn ritem_cell(item: &RItem) -> String {
+    let sub_cells = match item.children.as_ref() {
+        Some(children) => children
+            .iter()
+            .map(|item| ritem_cell(item))
+            .collect::<Vec<_>>(),
+        None => Vec::new(),
+    };
+
     let class = match item.ty {
         RItemType::Func => ".fn",
         _ => "",
     };
-
-    format!(
+    let cell = format!(
         r#"<TR><TD PORT="{port}" ID="{id}" HREF="remove_me_url.cell{class}">{name}</TD></TR>"#,
         port = item.pos.offset,
         id = item.pos,
         class = class,
         name = escape_html(&item.ident),
-    )
+    );
+
+    iter::once(cell)
+        .chain(sub_cells.into_iter())
+        .collect::<Vec<_>>()
+        .join("\n        ")
 }
 
 fn ritem_table(item: &RItem) -> String {
-    static EMPTY: &Vec<RItem> = &vec![];
-    let cells = iter::once(item)
-        .chain(item.children.as_ref().unwrap_or(EMPTY).iter())
-        .map(|m| ritem_cell(m))
-        .collect::<Vec<_>>()
-        .join("\n        ");
-
     format!(
         r#"
         <TR><TD>
@@ -50,7 +55,7 @@ fn ritem_table(item: &RItem) -> String {
         </TABLE>
         </TD></TR>
         "#,
-        cells,
+        ritem_cell(item),
     )
 }
 
