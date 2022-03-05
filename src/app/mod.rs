@@ -1,6 +1,6 @@
 mod handler;
 
-use std::{collections::HashMap, path::Path, time::Instant};
+use std::{collections::HashMap, path::Path};
 
 use anyhow::Result;
 use vial::prelude::*;
@@ -33,8 +33,6 @@ struct Context {
 }
 
 pub(crate) fn run(path: &Path) -> Result<()> {
-    let now = Instant::now();
-
     let analyzer = Analyzer::new(path);
 
     let files_id = analyzer.files_id(path);
@@ -46,9 +44,6 @@ pub(crate) fn run(path: &Path) -> Result<()> {
         .iter()
         .flat_map(|file| analyzer.file_references(file))
         .collect::<HashMap<_, _>>();
-
-    let elapsed = now.elapsed();
-    println!("elapsed {} seconds", elapsed.as_secs());
 
     use_state!(Context { files, refs });
     asset_dir!("./src/app/assets");
