@@ -5,31 +5,14 @@ use std::{collections::HashMap, path::Path};
 use anyhow::Result;
 use vial::prelude::*;
 
-use crate::{
-    analysis::{Analyzer, File},
-    graph::CallMap,
-};
+use crate::analysis::Analyzer;
+use handler::{handle_not_found, serve_static, serve_svg, Context};
 
 routes! {
-    GET "/" => |req| {
-        let context = req.state::<Context>();
-        handler::serve_svg(&context.files, &context.refs)
-    };
-    GET "/assets/*path" => |req| {
-        let path = req.arg("path").unwrap_or("");
-        Response::from_asset(path)
-    };
+    GET "/" => serve_svg;
+    GET "/assets/*path" => serve_static;
 
-    GET "/*path" => |req|
-        Response::from(404).with_body(format!(
-            "<h1>404 Not Found: {}</h1>",
-            req.arg("path").unwrap_or("")
-        ));
-}
-
-struct Context {
-    files: Vec<File>,
-    refs: CallMap,
+    GET "/*path" => handle_not_found;
 }
 
 pub(crate) fn run(path: &Path) -> Result<()> {
