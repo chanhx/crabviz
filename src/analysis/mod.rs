@@ -17,7 +17,7 @@ impl Analyzer {
         Analyzer(ra::Analyzer::new(path))
     }
 
-    pub fn files_id(&self, path: &Path) -> HashSet<FileId> {
+    pub fn files_id(&self, path: String) -> HashSet<FileId> {
         self.0.files_id(path)
     }
 

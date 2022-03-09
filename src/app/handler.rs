@@ -1,17 +1,30 @@
+use std::collections::HashMap;
+
 use vial::prelude::*;
 
-use crate::{
-    analysis::File,
-    graph::{self, CallMap},
-};
+use crate::{analysis::Analyzer, graph};
 
 pub(super) struct Context {
-    pub files: Vec<File>,
-    pub refs: CallMap,
+    pub root: String,
+    pub analyzer: Analyzer,
 }
+
+unsafe impl Sync for Context {}
 
 pub(super) fn serve_svg(req: Request) -> impl Responder {
     let ctx = req.state::<Context>();
+    let path = ctx.root.clone();
+    let analyzer = &ctx.analyzer;
+
+    let files_id = analyzer.files_id(path);
+    let files = files_id
+        .iter()
+        .map(|&id| analyzer.file_structure(id))
+        .collect::<Vec<_>>();
+    let refs = files
+        .iter()
+        .flat_map(|file| analyzer.file_references(file))
+        .collect::<HashMap<_, _>>();
 
     format!(
         r#"
@@ -28,7 +41,7 @@ pub(super) fn serve_svg(req: Request) -> impl Responder {
 </body>
 </html>
         "#,
-        graph::gen_graph(&ctx.files, &ctx.refs).unwrap(),
+        graph::gen_graph(&files, &refs).unwrap(),
     )
 }
 

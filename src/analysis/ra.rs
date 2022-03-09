@@ -43,14 +43,14 @@ impl Analyzer {
         Ok((host, analysis, vfs))
     }
 
-    pub(super) fn files_id(&self, path: &Path) -> HashSet<FileId> {
+    pub(super) fn files_id(&self, path: String) -> HashSet<FileId> {
         let db = self.host.raw_database();
-        let vfs_path = VfsPath::new_real_path(path.to_string_lossy().to_string());
+        let vfs_path = VfsPath::new_real_path(path);
 
         db.local_roots()
             .iter()
-            .flat_map(|root_id| db.source_root(*root_id).iter().collect::<Vec<_>>())
-            .filter(|file_id| self.vfs.file_path(*file_id).starts_with(&vfs_path))
+            .flat_map(|&root_id| db.source_root(root_id).iter().collect::<Vec<_>>())
+            .filter(|&file_id| self.vfs.file_path(file_id).starts_with(&vfs_path))
             .collect()
     }
 
