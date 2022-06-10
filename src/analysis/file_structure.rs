@@ -9,7 +9,7 @@ pub(crate) struct RItem {
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]
-pub(crate) struct FilePosition {
+pub struct FilePosition {
     pub file_id: u32,
     pub offset: u32,
 }

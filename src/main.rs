@@ -1,6 +1,6 @@
 mod analysis;
 mod app;
-mod graph;
+mod dot;
 
 use std::{fs, path::PathBuf};
 

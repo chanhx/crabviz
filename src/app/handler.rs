@@ -1,8 +1,9 @@
-use std::collections::HashMap;
-
-use vial::prelude::*;
-
-use crate::{analysis::Analyzer, graph};
+use {
+    super::graph::{gen_svg, Reference},
+    crate::{analysis::Analyzer, dot::Dot},
+    std::collections::HashMap,
+    vial::prelude::*,
+};
 
 pub(super) struct Context {
     pub root: String,
@@ -21,10 +22,23 @@ pub(super) fn serve_svg(req: Request) -> impl Responder {
         .iter()
         .map(|&id| analyzer.file_structure(id))
         .collect::<Vec<_>>();
+
     let refs = files
         .iter()
         .flat_map(|file| analyzer.file_references(file))
+        .map(|(k, v)| {
+            let v = v
+                .iter()
+                .map(|&pos| Reference {
+                    dest: pos,
+                    style: None,
+                })
+                .collect();
+            (k, v)
+        })
         .collect::<HashMap<_, _>>();
+
+    let svg = gen_svg(&Dot {}, &files, refs);
 
     format!(
         r#"
@@ -36,12 +50,11 @@ pub(super) fn serve_svg(req: Request) -> impl Responder {
     <script src="assets/svg-pan-zoom.min.js"></script>
 </head>
 <body>
-    {}
+    {svg}
     <script src="assets/preprocess.js"></script>
 </body>
 </html>
         "#,
-        graph::gen_graph(&files, &refs).unwrap(),
     )
 }
 

@@ -1,12 +1,15 @@
+mod graph;
 mod handler;
 
-use std::path::Path;
+use {
+    crate::analysis::Analyzer,
+    anyhow::Result,
+    handler::{handle_not_found, serve_static, serve_svg, Context},
+    std::path::Path,
+    vial::prelude::*,
+};
 
-use anyhow::Result;
-use vial::prelude::*;
-
-use crate::analysis::Analyzer;
-use handler::{handle_not_found, serve_static, serve_svg, Context};
+pub(crate) use graph::{GenerateSVG, Node, References, Subgraph, TableNode};
 
 routes! {
     GET "/" => serve_svg;

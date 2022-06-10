@@ -1,12 +1,13 @@
 mod file_structure;
 mod ra;
 
-use std::{
-    collections::{HashMap, HashSet},
-    path::Path,
+use {
+    ra_ide::{FileId, StructureNode, StructureNodeKind, SymbolKind},
+    std::{
+        collections::{HashMap, HashSet},
+        path::Path,
+    },
 };
-
-use ra_ide::{FileId, StructureNode, StructureNodeKind, SymbolKind};
 
 pub(crate) use file_structure::{File, FilePosition, RItem, RItemType};
 
@@ -67,12 +68,11 @@ impl Analyzer {
                     .0
                     .find_references(pos)
                     .iter()
-                    .filter_map(|item| match item.target.focus_range {
-                        Some(ref_pos) => Some(FilePosition {
+                    .filter_map(|item| {
+                        item.target.focus_range.map(|ref_pos| FilePosition {
                             file_id: item.target.file_id.0,
                             offset: u32::from(ref_pos.start()),
-                        }),
-                        None => None,
+                        })
                     })
                     .collect();
 
