@@ -134,8 +134,8 @@ const onSelectNode = (svg, target) => {
   if (selectedNodeID == id) {
     svg.state.selectedNodeID = null;
   } else {
-    addClass(svg, `g.edge[edge-from^="${id}"]`, "incoming");
-    addClass(svg, `g.edge[edge-to^="${id}"]`, "outgoing");
+    addClass(svg, `g.edge[edge-from^="${id}:"]`, "incoming");
+    addClass(svg, `g.edge[edge-to^="${id}:"]`, "outgoing");
     addClass(svg, "g.edge:not(.incoming):not(.outgoing)", "fade");
 
     node.classList.add("selected");

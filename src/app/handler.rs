@@ -1,7 +1,10 @@
 use {
-    super::graph::{gen_svg, Reference},
-    crate::{analysis::Analyzer, dot::Dot},
-    std::collections::HashMap,
+    super::{
+        analysis::{Analyzer, Relations, SymbolLocation},
+        graph::gen_svg,
+    },
+    crate::dot::Dot,
+    std::{collections::HashSet, path::PathBuf},
     vial::prelude::*,
 };
 
@@ -17,28 +20,60 @@ pub(super) fn serve_svg(req: Request) -> impl Responder {
     let path = ctx.root.clone();
     let analyzer = &ctx.analyzer;
 
-    let files_id = analyzer.files_id(path);
-    let files = files_id
-        .iter()
-        .map(|&id| analyzer.file_structure(id))
-        .collect::<Vec<_>>();
+    let file_outlines = analyzer.file_outlines(std::path::Path::new(&path));
 
-    let refs = files
+    let paths = file_outlines
         .iter()
-        .flat_map(|file| analyzer.file_references(file))
-        .map(|(k, v)| {
-            let v = v
-                .iter()
-                .map(|&pos| Reference {
-                    dest: pos,
-                    style: None,
-                })
-                .collect();
-            (k, v)
+        .map(|outline| &outline.path)
+        .collect::<HashSet<_>>();
+
+    let mut calls = analyzer
+        .outgoing_calls(&file_outlines)
+        .into_iter()
+        .map(|(caller, callee)| {
+            (
+                caller,
+                callee
+                    .into_iter()
+                    .filter(|callee| {
+                        let path = callee.to.uri.path();
+                        let path = PathBuf::from(path);
+
+                        paths.contains(&path)
+                    })
+                    .map(|call| {
+                        (
+                            SymbolLocation::new(&call.to.uri, &call.to.selection_range.start),
+                            None,
+                        )
+                    })
+                    .collect(),
+            )
         })
-        .collect::<HashMap<_, _>>();
+        .collect::<Relations>();
 
-    let svg = gen_svg(&Dot {}, &files, refs);
+    let implementations = analyzer
+        .interface_implementations(&file_outlines)
+        .into_iter()
+        .map(|(interface, implementations)| {
+            (
+                interface,
+                implementations
+                    .into_iter()
+                    .filter(|location| {
+                        let path = &location.path;
+                        let path = PathBuf::from(path);
+
+                        paths.contains(&path)
+                    })
+                    .map(|location| (location, None))
+                    .collect(),
+            )
+        });
+
+    calls.extend(implementations);
+
+    let svg = gen_svg(&Dot {}, &file_outlines, calls);
 
     format!(
         r#"

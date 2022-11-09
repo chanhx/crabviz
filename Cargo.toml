@@ -6,12 +6,19 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0"
+snafu = "0.7"
 vial = "0.1"
-clap = { version = "3.1.2", features = ["derive"] }
+clap = "4.0"
+confy = " 0.5"
 
-ra_rust-analyzer = { package = "ra_ap_rust-analyzer", version = "0.0.96" }
-ra_ide = { package = "ra_ap_ide", version = "0.0.96" }
-ra_ide_db = { package = "ra_ap_ide_db", version = "0.0.96" }
-ra_vfs = { package = "ra_ap_vfs", version = "0.0.96" }
-ra_project_model = { package = "ra_ap_project_model", version = "0.0.96" }
+lsp-types = "0.93"
+
+rayon = "1.5"
+crossbeam-channel = "0.5"
+
+serde = "1.0"
+serde_json = "1.0"
+shellexpand = "2.1"
+
+walkdir = "2.3"
+dashmap = "5.4"

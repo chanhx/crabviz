@@ -1,6 +1,10 @@
+use snafu::ResultExt;
+
 use {
-    crate::app::{GenerateSVG, Node, References, Subgraph, TableNode},
-    anyhow::Result,
+    crate::{
+        app::{Edge, GenerateSVG, Node, Subgraph, TableNode},
+        error::{self, Result},
+    },
     std::{
         io::Write,
         iter,
@@ -23,18 +27,28 @@ impl Dot {
             .arg(format!("-T{}", format))
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
-            .spawn()?;
+            .spawn()
+            .map_err(Into::into)
+            .context(error::RuntimeSnafu)?;
 
         let cmd_stdin = cmd.stdin.as_mut().unwrap();
-        cmd_stdin.write_all(graph.as_bytes())?;
+        cmd_stdin
+            .write_all(graph.as_bytes())
+            .map_err(Into::into)
+            .context(error::RuntimeSnafu)?;
         drop(cmd_stdin);
 
-        Ok(cmd.wait_with_output()?)
+        Ok(cmd
+            .wait_with_output()
+            .map_err(Into::into)
+            .context(error::RuntimeSnafu)?)
     }
 
     pub(crate) fn export_svg(&self, graph: String) -> Result<String> {
         let output = self.export(graph, "svg")?;
-        let output = String::from_utf8(output.stdout)?;
+        let output = String::from_utf8(output.stdout)
+            .map_err(Into::into)
+            .context(error::RuntimeSnafu)?;
 
         Ok(output)
     }
@@ -45,7 +59,7 @@ impl GenerateSVG for Dot {
         &self,
         tables: &Vec<TableNode>,
         // nodes: Vec<Node>,
-        refs: &References,
+        refs: &Vec<Edge>,
         subgraphs: &Vec<Subgraph>,
     ) -> String {
         let tables = tables
@@ -100,6 +114,8 @@ digraph {{
             edges(refs),
         );
 
+        // println!("{}", graph);
+
         self.export_svg(graph).unwrap()
     }
 }
@@ -141,35 +157,35 @@ fn section(node: &Node) -> String {
     )
 }
 
-fn edges(calls: &References) -> String {
-    let calls = calls
+fn edges(edges: &Vec<Edge>) -> String {
+    edges
         .iter()
-        .flat_map(|(k, v)| {
-            v.iter()
-                .map(|pos| {
-                    let dest = pos.dest;
-                    let mut attrs = vec![format!(r#"id="{} -> {}""#, dest, k)];
-                    let pt = if k.file_id == dest.file_id {
-                        attrs.push(r#"class="modify-me""#.to_string());
-                        ":w"
-                    } else {
-                        ""
-                    };
+        .map(|edge| {
+            let from = format!(r#"{}:"{}""#, edge.from_table_id, edge.from_node_id);
+            let to = format!(r#"{}:"{}""#, edge.to_table_id, edge.to_node_id);
 
-                    format!(
-                        "{}{pt} -> {}{pt} [{attrs}];",
-                        dest,
-                        k,
-                        pt = pt,
-                        attrs = attrs.join(", "),
-                    )
-                })
-                .collect::<Vec<_>>()
+            let mut attrs = vec![format!(
+                r#"id="{}:{} -> {}:{}""#,
+                edge.from_table_id, edge.from_node_id, edge.to_table_id, edge.to_node_id
+            )];
+            // let mut attrs = vec![];
+            let pt = if edge.from_table_id == edge.to_table_id {
+                attrs.push(r#"class="modify-me""#.to_string());
+                ":w"
+            } else {
+                ""
+            };
+
+            format!(
+                "{}{pt} -> {}{pt} [{attrs}];",
+                from,
+                to,
+                pt = pt,
+                attrs = attrs.join(", "),
+            )
         })
         .collect::<Vec<_>>()
-        .join("\n    ");
-
-    calls
+        .join("\n    ")
 }
 
 fn clusters(subgraphs: &Vec<Subgraph>) -> String {
