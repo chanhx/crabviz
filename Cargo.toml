@@ -10,6 +10,7 @@ snafu = "0.7"
 vial = "0.1"
 clap = "4.0"
 confy = " 0.5"
+lazy_static = "1.4"
 
 lsp-types = "0.93"
 

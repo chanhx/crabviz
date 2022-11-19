@@ -3,12 +3,16 @@ mod rust;
 use {
     crate::app::FileOutline,
     lsp_types::{DocumentSymbol, SymbolKind},
-    std::path::{Path, PathBuf},
+    std::{
+        path::{Path, PathBuf},
+        process::Child,
+    },
 };
 
 pub(crate) use rust::Rust;
 
 pub(crate) trait Language {
+    fn start_language_server(&self) -> Child;
     fn entry(&self, base: &Path) -> Entry;
 
     fn all_functions<'a, 'b>(&'a self, outline: &'b FileOutline) -> Vec<&'b DocumentSymbol> {
@@ -31,6 +35,13 @@ pub(crate) trait Language {
     }
 
     // fn handle_unrecognized_functions(&self, funcs: Vec<&DocumentSymbol>);
+}
+
+pub(crate) fn language_handler(lang: &str) -> Box<dyn Language> {
+    Box::new(match lang {
+        "rust" => Rust {},
+        _ => unimplemented!(),
+    })
 }
 
 pub struct Entry {

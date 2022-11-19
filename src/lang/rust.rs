@@ -1,13 +1,33 @@
 use {
     super::{Entry, Language},
-    crate::app::FileOutline,
+    crate::{app::FileOutline, config::CONFIG},
     lsp_types::{DocumentSymbol, SymbolKind},
-    std::path::Path,
+    std::{
+        path::Path,
+        process::{Child, Command, Stdio},
+    },
 };
 
 pub(crate) struct Rust {}
 
 impl Language for Rust {
+    fn start_language_server(&self) -> Child {
+        let server_path = CONFIG
+            .servers
+            .get("rust")
+            .expect("The path to rust language server is not set");
+
+        let server_path = shellexpand::full(server_path)
+            .map(|path| std::path::Path::new(path.as_ref()).canonicalize().unwrap())
+            .unwrap();
+
+        Command::new(server_path)
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .spawn()
+            .expect("failed to start the language server")
+    }
+
     fn entry(&self, base: &Path) -> Entry {
         Entry::new(base, vec!["rs".to_string()], &[".git", "target"])
     }

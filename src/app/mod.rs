@@ -8,10 +8,10 @@ use {
     self::analysis::Analyzer,
     crate::{
         error::{self, Result},
-        lang,
+        lang::Language,
     },
     handler::{handle_not_found, serve_static, serve_svg, Context},
-    std::{path::Path, process::Child},
+    std::path::Path,
     vial::prelude::*,
 };
 
@@ -26,8 +26,8 @@ routes! {
     GET "/*path" => handle_not_found;
 }
 
-pub(crate) fn run(lsp_server: Child, path: &Path) -> Result<()> {
-    let lang = Box::new(lang::Rust {});
+pub(crate) fn run(lang: Box<dyn Language + Sync + Send>, path: &Path) -> Result<()> {
+    let lsp_server = lang.start_language_server();
     let (analyzer, _io_thread) = Analyzer::new(lang, lsp_server, path);
 
     use_state!(Context {
