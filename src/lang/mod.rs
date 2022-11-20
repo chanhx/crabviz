@@ -1,4 +1,5 @@
 mod go;
+mod infer;
 mod rust;
 
 use {
@@ -10,6 +11,8 @@ use {
         process::Child,
     },
 };
+
+pub(crate) use infer::infer_language;
 
 pub(crate) trait Language {
     fn start_language_server(&self) -> Child;

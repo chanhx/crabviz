@@ -21,8 +21,9 @@ fn main() -> Result<()> {
 
     let lang = matches
         .get_one::<String>("lang")
-        .expect("`--lang` argument is required at present")
-        .to_owned();
+        .map(ToOwned::to_owned)
+        .or(lang::infer_language(&path))
+        .expect("can not infer the programming language, please provide a `--lang` parameter");
     let lang = language_handler(&lang);
 
     app::run(lang, &path)
