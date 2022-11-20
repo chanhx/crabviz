@@ -1,6 +1,8 @@
+mod go;
 mod rust;
 
 use {
+    self::{go::Go, rust::Rust},
     crate::app::FileOutline,
     lsp_types::{DocumentSymbol, SymbolKind},
     std::{
@@ -8,8 +10,6 @@ use {
         process::Child,
     },
 };
-
-pub(crate) use rust::Rust;
 
 pub(crate) trait Language {
     fn start_language_server(&self) -> Child;
@@ -37,11 +37,12 @@ pub(crate) trait Language {
     // fn handle_unrecognized_functions(&self, funcs: Vec<&DocumentSymbol>);
 }
 
-pub(crate) fn language_handler(lang: &str) -> Box<dyn Language> {
-    Box::new(match lang {
-        "rust" => Rust {},
+pub(crate) fn language_handler(lang: &str) -> Box<dyn Language + Sync + Send> {
+    match lang {
+        "rust" => Box::new(Rust {}),
+        "go" => Box::new(Go {}),
         _ => unimplemented!(),
-    })
+    }
 }
 
 pub struct Entry {

@@ -23,8 +23,7 @@ use {
             atomic::{AtomicBool, AtomicUsize, Ordering},
             mpsc::sync_channel,
         },
-        thread,
-        thread::sleep,
+        thread::{self, sleep},
         time,
     },
     walkdir::WalkDir,
@@ -74,12 +73,10 @@ impl Analyzer {
 
         let client = Client::new(req_sender);
 
-        eprintln!("initializing connection");
         client.initialize(path.to_str().unwrap(), &rsp_receiver);
 
-        eprintln!("initialization finish");
-
-        let dur = time::Duration::from_secs(5);
+        // wait for cargo check
+        let dur = time::Duration::from_millis(1200);
         sleep(dur);
 
         (
@@ -227,19 +224,29 @@ impl Analyzer {
                         Message::Notification(_) | Message::Request(_) => None,
                         Message::Response(rsp) => Some(rsp),
                     })
-                    .map(|rsp| {
-                        let id = rsp.id;
-
-                        let rsp = rsp.result.unwrap();
-                        let locations =
-                            serde_json::from_value::<Vec<CallHierarchyOutgoingCall>>(rsp).unwrap();
-
+                    .inspect(|_| {
                         count.fetch_sub(1, Ordering::SeqCst);
-
-                        (map.remove(&id).unwrap().1, locations)
                     })
                     .take_until(|_| {
                         is_finished.load(Ordering::SeqCst) && count.load(Ordering::SeqCst) == 0
+                    })
+                    .filter_map(|rsp| {
+                        let id = rsp.id;
+
+                        // TODO: handling error
+                        if let Some(e) = rsp.error {
+                            eprint!("{:#?}", e);
+                            return None;
+                        }
+
+                        let Some(rsp) = rsp.result else {
+                            return None;
+                        };
+
+                        let locations =
+                            serde_json::from_value::<Vec<CallHierarchyOutgoingCall>>(rsp).unwrap();
+
+                        Some((map.remove(&id).unwrap().1, locations))
                     })
                     .collect();
             });
@@ -287,14 +294,26 @@ impl Analyzer {
                         Message::Notification(_) | Message::Request(_) => None,
                         Message::Response(rsp) => Some(rsp),
                     })
-                    .map(|rsp| {
+                    .inspect(|_| {
+                        count.fetch_sub(1, Ordering::SeqCst);
+                    })
+                    .take_until(|_| {
+                        is_finished.load(Ordering::SeqCst) && count.load(Ordering::SeqCst) == 0
+                    })
+                    .filter_map(|rsp| {
                         let id = rsp.id;
 
-                        let rsp = rsp.result.unwrap();
+                        // TODO: handling error
+                        if let Some(e) = rsp.error {
+                            eprint!("{:#?}", e);
+                            return None;
+                        }
+
+                        let Some(rsp) = rsp.result else {
+                            return None;
+                        };
                         let rsp =
                             serde_json::from_value::<GotoImplementationResponse>(rsp).unwrap();
-
-                        count.fetch_sub(1, Ordering::SeqCst);
 
                         let locations = match rsp {
                             GotoDefinitionResponse::Scalar(l) => vec![l],
@@ -308,7 +327,7 @@ impl Analyzer {
                                 .collect(),
                         };
 
-                        (
+                        Some((
                             map.remove(&id).unwrap().1,
                             locations
                                 .iter()
@@ -316,10 +335,7 @@ impl Analyzer {
                                     SymbolLocation::new(&location.uri, &location.range.start)
                                 })
                                 .collect(),
-                        )
-                    })
-                    .take_until(|_| {
-                        is_finished.load(Ordering::SeqCst) && count.load(Ordering::SeqCst) == 0
+                        ))
                     })
                     .collect();
             })

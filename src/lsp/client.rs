@@ -113,7 +113,8 @@ impl Client {
                 tags: None,
                 detail: None,
                 uri: uri.clone(),
-                range: func.range,
+                // `range: func.range,` not working when communicate with gopls
+                range: func.selection_range,
                 selection_range: func.selection_range,
                 data: None,
             },
