@@ -96,7 +96,7 @@ impl Client {
 
         let params = lsp_types::DocumentSymbolParams {
             text_document: lsp_types::TextDocumentIdentifier {
-                uri: Url::from_directory_path(path).unwrap(),
+                uri: Url::from_file_path(path).unwrap(),
             },
             work_done_progress_params: Default::default(),
             partial_result_params: Default::default(),

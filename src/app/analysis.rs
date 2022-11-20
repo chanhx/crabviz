@@ -204,7 +204,7 @@ impl Analyzer {
         rayon::scope(|s| {
             s.spawn(|_| {
                 outlines.iter().for_each(|outline| {
-                    let uri = Url::from_directory_path(&outline.path).unwrap();
+                    let uri = Url::from_file_path(&outline.path).unwrap();
                     let functions = self.lang.all_functions(outline);
 
                     count.fetch_add(functions.len(), Ordering::SeqCst);
@@ -261,7 +261,7 @@ impl Analyzer {
         rayon::scope(|s| {
             s.spawn(|_| {
                 outlines.iter().for_each(|outline| {
-                    let uri = Url::from_directory_path(&outline.path).unwrap();
+                    let uri = Url::from_file_path(&outline.path).unwrap();
                     let interfaces = self.lang.all_interfaces(outline);
 
                     count.fetch_add(interfaces.len(), Ordering::SeqCst);
