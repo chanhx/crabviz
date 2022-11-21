@@ -81,7 +81,6 @@ pub(super) fn serve_svg(req: Request) -> impl Responder {
 <html>
 <head>
     <link rel="stylesheet" type="text/css" href="assets/styles.css">
-    <script src="assets/path-data-polyfill.min.js"></script>
     <script src="assets/svg-pan-zoom.min.js"></script>
 </head>
 <body>

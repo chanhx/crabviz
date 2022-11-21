@@ -168,21 +168,11 @@ fn edges(edges: &Vec<Edge>) -> String {
                 r#"id="{}:{} -> {}:{}""#,
                 edge.from_table_id, edge.from_node_id, edge.to_table_id, edge.to_node_id
             )];
-            // let mut attrs = vec![];
-            let pt = if edge.from_table_id == edge.to_table_id {
-                attrs.push(r#"class="modify-me""#.to_string());
-                ":w"
-            } else {
-                ""
+            if edge.from_table_id == edge.to_table_id {
+                attrs.push(r#"label=" ""#.to_string());
             };
 
-            format!(
-                "{}{pt} -> {}{pt} [{attrs}];",
-                from,
-                to,
-                pt = pt,
-                attrs = attrs.join(", "),
-            )
+            format!("{} -> {} [{attrs}];", from, to, attrs = attrs.join(", "),)
         })
         .collect::<Vec<_>>()
         .join("\n    ")
