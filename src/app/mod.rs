@@ -38,5 +38,5 @@ pub(crate) fn run(lang: Box<dyn Language + Sync + Send>, path: &Path) -> Result<
 
     run!("localhost:8090")
         .map_err(Into::into)
-        .context(error::RuntimeSnafu)
+        .context(error::AppServerSnafu)
 }

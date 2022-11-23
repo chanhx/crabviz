@@ -23,10 +23,8 @@ fn main() -> Result<()> {
         .get_one::<String>("lang")
         .map(ToOwned::to_owned)
         .or(lang::infer_language(&path))
-        .expect("can not infer the programming language, please provide a `--lang` parameter");
+        .expect("can not infer the programming language, please provide a `--lang` argument");
     let lang = language_handler(&lang);
 
     app::run(lang, &path)
-        .map_err(Into::into)
-        .context(error::RuntimeSnafu)
 }

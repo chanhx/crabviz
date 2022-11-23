@@ -286,6 +286,7 @@ impl Analyzer {
                 is_finished.store(true, Ordering::SeqCst);
             });
 
+            // FIXME: it will be blocked forever if there is no interface
             s.spawn(|_| {
                 result = self
                     .rsp_receiver

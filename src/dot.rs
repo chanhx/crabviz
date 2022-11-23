@@ -29,26 +29,26 @@ impl Dot {
             .stdout(Stdio::piped())
             .spawn()
             .map_err(Into::into)
-            .context(error::RuntimeSnafu)?;
+            .context(error::GenerateSVGSnafu)?;
 
         let cmd_stdin = cmd.stdin.as_mut().unwrap();
         cmd_stdin
             .write_all(graph.as_bytes())
             .map_err(Into::into)
-            .context(error::RuntimeSnafu)?;
+            .context(error::GenerateSVGSnafu)?;
         drop(cmd_stdin);
 
         Ok(cmd
             .wait_with_output()
             .map_err(Into::into)
-            .context(error::RuntimeSnafu)?)
+            .context(error::GenerateSVGSnafu)?)
     }
 
     pub(crate) fn export_svg(&self, graph: String) -> Result<String> {
         let output = self.export(graph, "svg")?;
         let output = String::from_utf8(output.stdout)
             .map_err(Into::into)
-            .context(error::RuntimeSnafu)?;
+            .context(error::GenerateSVGSnafu)?;
 
         Ok(output)
     }

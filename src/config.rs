@@ -35,6 +35,6 @@ impl Config {
     pub(crate) fn path() -> Result<PathBuf> {
         confy::get_configuration_file_path(env!("CARGO_PKG_NAME"), "config")
             .map_err(Into::into)
-            .context(error::RuntimeSnafu)
+            .context(error::ReadConfigSnafu)
     }
 }
