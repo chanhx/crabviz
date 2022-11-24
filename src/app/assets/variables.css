@@ -1,8 +1,11 @@
 :root {
+  --background-color: blanchedalmond;
+
   --edge-color: #548f9e;
   --highlight-edge-color: #00bcd4;
   --selected-edge-color: red;
 
+  --hover-cell-color: #ffffa1;
   --selected-cell-color: yellow;
 
   --incoming-edge-color: blue;

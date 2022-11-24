@@ -69,7 +69,7 @@ impl GenerateSVG for Dot {
                     r#"
     "{id}" [id="{id}", label=<
         <TABLE BORDER="0" CELLBORDER="0">
-        <TR><TD WIDTH="230" BORDER="0"><FONT POINT-SIZE="12">{title}</FONT></TD></TR>
+        <TR><TD WIDTH="230" BORDER="0" CELLPADDING="6" HREF="remove_me_url.title">{title}</TD></TR>
         {sections}
         <TR><TD BORDER="0"></TD></TR>
         </TABLE>
@@ -126,10 +126,11 @@ fn cell(node: &Node) -> String {
         None => Vec::new(),
     };
 
-    let classes = match &node.classes {
-        Some(classes) => classes.join(""),
-        _ => "".into(),
-    };
+    let classes = node
+        .classes
+        .as_ref()
+        .map(|classes| classes.join("."))
+        .unwrap_or("".to_string());
 
     let cell = format!(
         r#"     <TR><TD PORT="{port}" ID="{id}" HREF="remove_me_url.cell{classes}">{name}</TD></TR>"#,
