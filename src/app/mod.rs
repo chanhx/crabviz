@@ -1,12 +1,10 @@
 use snafu::ResultExt;
 
-mod analysis;
-mod graph;
 mod handler;
 
 use {
-    self::analysis::Analyzer,
     crate::{
+        analysis::Analyzer,
         error::{self, Result},
         lang::Language,
     },
@@ -15,10 +13,7 @@ use {
     vial::prelude::*,
 };
 
-pub(crate) use {
-    analysis::FileOutline,
-    graph::{Edge, GenerateSVG, Node, Subgraph, TableNode},
-};
+pub(crate) use crate::graph::{Edge, GenerateSVG, Node, Subgraph, TableNode};
 
 routes! {
     GET "/" => serve_svg;

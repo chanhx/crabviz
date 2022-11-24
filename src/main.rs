@@ -1,11 +1,12 @@
+mod analysis;
 mod app;
 mod cli;
 mod config;
 mod dot;
 mod error;
+mod graph;
 mod lang;
 mod lsp;
-mod utils;
 
 use {cli::cli, error::Result, lang::language_handler, snafu::ResultExt, std::fs};
 

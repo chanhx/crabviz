@@ -1,6 +1,6 @@
 use {
     super::{Entry, Language},
-    crate::{app::FileOutline, config::CONFIG},
+    crate::{analysis::FileOutline, config::CONFIG},
     lsp_types::{DocumentSymbol, SymbolKind},
     std::{
         path::Path,

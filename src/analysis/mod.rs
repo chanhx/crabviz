@@ -1,23 +1,25 @@
+mod take_until;
+mod types;
+
+pub(crate) use types::*;
+
 use {
     crate::{
         lang::Language,
         lsp::{Client, Message},
-        utils::take_until::TakeUntilExt,
     },
     crossbeam_channel::{bounded, Receiver},
     dashmap::DashMap,
     lsp_types::{
         request::GotoImplementationResponse, CallHierarchyOutgoingCall, DocumentSymbol,
-        DocumentSymbolResponse, GotoDefinitionResponse, Location, Position, SymbolKind, Url,
+        DocumentSymbolResponse, GotoDefinitionResponse, Location, SymbolKind, Url,
     },
     rayon::prelude::*,
     serde_json,
     std::{
         collections::HashMap,
-        fmt::Display,
-        hash::Hash,
         io::{self, BufReader},
-        path::{Path, PathBuf},
+        path::Path,
         process::Child,
         sync::{
             atomic::{AtomicBool, AtomicUsize, Ordering},
@@ -26,6 +28,7 @@ use {
         thread::{self, sleep},
         time,
     },
+    take_until::TakeUntilExt,
     walkdir::WalkDir,
 };
 
@@ -343,35 +346,5 @@ impl Analyzer {
         });
 
         result
-    }
-}
-
-pub(crate) struct FileOutline {
-    pub path: PathBuf,
-    pub symbols: Vec<DocumentSymbol>,
-}
-
-pub type Relations = HashMap<SymbolLocation, Vec<(SymbolLocation, Option<String>)>>;
-
-#[derive(Hash, PartialEq, Eq, Clone)]
-pub struct SymbolLocation {
-    pub path: String,
-    pub line: u32,
-    pub character: u32,
-}
-
-impl SymbolLocation {
-    pub fn new(uri: &Url, position: &Position) -> Self {
-        Self {
-            path: uri.path().to_string().trim_end_matches('/').to_string(),
-            line: position.line,
-            character: position.character,
-        }
-    }
-}
-
-impl Display for SymbolLocation {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, r#""{}":"{}_{}""#, self.path, self.line, self.character)
     }
 }

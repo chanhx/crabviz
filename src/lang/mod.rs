@@ -4,7 +4,7 @@ mod rust;
 
 use {
     self::{go::Go, rust::Rust},
-    crate::app::FileOutline,
+    crate::analysis::FileOutline,
     lsp_types::{DocumentSymbol, SymbolKind},
     std::{
         path::{Path, PathBuf},

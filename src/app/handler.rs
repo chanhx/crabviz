@@ -1,9 +1,9 @@
 use {
-    super::{
+    crate::{
         analysis::{Analyzer, Relations, SymbolLocation},
+        dot::Dot,
         graph::gen_svg,
     },
-    crate::dot::Dot,
     std::{collections::HashSet, path::PathBuf},
     vial::prelude::*,
 };

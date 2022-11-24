@@ -1,3 +1,7 @@
+mod types;
+
+pub(crate) use types::*;
+
 use {
     super::analysis::{FileOutline, Relations},
     lsp_types::{DocumentSymbol, SymbolKind},
@@ -6,34 +10,6 @@ use {
         path::{Path, PathBuf},
     },
 };
-
-pub struct Edge {
-    pub from_table_id: String,
-    pub from_node_id: String,
-    pub to_table_id: String,
-    pub to_node_id: String,
-    pub style: Option<String>,
-}
-
-pub struct Node {
-    pub id: String,
-    pub port: String,
-    pub title: String,
-    pub classes: Option<Vec<String>>,
-    pub children: Option<Box<Vec<Node>>>,
-}
-
-pub struct TableNode {
-    pub id: String,
-    pub title: String,
-    pub sections: Vec<Node>,
-}
-
-pub struct Subgraph {
-    pub title: String,
-    pub nodes: Vec<String>,
-    pub subgraphs: Box<Vec<Subgraph>>,
-}
 
 pub trait GenerateSVG {
     fn gen_svg(
@@ -52,12 +28,10 @@ fn symbol_to_node(symbol: &DocumentSymbol, path: &Path, map: &PathMap) -> Node {
     };
 
     let children = symbol.children.as_ref().map(|children| {
-        Box::new(
-            children
-                .iter()
-                .map(|item| symbol_to_node(item, path, map))
-                .collect(),
-        )
+        children
+            .iter()
+            .map(|item| symbol_to_node(item, path, map))
+            .collect()
     });
 
     let port = format!(
@@ -157,6 +131,9 @@ pub(super) fn gen_svg<T: GenerateSVG>(
 }
 
 struct PathMap {
+    // analysis_root: PathBuf,
+    // source: HashMap<PathBuf, u32>,
+    // dependencies: HashMap<PathBuf, u32>,
     map: HashMap<PathBuf, u32>,
     next_id: u32,
 }
