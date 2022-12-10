@@ -1,6 +1,6 @@
 [package]
 name = "crabviz"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -19,7 +19,7 @@ crossbeam-channel = "0.5"
 
 serde = "1.0"
 serde_json = "1.0"
-shellexpand = "2.1"
+shellexpand = "3.0"
 
 walkdir = "2.3"
 dashmap = "5.4"
