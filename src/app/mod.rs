@@ -13,8 +13,6 @@ use {
     vial::prelude::*,
 };
 
-pub(crate) use crate::graph::{Edge, GenerateSVG, Node, Subgraph, TableNode};
-
 routes! {
     GET "/" => serve_svg;
     GET "/assets/*path" => serve_static;

@@ -1,8 +1,7 @@
 use {
     crate::{
         analysis::{Analyzer, Relations, SymbolLocation},
-        dot::Dot,
-        graph::gen_svg,
+        graph::{dot::Dot, GenerateSVG},
     },
     std::{collections::HashSet, path::PathBuf},
     vial::prelude::*,
@@ -20,15 +19,15 @@ pub(super) fn serve_svg(req: Request) -> impl Responder {
     let path = ctx.root.clone();
     let analyzer = &ctx.analyzer;
 
-    let file_outlines = analyzer.file_outlines(std::path::Path::new(&path));
+    let files = analyzer.file_outlines(std::path::Path::new(&path));
 
-    let paths = file_outlines
+    let paths = files
         .iter()
         .map(|outline| &outline.path)
         .collect::<HashSet<_>>();
 
-    let mut calls = analyzer
-        .outgoing_calls(&file_outlines)
+    let calls = analyzer
+        .outgoing_calls(&files)
         .into_iter()
         .map(|(caller, callee)| {
             (
@@ -41,19 +40,14 @@ pub(super) fn serve_svg(req: Request) -> impl Responder {
 
                         paths.contains(&path)
                     })
-                    .map(|call| {
-                        (
-                            SymbolLocation::new(&call.to.uri, &call.to.selection_range.start),
-                            None,
-                        )
-                    })
+                    .map(|call| SymbolLocation::new(&call.to.uri, &call.to.selection_range.start))
                     .collect(),
             )
         })
         .collect::<Relations>();
 
     let implementations = analyzer
-        .interface_implementations(&file_outlines)
+        .interface_implementations(&files)
         .into_iter()
         .map(|(interface, implementations)| {
             (
@@ -66,14 +60,29 @@ pub(super) fn serve_svg(req: Request) -> impl Responder {
 
                         paths.contains(&path)
                     })
-                    .map(|location| (location, None))
+                    .map(|location| location)
                     .collect(),
             )
-        });
+        })
+        .collect::<Relations>();
 
-    calls.extend(implementations);
+    let tables = files
+        .iter()
+        .map(|f| analyzer.lang.file_repr(f))
+        .collect::<Vec<_>>();
 
-    let svg = gen_svg(&Dot {}, &file_outlines, calls);
+    let calling_edges = analyzer
+        .lang
+        .calling_repr(calls, &analyzer.path_map.borrow());
+    let impl_edges = analyzer
+        .lang
+        .impl_repr(implementations, &analyzer.path_map.borrow());
+    let edges = [calling_edges, impl_edges].concat();
+
+    let subgraphs = analyzer.subgraphs(&files);
+
+    let dot = Dot {};
+    let svg = dot.generate_svg(&tables, &edges, &subgraphs);
 
     format!(
         r#"

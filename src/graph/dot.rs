@@ -1,10 +1,9 @@
-use snafu::ResultExt;
-
 use {
     crate::{
-        app::{Edge, GenerateSVG, Node, Subgraph, TableNode},
         error::{self, Result},
+        graph::{Cell, CellStyle, Edge, EdgeStyle, GenerateSVG, Subgraph, TableNode, TableStyle},
     },
+    snafu::ResultExt,
     std::{
         io::Write,
         iter,
@@ -55,12 +54,12 @@ impl Dot {
 }
 
 impl GenerateSVG for Dot {
-    fn gen_svg(
+    fn generate_svg(
         &self,
-        tables: &Vec<TableNode>,
-        // nodes: Vec<Node>,
-        refs: &Vec<Edge>,
-        subgraphs: &Vec<Subgraph>,
+        tables: &[TableNode],
+        // nodes: &[Node],
+        edges: &[Edge],
+        subgraphs: &[Subgraph],
     ) -> String {
         let tables = tables
             .iter()
@@ -68,7 +67,7 @@ impl GenerateSVG for Dot {
                 format!(
                     r#"
     "{id}" [id="{id}", label=<
-        <TABLE BORDER="0" CELLBORDER="0">
+        <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="8" CELLPADDING="4">
         <TR><TD WIDTH="230" BORDER="0" CELLPADDING="6" HREF="remove_me_url.title">{title}</TD></TR>
         {sections}
         <TR><TD BORDER="0"></TD></TR>
@@ -80,7 +79,7 @@ impl GenerateSVG for Dot {
                     sections = table
                         .sections
                         .iter()
-                        .map(|node| section(node))
+                        .map(|node| process_cell(node))
                         .collect::<Vec<_>>()
                         .join("\n"),
                 )
@@ -111,7 +110,7 @@ digraph {{
             "#,
             tables,
             clusters(subgraphs),
-            edges(refs),
+            process_edges(edges),
         );
 
         // println!("{}", graph);
@@ -120,55 +119,102 @@ digraph {{
     }
 }
 
-fn cell(node: &Node) -> String {
-    let sub_cells = match node.children.as_ref() {
-        Some(children) => children.iter().map(|item| cell(item)).collect::<Vec<_>>(),
-        None => Vec::new(),
-    };
+fn process_cell(cell: &Cell) -> String {
+    let children = cell
+        .children
+        .iter()
+        .map(|item| process_cell(item))
+        .collect::<Vec<_>>();
 
-    let classes = node
-        .classes
-        .as_ref()
-        .map(|classes| classes.join("."))
-        .unwrap_or("".to_string());
+    let classes = cell
+        .styles
+        .iter()
+        .filter_map(|s| match s {
+            CellStyle::CssClass(cls) => Some(cls.clone()),
+            _ => None,
+        })
+        .chain(iter::once("cell".to_string()))
+        .collect::<Vec<_>>();
+
+    let mut table_styles = None;
+
+    let styles = cell
+        .styles
+        .iter()
+        .filter(|s| !matches!(s, CellStyle::CssClass(_)))
+        .map(|s| match s {
+            CellStyle::Border(w) => format!(r#"BORDER="{}""#, w),
+            CellStyle::Rounded => r#"STYLE="ROUNDED""#.to_string(),
+            CellStyle::Table(styles) => {
+                table_styles = Some(styles);
+                "".to_string()
+            }
+            _ => "".to_string(),
+        })
+        .collect::<Vec<_>>()
+        .join(" ");
 
     let cell = format!(
-        r#"     <TR><TD PORT="{port}" ID="{id}" HREF="remove_me_url.cell{classes}">{name}</TD></TR>"#,
-        port = node.port,
-        id = node.id,
-        name = escape_html(&node.title),
+        r#"     <TR><TD PORT="{port}" ID="{id}" {styles} {href}>{name}</TD></TR>"#,
+        port = cell.port,
+        id = cell.id,
+        href = css_classes_href(&classes),
+        name = escape_html(&cell.title),
     );
 
-    iter::once(cell)
-        .chain(sub_cells.into_iter())
-        .collect::<Vec<_>>()
-        .join("\n")
+    match table_styles {
+        Some(styles) => {
+            let classes = styles
+                .iter()
+                .filter_map(|s| match s {
+                    TableStyle::CssClass(cls) => Some(cls.clone()),
+                    _ => None,
+                })
+                .collect::<Vec<_>>();
+
+            format!(
+                r#"
+            <TR><TD BORDER="0" CELLPADDING="0">
+            <TABLE CELLSPACING="4" CELLPADDING="4" BORDER="0" CELLBORDER="1" STYLE="ROUNDED" BGCOLOR="green" {href}>
+            {}
+            </TABLE>
+            </TD></TR>
+            "#,
+                iter::once(cell)
+                    .chain(children.into_iter())
+                    .collect::<Vec<_>>()
+                    .join("\n"),
+                href = css_classes_href(&classes),
+            )
+        }
+
+        None => cell,
+    }
 }
 
-fn section(node: &Node) -> String {
-    format!(
-        r#"
-        <TR><TD>
-        <TABLE BORDER="0" CELLSPACING="0" CELLPADDING="4" CELLBORDER="1">
-        {cell}
-        </TABLE>
-        </TD></TR>
-        "#,
-        cell = cell(node),
-    )
-}
-
-fn edges(edges: &Vec<Edge>) -> String {
+fn process_edges(edges: &[Edge]) -> String {
     edges
         .iter()
         .map(|edge| {
             let from = format!(r#"{}:"{}""#, edge.from_table_id, edge.from_node_id);
             let to = format!(r#"{}:"{}""#, edge.to_table_id, edge.to_node_id);
 
-            let mut attrs = vec![format!(
+            let classes = edge
+                .styles
+                .iter()
+                .filter_map(|s| match s {
+                    EdgeStyle::CssClass(cls) => Some(cls.clone()),
+                })
+                .collect::<Vec<_>>();
+
+            let mut attrs = iter::once(format!(
                 r#"id="{}:{} -> {}:{}""#,
                 edge.from_table_id, edge.from_node_id, edge.to_table_id, edge.to_node_id
-            )];
+            ))
+            .chain(iter::once(css_classes_href(&classes)))
+            .filter(|s| !s.is_empty())
+            .collect::<Vec<_>>();
+
             if edge.from_table_id == edge.to_table_id {
                 attrs.push(r#"label=" ""#.to_string());
             };
@@ -179,7 +225,7 @@ fn edges(edges: &Vec<Edge>) -> String {
         .join("\n    ")
 }
 
-fn clusters(subgraphs: &Vec<Subgraph>) -> String {
+fn clusters(subgraphs: &[Subgraph]) -> String {
     subgraphs
         .iter()
         .map(|subgraph| {
@@ -200,4 +246,12 @@ fn clusters(subgraphs: &Vec<Subgraph>) -> String {
         })
         .collect::<Vec<_>>()
         .join("\n")
+}
+
+fn css_classes_href(classes: &[String]) -> String {
+    if classes.is_empty() {
+        "".to_string()
+    } else {
+        format!(r#"href="remove_me_url.{}""#, classes.join("."))
+    }
 }

@@ -28,20 +28,27 @@ svg {
 
 /* Cell */
 
-.cell polygon {
+.cell :is(polygon, path) {
   fill: var(--node-color);
   stroke-width: 1.13pt;
 }
 
-.cell.fn:hover:not(.selected) polygon {
-  /* stroke-width: 1.5pt; */
+.cell.fn:hover:not(.selected) :is(polygon, path) {
   fill: var(--hover-cell-color);
 }
-.cell.selected polygon {
+.cell.selected :is(polygon, path) {
   fill: var(--selected-cell-color);
 }
 
 /* Edge */
+
+.impl path {
+  stroke-dasharray: 8, 3;
+}
+:is(.edge, .edge:hover, .edge.selected) .impl polygon {
+  stroke-width: 2;
+  fill: none;
+}
 
 .edge path {
   stroke: var(--edge-color);
@@ -73,33 +80,33 @@ svg {
   fill: var(--selected-edge-color);
 }
 
-.edge.incoming path:not(.hover-path) {
+.incoming path:not(.hover-path) {
   stroke: var(--incoming-edge-color);
 }
-.edge.incoming polygon {
+.incoming polygon {
   stroke: var(--incoming-edge-color);
   fill: var(--incoming-edge-color);
 }
 
-.edge.outgoing path:not(.hover-path) {
+.outgoing path:not(.hover-path) {
   stroke: var(--outgoing-edge-color);
 }
-.edge.outgoing polygon {
+.outgoing polygon {
   stroke: var(--outgoing-edge-color);
   fill: var(--outgoing-edge-color);
 }
 
-.edge.incoming.outgoing path:not(.hover-path) {
+.incoming.outgoing path:not(.hover-path) {
   stroke: var(--recurse-edge-color);
 }
-.edge.incoming.outgoing polygon {
+.incoming.outgoing polygon {
   stroke: var(--recurse-edge-color);
   fill: var(--recurse-edge-color);
 }
 
 /* Node */
 
-.node path {
+.node > path:first-child {
   fill: var(--node-color);
   stroke: black;
   stroke-width: 1.35pt;
@@ -111,7 +118,7 @@ svg {
   fill: var(--node-content-color);
 }
 
-.node.selected path {
+.node.selected > path:first-child {
   stroke: var(--node-highlight-color);
   stroke-width: 2.25pt;
 }
@@ -123,4 +130,24 @@ svg {
 /* selection fade */
 .fade {
   opacity: 0.05;
+}
+
+/* langugage */
+
+.interface > :first-child {
+  stroke: black;
+  stroke-width: 1.13pt;
+  stroke-dasharray: 5, 3;
+}
+
+.interface :is(path, polygon) {
+  fill: cornsilk;
+}
+
+.module :is(path, polygon) {
+  fill: blanchedalmond;
+}
+
+.rust-impl :is(path, polygon) {
+  fill: burlywood;
 }

@@ -1,8 +1,9 @@
+#![feature(map_try_insert)]
+
 mod analysis;
 mod app;
 mod cli;
 mod config;
-mod dot;
 mod error;
 mod graph;
 mod lang;

@@ -3,12 +3,15 @@ use {
     std::{collections::HashMap, fmt::Display, hash::Hash, path::PathBuf},
 };
 
+pub(crate) type PathId = u32;
+
 pub(crate) struct FileOutline {
+    pub id: PathId,
     pub path: PathBuf,
     pub symbols: Vec<DocumentSymbol>,
 }
 
-pub type Relations = HashMap<SymbolLocation, Vec<(SymbolLocation, Option<String>)>>;
+pub type Relations = HashMap<SymbolLocation, Vec<SymbolLocation>>;
 
 #[derive(Hash, PartialEq, Eq, Clone)]
 pub struct SymbolLocation {

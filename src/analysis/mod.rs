@@ -5,21 +5,24 @@ pub(crate) use types::*;
 
 use {
     crate::{
+        graph::Subgraph,
         lang::Language,
         lsp::{Client, Message},
     },
     crossbeam_channel::{bounded, Receiver},
     dashmap::DashMap,
     lsp_types::{
-        request::GotoImplementationResponse, CallHierarchyOutgoingCall, DocumentSymbol,
-        DocumentSymbolResponse, GotoDefinitionResponse, Location, SymbolKind, Url,
+        request::GotoImplementationResponse, CallHierarchyOutgoingCall, DocumentSymbolResponse,
+        GotoDefinitionResponse, Location, Url,
     },
     rayon::prelude::*,
     serde_json,
     std::{
-        collections::HashMap,
+        borrow::BorrowMut,
+        cell::RefCell,
+        collections::{BTreeMap, HashMap},
         io::{self, BufReader},
-        path::Path,
+        path::{Path, PathBuf},
         process::Child,
         sync::{
             atomic::{AtomicBool, AtomicUsize, Ordering},
@@ -33,9 +36,10 @@ use {
 };
 
 pub(crate) struct Analyzer {
-    lang: Box<dyn Language + Sync + Send>,
+    pub lang: Box<dyn Language + Sync + Send>,
     client: Client,
     rsp_receiver: Receiver<Message>,
+    pub path_map: RefCell<PathMap>,
 }
 
 impl Analyzer {
@@ -87,6 +91,7 @@ impl Analyzer {
                 lang,
                 client,
                 rsp_receiver,
+                path_map: RefCell::new(PathMap::new()),
             },
             io_thread,
         )
@@ -100,6 +105,11 @@ impl Analyzer {
         let is_finished = AtomicBool::new(false);
 
         let mut result = vec![];
+        let mut path_map = self.path_map.borrow_mut();
+        let path_map: &mut PathMap = (*path_map).borrow_mut();
+
+        let client = &self.client;
+        let rsp_receiver = &self.rsp_receiver;
 
         rayon::scope(|s| {
             s.spawn(|_| {
@@ -118,13 +128,14 @@ impl Analyzer {
                         let ext = path.extension().unwrap_or_default();
                         entry.extensions.iter().any(|it| it.as_str() == ext)
                     })
-                    .inspect(|_| {
+                    .inspect(|e| {
                         count.fetch_add(1, Ordering::SeqCst);
+                        path_map.insert(e.path().to_path_buf());
                     })
                     .par_bridge()
                     .for_each(|entry| {
                         let path = entry.path();
-                        let id = self.client.document_symbol(path.to_str().unwrap());
+                        let id = client.document_symbol(path.to_str().unwrap());
 
                         map.insert(id, path.to_path_buf());
                     });
@@ -133,8 +144,7 @@ impl Analyzer {
             });
 
             s.spawn(|_| {
-                result = self
-                    .rsp_receiver
+                result = rsp_receiver
                     .iter()
                     .filter_map(|msg| match msg {
                         Message::Notification(_) | Message::Request(_) => None,
@@ -148,7 +158,7 @@ impl Analyzer {
 
                         count.fetch_sub(1, Ordering::SeqCst);
 
-                        let mut symbols = match rsp {
+                        let symbols = match rsp {
                             DocumentSymbolResponse::Flat(v) => {
                                 println!("{:#?}", v);
                                 vec![]
@@ -156,12 +166,11 @@ impl Analyzer {
                             DocumentSymbolResponse::Nested(v) => v,
                         };
 
-                        symbols
-                            .iter_mut()
-                            .for_each(|symbol| self.trim_symbols(symbol));
+                        let path = map.remove(&id).unwrap().1;
 
                         FileOutline {
-                            path: map.remove(&id).unwrap().1,
+                            id: 0,
+                            path,
                             symbols,
                         }
                     })
@@ -173,22 +182,10 @@ impl Analyzer {
         });
 
         result
-    }
+            .iter_mut()
+            .for_each(|f| f.id = path_map.get(&f.path).unwrap());
 
-    fn trim_symbols(&self, symbol: &mut DocumentSymbol) {
-        match symbol.kind {
-            SymbolKind::STRUCT | SymbolKind::ENUM | SymbolKind::CLASS => {
-                symbol.children = None;
-            }
-            _ => {
-                symbol.children.as_mut().map(|symbols| {
-                    symbols.iter_mut().for_each(|symbol| {
-                        self.trim_symbols(symbol);
-                    });
-                    symbols
-                });
-            }
-        }
+        result
     }
 
     pub fn outgoing_calls(
@@ -201,6 +198,9 @@ impl Analyzer {
         let count = AtomicUsize::new(0);
         let is_finished = AtomicBool::new(false);
 
+        let client = &self.client;
+        let rsp_receiver = &self.rsp_receiver;
+
         rayon::scope(|s| {
             s.spawn(|_| {
                 outlines.iter().for_each(|outline| {
@@ -210,7 +210,7 @@ impl Analyzer {
                     count.fetch_add(functions.len(), Ordering::SeqCst);
 
                     functions.par_iter().for_each(|func| {
-                        let id = self.client.outgoing_calls(&uri, func);
+                        let id = client.outgoing_calls(&uri, func);
 
                         map.insert(id, SymbolLocation::new(&uri, &func.selection_range.start));
                     })
@@ -220,8 +220,7 @@ impl Analyzer {
             });
 
             s.spawn(|_| {
-                result = self
-                    .rsp_receiver
+                result = rsp_receiver
                     .iter()
                     .filter_map(|msg| match msg {
                         Message::Notification(_) | Message::Request(_) => None,
@@ -268,6 +267,9 @@ impl Analyzer {
 
         let mut result = HashMap::new();
 
+        let client = &self.client;
+        let rsp_receiver = &self.rsp_receiver;
+
         rayon::scope(|s| {
             s.spawn(|_| {
                 outlines.iter().for_each(|outline| {
@@ -277,7 +279,7 @@ impl Analyzer {
                     count.fetch_add(interfaces.len(), Ordering::SeqCst);
 
                     interfaces.par_iter().for_each(|interface| {
-                        let id = self.client.implementations(&uri, interface);
+                        let id = client.implementations(&uri, interface);
 
                         map.insert(
                             id,
@@ -291,8 +293,7 @@ impl Analyzer {
 
             // FIXME: it will be blocked forever if there is no interface
             s.spawn(|_| {
-                result = self
-                    .rsp_receiver
+                result = rsp_receiver
                     .iter()
                     .filter_map(|msg| match msg {
                         Message::Notification(_) | Message::Request(_) => None,
@@ -346,5 +347,66 @@ impl Analyzer {
         });
 
         result
+    }
+
+    pub fn subgraphs(&self, files: &[FileOutline]) -> Vec<Subgraph> {
+        let mut dirs = BTreeMap::new();
+        for f in files {
+            let parent = f.path.parent().unwrap();
+            dirs.entry(parent)
+                .or_insert(Vec::new())
+                .push(f.path.clone());
+        }
+
+        fn subgraph_recursive(
+            parent: &Path,
+            dirs: &BTreeMap<&Path, Vec<PathBuf>>,
+            map: &PathMap,
+        ) -> Vec<Subgraph> {
+            dirs.iter()
+                .filter(|(dir, _)| dir.parent().unwrap() == parent)
+                .map(|(dir, v)| Subgraph {
+                    title: dir.file_name().unwrap().to_str().unwrap().into(),
+                    nodes: v
+                        .iter()
+                        .map(|path| map.get(&path).unwrap().to_string())
+                        .collect::<Vec<_>>(),
+                    subgraphs: subgraph_recursive(dir, dirs, map),
+                })
+                .collect::<Vec<_>>()
+        }
+
+        subgraph_recursive(dirs.keys().next().unwrap(), &dirs, &self.path_map.borrow())
+    }
+}
+
+pub struct PathMap {
+    // analysis_root: PathBuf,
+    // source: HashMap<PathBuf, u32>,
+    // dependencies: HashMap<PathBuf, u32>,
+    map: HashMap<PathBuf, PathId>,
+    next_id: PathId,
+}
+
+impl PathMap {
+    fn new() -> Self {
+        Self {
+            map: HashMap::new(),
+            next_id: 1,
+        }
+    }
+
+    fn insert(&mut self, path: PathBuf) -> PathId {
+        match self.map.try_insert(path, self.next_id) {
+            Ok(id) => {
+                self.next_id += 1;
+                id.to_owned()
+            }
+            Err(e) => e.value,
+        }
+    }
+
+    pub fn get(&self, path: &Path) -> Option<u32> {
+        self.map.get(path).copied()
     }
 }
