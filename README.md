@@ -4,7 +4,7 @@ crabviz is a static code analysis tool that generates interactive call graph.
 
 ## Preview
 
-![preview](https://user-images.githubusercontent.com/20551552/206857636-4f7ad70f-2f65-4f0a-ac77-8f6cca7515e5.gif)
+![preview](https://user-images.githubusercontent.com/20551552/230730902-d70fb5fd-ff52-4eea-bd26-c4dbff4cd2a6.gif)
 
 ## Supported Languages
 
