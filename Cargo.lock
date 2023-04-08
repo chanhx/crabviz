@@ -617,9 +617,8 @@ dependencies = [
 
 [[package]]
 name = "vial"
-version = "0.1.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1e550624ebee7735849255e1f4461387e5f0dda5876f8421c73c921009259e82"
+version = "0.1.10-dev"
+source = "git+https://github.com/xvxx/vial#120907e937323b52fb997724ad70a4cfc9326a87"
 dependencies = [
  "libc-strftime",
  "threadpool",

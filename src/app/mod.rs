@@ -27,7 +27,6 @@ pub(crate) fn run(lang: Box<dyn Language + Sync + Send>, path: &Path) -> Result<
         root: path.to_string_lossy().to_string(),
         analyzer
     });
-    asset_dir!("./src/app/assets");
 
     run!("localhost:8090")
         .map_err(Into::into)

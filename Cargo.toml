@@ -6,7 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-vial = "0.1"
+# vial = "0.1"
+vial = { git = "https://github.com/xvxx/vial" }
 clap = "4.0"
 confy = " 0.5"
 lazy_static = "1.4"
@@ -23,3 +24,7 @@ shellexpand = "3.0"
 
 walkdir = "2.3"
 dashmap = "5.4"
+
+[build-dependencies]
+# vial = "0.1"
+vial = { git = "https://github.com/xvxx/vial" }

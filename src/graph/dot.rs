@@ -231,7 +231,7 @@ fn clusters(subgraphs: &[Subgraph]) -> String {
         .map(|subgraph| {
             format!(
                 r#"
-    subgraph cluster_{name} {{
+    subgraph "cluster_{name}" {{
         label = "{name}";
 
         {nodes}
