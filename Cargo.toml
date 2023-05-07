@@ -5,26 +5,21 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = ["console_error_panic_hook"]
+
 [dependencies]
-# vial = "0.1"
-vial = { git = "https://github.com/xvxx/vial" }
-clap = "4.0"
-confy = " 0.5"
-lazy_static = "1.4"
-snafu = { version = "0.7", features = ["backtraces-impl-std"]}
+snafu = { version = "0.7", features = ["backtraces-impl-std"] }
 
-lsp-types = "0.93"
+# graphviz-sys = "0.1"
 
-rayon = "1.5"
-crossbeam-channel = "0.5"
+wasm-bindgen = "0.2"
+console_error_panic_hook = { version = "0.1", optional = true }
 
-serde = "1.0"
+serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-shellexpand = "3.0"
-
-walkdir = "2.3"
-dashmap = "5.4"
-
-[build-dependencies]
-# vial = "0.1"
-vial = { git = "https://github.com/xvxx/vial" }
+serde_repr = "0.1"
+serde-wasm-bindgen = "0.5"

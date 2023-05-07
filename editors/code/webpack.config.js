@@ -3,6 +3,7 @@
 'use strict';
 
 const path = require('path');
+const WasmPackPlugin = require("@wasm-tool/wasm-pack-plugin");
 
 //@ts-check
 /** @typedef {import('webpack').Configuration} WebpackConfig **/
@@ -44,5 +45,13 @@ const extensionConfig = {
   infrastructureLogging: {
     level: "log", // enables logging required for problem matchers
   },
+  plugins: [
+    new WasmPackPlugin({
+      crateDirectory: path.resolve(__dirname, '../..'),
+    }),
+  ],
+  experiments: {
+    futureDefaults: true,
+  }
 };
 module.exports = [ extensionConfig ];

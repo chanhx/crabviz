@@ -1,5 +1,5 @@
 use {
-    lsp_types::{DocumentSymbol, Position, Url},
+    crate::lsp_types::{DocumentSymbol, Position},
     std::{collections::HashMap, fmt::Display, hash::Hash, path::PathBuf},
 };
 
@@ -21,9 +21,9 @@ pub struct SymbolLocation {
 }
 
 impl SymbolLocation {
-    pub fn new(uri: &Url, position: &Position) -> Self {
+    pub fn new(path: String, position: &Position) -> Self {
         Self {
-            path: uri.path().to_string().trim_end_matches('/').to_string(),
+            path,
             line: position.line,
             character: position.character,
         }

@@ -1,34 +1,23 @@
 mod go;
-mod infer;
 mod rust;
 
 use {
     self::{go::Go, rust::Rust},
     crate::{
-        analysis::{FileOutline, PathMap},
+        generator::{FileOutline, PathMap, Relations},
         graph::{Cell, CellStyle, Edge, EdgeStyle, TableNode},
+        lsp_types::{DocumentSymbol, SymbolKind},
     },
-    lsp_types::{DocumentSymbol, SymbolKind},
-    std::{
-        path::{Path, PathBuf},
-        process::Child,
-    },
+    std::path::Path,
 };
 
-pub(crate) use infer::infer_language;
-
-use crate::analysis::Relations;
-
 pub(crate) trait Language {
-    fn start_language_server(&self) -> Child;
-    fn entry(&self, base: &Path) -> Entry;
-
     fn all_functions<'a, 'b>(&'a self, outline: &'b FileOutline) -> Vec<&'b DocumentSymbol> {
         outline
             .symbols
             .iter()
             .filter(|symbol| match symbol.kind {
-                SymbolKind::FUNCTION | SymbolKind::METHOD => true,
+                SymbolKind::Function | SymbolKind::Method => true,
                 _ => false,
             })
             .collect()
@@ -38,7 +27,7 @@ pub(crate) trait Language {
         outline
             .symbols
             .iter()
-            .filter(|symbol| symbol.kind == SymbolKind::INTERFACE)
+            .filter(|symbol| symbol.kind == SymbolKind::Interface)
             .collect()
     }
 
@@ -61,8 +50,8 @@ pub(crate) trait Language {
 
         let children = symbol
             .children
-            .as_ref()
-            .unwrap_or(&vec![])
+            // .as_ref()
+            // .unwrap_or(&vec![])
             .iter()
             .map(|item| self.symbol_repr(file_id, item, path))
             .collect();
@@ -84,7 +73,7 @@ pub(crate) trait Language {
 
     fn symbol_style(&self, symbol: &DocumentSymbol) -> Vec<CellStyle> {
         match symbol.kind {
-            SymbolKind::FUNCTION | SymbolKind::METHOD => {
+            SymbolKind::Function | SymbolKind::Method => {
                 vec![CellStyle::CssClass("fn".to_string()), CellStyle::Rounded]
             }
             _ => vec![],
@@ -95,10 +84,7 @@ pub(crate) trait Language {
         relations
             .iter()
             .flat_map(|rels| {
-                let from_table_id = map
-                    .get(&PathBuf::from(rels.0.path.clone()))
-                    .unwrap()
-                    .to_string();
+                let from_table_id = map.get(&rels.0.path.clone()).unwrap().to_string();
                 let from_node_id = format!("{}_{}", rels.0.line, rels.0.character);
 
                 rels.1
@@ -106,10 +92,7 @@ pub(crate) trait Language {
                     .map(|location| Edge {
                         from_table_id: from_table_id.clone(),
                         from_node_id: from_node_id.clone(),
-                        to_table_id: map
-                            .get(&PathBuf::from(location.path.clone()))
-                            .unwrap()
-                            .to_string(),
+                        to_table_id: map.get(&location.path.clone()).unwrap().to_string(),
                         to_node_id: format!("{}_{}", location.line, location.character),
                         styles: vec![],
                     })
@@ -122,19 +105,13 @@ pub(crate) trait Language {
         relations
             .iter()
             .flat_map(|rels| {
-                let to_table_id = map
-                    .get(&PathBuf::from(rels.0.path.clone()))
-                    .unwrap()
-                    .to_string();
+                let to_table_id = map.get(&rels.0.path.clone()).unwrap().to_string();
                 let to_node_id = format!("{}_{}", rels.0.line, rels.0.character);
 
                 rels.1
                     .iter()
                     .map(|location| Edge {
-                        from_table_id: map
-                            .get(&PathBuf::from(location.path.clone()))
-                            .unwrap()
-                            .to_string(),
+                        from_table_id: map.get(&location.path.clone()).unwrap().to_string(),
                         from_node_id: format!("{}_{}", location.line, location.character),
                         to_table_id: to_table_id.clone(),
                         to_node_id: to_node_id.clone(),
@@ -148,29 +125,14 @@ pub(crate) trait Language {
     // fn handle_unrecognized_functions(&self, funcs: Vec<&DocumentSymbol>);
 }
 
+pub struct DefaultLang;
+
+impl Language for DefaultLang {}
+
 pub(crate) fn language_handler(lang: &str) -> Box<dyn Language + Sync + Send> {
     match lang {
         "rust" => Box::new(Rust {}),
         "go" => Box::new(Go {}),
-        _ => unimplemented!(),
-    }
-}
-
-pub struct Entry {
-    pub extensions: Vec<String>,
-    pub include: Vec<PathBuf>,
-    pub exclude: Vec<PathBuf>,
-}
-
-impl Entry {
-    fn new(base: &Path, extensions: Vec<String>, exclude: &[&str]) -> Self {
-        let base = base.to_path_buf();
-        let exclude = exclude.iter().map(|it| base.join(it)).collect();
-
-        Self {
-            extensions,
-            include: vec![base],
-            exclude,
-        }
+        _ => Box::new(DefaultLang {}),
     }
 }
