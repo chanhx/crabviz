@@ -3,7 +3,6 @@ use {
     std::io::Error as IoError,
 };
 
-pub type Result<T> = std::result::Result<T, Error>;
 type AnotherError = Box<dyn std::error::Error>;
 
 #[derive(Debug, Snafu)]

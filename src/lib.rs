@@ -1,10 +1,5 @@
 #![feature(map_try_insert)]
 
-use {
-    generator::{FileOutline, GraphGenerator, PathMap},
-    std::path::PathBuf,
-};
-
 mod error;
 mod generator;
 mod graph;

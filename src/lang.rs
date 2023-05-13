@@ -1,11 +1,12 @@
 mod go;
+mod java;
 mod rust;
 
 use {
-    self::{go::Go, rust::Rust},
+    self::{go::Go, java::Java, rust::Rust},
     crate::{
-        generator::{FileOutline, PathMap, Relations},
-        graph::{Cell, CellStyle, Edge, EdgeStyle, TableNode},
+        generator::FileOutline,
+        graph::{Cell, CellStyle, TableNode, TableStyle},
         lsp_types::{DocumentSymbol, SymbolKind},
     },
     std::path::Path,
@@ -73,53 +74,15 @@ pub(crate) trait Language {
 
     fn symbol_style(&self, symbol: &DocumentSymbol) -> Vec<CellStyle> {
         match symbol.kind {
-            SymbolKind::Function | SymbolKind::Method => {
+            SymbolKind::Function | SymbolKind::Method | SymbolKind::Constructor => {
                 vec![CellStyle::CssClass("fn".to_string()), CellStyle::Rounded]
+            }
+            SymbolKind::Interface => {
+                let table_style = vec![TableStyle::CssClass("interface".to_string())];
+                vec![CellStyle::Table(table_style), CellStyle::Border(0)]
             }
             _ => vec![],
         }
-    }
-
-    fn calling_repr(&self, relations: Relations, map: &PathMap) -> Vec<Edge> {
-        relations
-            .iter()
-            .flat_map(|rels| {
-                let from_table_id = map.get(&rels.0.path.clone()).unwrap().to_string();
-                let from_node_id = format!("{}_{}", rels.0.line, rels.0.character);
-
-                rels.1
-                    .iter()
-                    .map(|location| Edge {
-                        from_table_id: from_table_id.clone(),
-                        from_node_id: from_node_id.clone(),
-                        to_table_id: map.get(&location.path.clone()).unwrap().to_string(),
-                        to_node_id: format!("{}_{}", location.line, location.character),
-                        styles: vec![],
-                    })
-                    .collect::<Vec<_>>()
-            })
-            .collect()
-    }
-
-    fn impl_repr(&self, relations: Relations, map: &PathMap) -> Vec<Edge> {
-        relations
-            .iter()
-            .flat_map(|rels| {
-                let to_table_id = map.get(&rels.0.path.clone()).unwrap().to_string();
-                let to_node_id = format!("{}_{}", rels.0.line, rels.0.character);
-
-                rels.1
-                    .iter()
-                    .map(|location| Edge {
-                        from_table_id: map.get(&location.path.clone()).unwrap().to_string(),
-                        from_node_id: format!("{}_{}", location.line, location.character),
-                        to_table_id: to_table_id.clone(),
-                        to_node_id: to_node_id.clone(),
-                        styles: vec![EdgeStyle::CssClass("impl".to_string())],
-                    })
-                    .collect::<Vec<_>>()
-            })
-            .collect()
     }
 
     // fn handle_unrecognized_functions(&self, funcs: Vec<&DocumentSymbol>);
@@ -129,10 +92,11 @@ pub struct DefaultLang;
 
 impl Language for DefaultLang {}
 
-pub(crate) fn language_handler(lang: &str) -> Box<dyn Language + Sync + Send> {
-    match lang {
-        "rust" => Box::new(Rust {}),
-        "go" => Box::new(Go {}),
+pub(crate) fn language_handler(ext: &str) -> Box<dyn Language + Sync + Send> {
+    match ext {
+        "go" => Box::new(Go),
+        "java" => Box::new(Java),
+        "rs" => Box::new(Rust),
         _ => Box::new(DefaultLang {}),
     }
 }

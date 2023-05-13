@@ -5,7 +5,7 @@ use {
     crate::{
         graph::{dot::Dot, Edge, EdgeStyle, Subgraph},
         lang,
-        lsp_types::{CallHierarchyOutgoingCall, DocumentSymbol, LocationLink, Position},
+        lsp_types::{CallHierarchyOutgoingCall, DocumentSymbol, Location, Position},
     },
     std::{
         cell::RefCell,
@@ -21,16 +21,6 @@ extern "C" {
     // `log(..)`
     #[wasm_bindgen(js_namespace = console)]
     fn log(s: String);
-
-    // The `console.log` is quite polymorphic, so we can bind it with multiple
-    // signatures. Note that we need to use `js_name` to ensure we always call
-    // `log` in JS.
-    #[wasm_bindgen(js_namespace = console, js_name = log)]
-    fn log_u32(a: u32);
-
-    // Multiple arguments too!
-    #[wasm_bindgen(js_namespace = console, js_name = log)]
-    fn log_many(a: &str, b: &str);
 }
 
 #[wasm_bindgen]
@@ -84,21 +74,26 @@ impl GraphGenerator {
         &self,
         file_path: String,
         position: JsValue,
-        links: JsValue,
+        locations: JsValue,
     ) {
         let position = serde_wasm_bindgen::from_value::<Position>(position).unwrap();
-        let links = serde_wasm_bindgen::from_value::<Vec<LocationLink>>(links).unwrap();
+        let locations = serde_wasm_bindgen::from_value::<Vec<Location>>(locations).unwrap();
 
         self.inner
             .borrow_mut()
-            .add_interface_implementations(file_path, position, links);
+            .add_interface_implementations(file_path, position, locations);
     }
 
     pub fn generate_dot_source(&self) -> String {
-        let lang = lang::language_handler("rust");
-
         let generator = self.inner.borrow();
         let files = &generator.files;
+
+        let ext = files
+            .iter()
+            .next()
+            .and_then(|(_, f)| f.path.extension().and_then(|ext| ext.to_str()))
+            .unwrap_or("");
+        let lang = lang::language_handler(ext);
 
         let tables = files
             .values()
@@ -109,82 +104,54 @@ impl GraphGenerator {
             .iter()
             .map(|(_, outline)| &outline.path)
             .collect::<HashSet<_>>();
-        // let edges = vec![];
 
         let calls = generator
             .outgoing_calls
             .iter()
-            .map(|(caller, callee)| {
-                (
-                    caller.clone(),
-                    callee
-                        .into_iter()
-                        .filter(|callee| {
-                            let path = callee.to.uri.path();
-                            let path = PathBuf::from(path);
+            .flat_map(|(caller, callee)| {
+                let from_table_id = files.get(&caller.path).unwrap().id.to_string();
+                let from_node_id = format!("{}_{}", caller.line, caller.character);
 
-                            paths.contains(&path)
-                        })
-                        .map(|call| {
-                            SymbolLocation::new(
-                                call.to.uri.path().to_string(),
-                                &call.to.selection_range.start,
-                            )
-                        })
-                        .collect(),
-                )
-            })
-            .collect::<Relations>();
+                callee
+                    .into_iter()
+                    .filter(|callee| {
+                        let path = callee.to.uri.path();
+                        let path = PathBuf::from(path);
 
-        let implementations = generator
-            .interfaces
-            .iter()
-            .map(|(interface, implementations)| {
-                (
-                    interface.clone(),
-                    implementations
-                        .iter()
-                        .filter(|location| {
-                            let path = &location.path;
-                            let path = PathBuf::from(path);
-
-                            paths.contains(&path)
-                        })
-                        .map(|location| location.clone())
-                        .collect(),
-                )
-            })
-            .collect::<Relations>();
-
-        let calling_edges = calls
-            .iter()
-            .flat_map(|rels| {
-                let from_table_id = files.get(&rels.0.path.clone()).unwrap().id;
-                let from_node_id = format!("{}_{}", rels.0.line, rels.0.character);
-
-                rels.1
-                    .iter()
-                    .map(|location| Edge {
-                        from_table_id: from_table_id.to_string(),
+                        paths.contains(&path)
+                    })
+                    .map(|call| Edge {
+                        from_table_id: from_table_id.clone(),
                         from_node_id: from_node_id.clone(),
-                        to_table_id: files.get(&location.path.clone()).unwrap().id.to_string(),
-                        to_node_id: format!("{}_{}", location.line, location.character),
+                        to_table_id: files.get(call.to.uri.path()).unwrap().id.to_string(),
+                        to_node_id: format!(
+                            "{}_{}",
+                            call.to.selection_range.start.line,
+                            call.to.selection_range.start.character
+                        ),
                         styles: vec![],
                     })
                     .collect::<Vec<_>>()
             })
             .collect::<Vec<_>>();
 
-        let impl_edges = implementations
+        let implementations = generator
+            .interfaces
             .iter()
-            .flat_map(|rels| {
-                let to_table_id = files.get(&rels.0.path.clone()).unwrap().id.to_string();
-                let to_node_id = format!("{}_{}", rels.0.line, rels.0.character);
+            .flat_map(|(interface, implementations)| {
+                let to_table_id = files.get(&interface.path).unwrap().id.to_string();
+                let to_node_id = format!("{}_{}", interface.line, interface.character);
 
-                rels.1
-                    .iter()
+                implementations
+                    .into_iter()
+                    .filter(|location| {
+                        let path = &location.path;
+                        let path = PathBuf::from(path);
+
+                        paths.contains(&path)
+                    })
                     .map(|location| Edge {
-                        from_table_id: files.get(&location.path.clone()).unwrap().id.to_string(),
+                        from_table_id: files.get(&location.path).unwrap().id.to_string(),
                         from_node_id: format!("{}_{}", location.line, location.character),
                         to_table_id: to_table_id.clone(),
                         to_node_id: to_node_id.clone(),
@@ -192,8 +159,9 @@ impl GraphGenerator {
                     })
                     .collect::<Vec<_>>()
             })
-            .collect();
-        let edges = [calling_edges, impl_edges].concat();
+            .collect::<Vec<_>>();
+
+        let edges = [calls, implementations].concat();
 
         let subgraphs = generator.subgraphs(files.iter().map(|(_, f)| f));
 
@@ -236,16 +204,13 @@ impl GraphGeneratorInner {
         &mut self,
         file_path: String,
         position: Position,
-        links: Vec<LocationLink>,
+        locations: Vec<Location>,
     ) {
         let location = SymbolLocation::new(file_path, &position);
-        let implementations = links
+        let implementations = locations
             .into_iter()
-            .map(|link| {
-                SymbolLocation::new(
-                    link.target_uri.path().to_string(),
-                    &link.target_selection_range.start,
-                )
+            .map(|location| {
+                SymbolLocation::new(location.uri.path().to_string(), &location.range.start)
             })
             .collect();
         self.interfaces.insert(location, implementations);
@@ -282,36 +247,5 @@ impl GraphGeneratorInner {
         }
 
         subgraph_recursive(dirs.keys().next().unwrap(), &dirs, &self.files)
-    }
-}
-
-pub struct PathMap {
-    // analysis_root: PathBuf,
-    // source: HashMap<PathBuf, u32>,
-    // dependencies: HashMap<PathBuf, u32>,
-    map: HashMap<String, PathId>,
-    next_id: PathId,
-}
-
-impl PathMap {
-    fn new() -> Self {
-        Self {
-            map: HashMap::new(),
-            next_id: 1,
-        }
-    }
-
-    fn insert(&mut self, path: String) -> PathId {
-        match self.map.try_insert(path, self.next_id) {
-            Ok(id) => {
-                self.next_id += 1;
-                id.to_owned()
-            }
-            Err(e) => e.value,
-        }
-    }
-
-    pub fn get(&self, path: &str) -> Option<u32> {
-        self.map.get(path).copied()
     }
 }

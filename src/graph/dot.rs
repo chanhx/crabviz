@@ -93,10 +93,11 @@ digraph {{
     graph [
         rankdir = "LR"
         ranksep = 2.0
+        fontname = "Arial"
     ];
     node [
         fontsize = "16"
-        fontname = "helvetica, open-sans"
+        fontname = "Arial"
         shape = "plaintext"
         style = "rounded, filled"
     ];

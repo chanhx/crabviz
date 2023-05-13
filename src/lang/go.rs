@@ -5,7 +5,7 @@ use {
     crate::lsp_types::{DocumentSymbol, SymbolKind},
 };
 
-pub(crate) struct Go {}
+pub(crate) struct Go;
 
 impl Language for Go {
     fn symbol_style(&self, symbol: &DocumentSymbol) -> Vec<CellStyle> {

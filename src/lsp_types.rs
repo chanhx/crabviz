@@ -172,6 +172,13 @@ pub struct VscodeUrl {
     pub fragment: String,
 }
 
+/// Represents a location inside a resource, such as a line inside a text file.
+#[derive(Debug, Eq, PartialEq, Clone, Deserialize, Serialize)]
+pub struct Location {
+    pub uri: Url,
+    pub range: Range,
+}
+
 /// Represents a link between a source and a target location.
 #[derive(Debug, Eq, PartialEq, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]

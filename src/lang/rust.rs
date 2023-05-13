@@ -8,7 +8,7 @@ use {
     },
 };
 
-pub(crate) struct Rust {}
+pub(crate) struct Rust;
 
 impl Language for Rust {
     fn all_functions<'a, 'b>(&'a self, outline: &'b FileOutline) -> Vec<&'b DocumentSymbol> {
@@ -51,7 +51,7 @@ impl Language for Rust {
             SymbolKind::Object if symbol.name.starts_with("impl") => {
                 let table_style = vec![
                     TableStyle::Border(0),
-                    TableStyle::CssClass("rust-impl".to_string()),
+                    TableStyle::CssClass("method-block".to_string()),
                 ];
                 vec![CellStyle::Table(table_style), CellStyle::Border(0)]
             }

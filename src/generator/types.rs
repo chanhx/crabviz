@@ -1,6 +1,6 @@
 use {
     crate::lsp_types::{DocumentSymbol, Position},
-    std::{collections::HashMap, fmt::Display, hash::Hash, path::PathBuf},
+    std::{fmt::Display, hash::Hash, path::PathBuf},
 };
 
 pub(crate) type PathId = u32;
@@ -10,8 +10,6 @@ pub(crate) struct FileOutline {
     pub path: PathBuf,
     pub symbols: Vec<DocumentSymbol>,
 }
-
-pub type Relations = HashMap<SymbolLocation, Vec<SymbolLocation>>;
 
 #[derive(Hash, PartialEq, Eq, Clone)]
 pub struct SymbolLocation {
