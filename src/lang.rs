@@ -13,25 +13,6 @@ use {
 };
 
 pub(crate) trait Language {
-    fn all_functions<'a, 'b>(&'a self, outline: &'b FileOutline) -> Vec<&'b DocumentSymbol> {
-        outline
-            .symbols
-            .iter()
-            .filter(|symbol| match symbol.kind {
-                SymbolKind::Function | SymbolKind::Method => true,
-                _ => false,
-            })
-            .collect()
-    }
-
-    fn all_interfaces<'a, 'b>(&'a self, outline: &'b FileOutline) -> Vec<&'b DocumentSymbol> {
-        outline
-            .symbols
-            .iter()
-            .filter(|symbol| symbol.kind == SymbolKind::Interface)
-            .collect()
-    }
-
     fn file_repr(&self, file: &FileOutline) -> TableNode {
         let sections = file
             .symbols
@@ -51,8 +32,6 @@ pub(crate) trait Language {
 
         let children = symbol
             .children
-            // .as_ref()
-            // .unwrap_or(&vec![])
             .iter()
             .map(|item| self.symbol_repr(file_id, item, path))
             .collect();

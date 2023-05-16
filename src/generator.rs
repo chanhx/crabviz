@@ -243,7 +243,7 @@ impl GraphGeneratorInner {
                         .collect::<Vec<_>>(),
                     subgraphs: subgraph_recursive(dir, dirs, map),
                 })
-                .collect::<Vec<_>>()
+                .collect()
         }
 
         subgraph_recursive(dirs.keys().next().unwrap(), &dirs, &self.files)

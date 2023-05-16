@@ -1,44 +1,14 @@
 use {
     super::Language,
-    crate::lsp_types::{DocumentSymbol, SymbolKind},
-    // lsp_types::{DocumentSymbol, SymbolKind},
     crate::{
-        generator::FileOutline,
         graph::{CellStyle, TableStyle},
+        lsp_types::{DocumentSymbol, SymbolKind},
     },
 };
 
 pub(crate) struct Rust;
 
 impl Language for Rust {
-    fn all_functions<'a, 'b>(&'a self, outline: &'b FileOutline) -> Vec<&'b DocumentSymbol> {
-        let (func_groups, funcs): (Vec<_>, Vec<_>) = outline
-            .symbols
-            .iter()
-            .filter(|symbol| match symbol.kind {
-                SymbolKind::Function | SymbolKind::Method => true,
-                SymbolKind::Object | SymbolKind::Interface if !symbol.children.is_empty() => true,
-                _ => false,
-            })
-            .partition(|symbol| !symbol.children.is_empty());
-
-        func_groups
-            .iter()
-            .flat_map(|impl_block| {
-                impl_block
-                    .children
-                    // .as_ref()
-                    // .unwrap()
-                    .iter()
-                    .filter(|symbol| match symbol.kind {
-                        SymbolKind::Function | SymbolKind::Method => true,
-                        _ => false,
-                    })
-            })
-            .chain(funcs)
-            .collect()
-    }
-
     fn symbol_style(&self, symbol: &DocumentSymbol) -> Vec<CellStyle> {
         match symbol.kind {
             SymbolKind::Function | SymbolKind::Method => {
