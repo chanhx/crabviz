@@ -147,7 +147,7 @@ async function generateCallGraph(context: vscode.ExtensionContext, extensions: s
 
 	const panel = vscode.window.createWebviewPanel('crabviz', 'crabviz', vscode.ViewColumn.One, {
 		localResourceRoots: [
-			vscode.Uri.joinPath(context.extensionUri, '..', 'common', 'media')
+			vscode.Uri.joinPath(context.extensionUri, 'media')
 		],
 		enableScripts: true
 	});
@@ -213,7 +213,7 @@ async function activateWebviewPanel(context: vscode.ExtensionContext, panel: vsc
 }
 
 function getWebviewContent(context: vscode.ExtensionContext, webview: vscode.Webview, svg: String) {
-	const resourceUri = vscode.Uri.joinPath(context.extensionUri, '..', 'common', 'media');
+	const resourceUri = vscode.Uri.joinPath(context.extensionUri, 'media');
 	const stylesPath = vscode.Uri.joinPath(resourceUri, 'styles.css');
 	const preprocessJsPath = vscode.Uri.joinPath(resourceUri, 'preprocess.js');
 	const svgPanZoomJsPath = vscode.Uri.joinPath(resourceUri, 'svg-pan-zoom.min.js');
