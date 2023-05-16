@@ -13,14 +13,14 @@ import * as languages from "./languages";
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export async function activate(context: vscode.ExtensionContext) {
-	let disposable = vscode.commands.registerCommand('crabviz.helloWorld', async () => {
+	let disposable = vscode.commands.registerCommand('crabviz.generateCallGraph', async () => {
 		let cancelled = false;
 
 		const ignores = await readIgnoreFiles();
 
 		const extensions = await vscode.window.withProgress({
 			location: vscode.ProgressLocation.Notification,
-			title: "Analyzing project languages",
+			title: "Detecting project languages",
 			cancellable: true
 		}, (_, token) => {
 			token.onCancellationRequested(() => {
@@ -68,7 +68,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		vscode.window.withProgress({
 			location: vscode.ProgressLocation.Window,
-			title: "Generatiing call graph",
+			title: "Crabviz: Generatiing call graph",
 		}, _ => {
 			return generateCallGraph(context, extensionsByLanguage[lang], ignores);
 		});
@@ -159,8 +159,6 @@ async function generateCallGraph(context: vscode.ExtensionContext, extensions: s
 async function collectFileExtensions(token: vscode.CancellationToken, ignores: string[]): Promise<Set<string>> {
 	const extensions: Set<string> = new Set();
 
-	console.time('collectFileExtensions');
-
 	let files: vscode.Uri[];
 	let exclude = undefined;
 	while (true) {
@@ -174,8 +172,6 @@ async function collectFileExtensions(token: vscode.CancellationToken, ignores: s
 		const ext = files[0].path.split('.').pop()!;
 		extensions.add(ext);
 	}
-
-	console.timeEnd('collectFileExtensions');
 
 	return extensions;
 }

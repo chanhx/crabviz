@@ -1,21 +1,32 @@
 {
   "name": "crabviz",
-  "displayName": "crabviz",
+  "displayName": "Crabviz (Preview)",
   "description": "interactive call graph generator",
   "version": "0.0.1",
+  "publisher": "chanhx",
+  "author": {
+    "name": "Chan HoCheung"
+  },
+  "repository": {
+    "url": "https://github.com/chanhx/crabviz"
+  },
   "engines": {
     "vscode": "^1.77.0"
   },
   "categories": [
+    "Programming Languages",
     "Other"
+  ],
+  "keywords": [
+    "call graph"
   ],
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "crabviz.helloWorld",
-        "title": "Hello World"
+        "command": "crabviz.generateCallGraph",
+        "title": "Crabviz: Generate Call Graph"
       }
     ]
   },
