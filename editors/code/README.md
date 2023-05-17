@@ -9,7 +9,7 @@ A static code analysis tool that generates interactive call graph.
 
 ## Preview
 
-![preview](https://user-images.githubusercontent.com/20551552/238610380-e7cfc0e4-9bc1-4fc2-ad19-140d9c5a687f.gif)
+![preview](https://user-images.githubusercontent.com/20551552/238906454-8bc073c1-b593-4a99-84f5-5bfdd9525d7c.gif)
 
 ## Requirements
 

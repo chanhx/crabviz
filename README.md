@@ -1,30 +1,33 @@
-# crabviz
+# Crabviz
 
-crabviz is a static code analysis tool that generates interactive call graph.
+a static code analysis tool that generates interactive call graph
 
-## Preview
+## Introdution
 
-![preview](https://user-images.githubusercontent.com/20551552/230730902-d70fb5fd-ff52-4eea-bd26-c4dbff4cd2a6.gif)
-
-## Supported Languages
-
-* Rust
-* Go
+Crabviz is based on the Langauge Server Protocol,
+as long as you have the corresponding language server installed,
+you can generate call graph with Crabviz for your project.
 
 ## Features
 
-* show types and functions in files
-* draw the calling relationships
-* draw the interface implementation relationships
-* highlight edges with different colors depending on calling relationships
+* show types, methods and functions, and group them by file
+* display function calling relationships and interface implementation relationships
 
-## TODOs
+## Preview
 
-* support more languages
-* beautify UI
-* collapse folders
-* draw type relationships
-* generate graph for specified files
+![preview](https://user-images.githubusercontent.com/20551552/238906454-8bc073c1-b593-4a99-84f5-5bfdd9525d7c.gif)
+
+## Editors
+
+Because Crabviz utilizes the capabilities of LSP server, it is more suitable as an editor extension than a command line tool.
+
+It is currently available in [VS Code](editors/code/), and PRs for other editors are welcome.
+
+## TODO
+
+* Specify files to scan and ignore
+* Collapse folder
+* Beautify UI
 
 ## Credits
 
