@@ -7,6 +7,7 @@ import * as path from 'path';
 import { graphviz } from "@hpcc-js/wasm";
 import * as languages from "./languages";
 import { convertSymbol } from './lspTypesConversion';
+import * as utils from "./utils";
 
 // wasmFolder("https://cdn.jsdelivr.net/npm/@hpcc-js/wasm/dist");
 
@@ -85,8 +86,10 @@ async function generateCallGraph(context: vscode.ExtensionContext, extensions: s
 	const files = await vscode.workspace.findFiles(`**/*.{${extensions.join(',')}}`, `{${ignores.join(',')}}`);
 
 	for await (const file of files) {
-		let symbols = await vscode.commands.executeCommand<vscode.DocumentSymbol[]>('vscode.executeDocumentSymbolProvider', file);
-		if (!symbols) {
+		// retry several times if the LSP server is not ready
+		let symbols = await utils.retryCommand<vscode.DocumentSymbol[]>(5, 600, 'vscode.executeDocumentSymbolProvider', file);
+		if (symbols === undefined) {
+			vscode.window.showErrorMessage(`Document symbol information not available for '${file.fsPath}'`);
 			continue;
 		}
 
