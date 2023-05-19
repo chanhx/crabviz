@@ -69,7 +69,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 		vscode.window.withProgress({
 			location: vscode.ProgressLocation.Window,
-			title: "Crabviz: Generatiing call graph",
+			title: "Crabviz: Generating call graph",
 		}, _ => {
 			return generateCallGraph(context, extensionsByLanguage[lang], ignores);
 		});
