@@ -1,26 +1,24 @@
-export const ignores = [
-  'css',
-  'csv',
-  'gif',
-  'gitignore',
-  'html',
-  'md',
-  'jpeg',
-  'jpg',
-  'json',
-  'lex',
-  'lock',
-  'log',
-  'png',
-  'toml',
-  'txt',
-  'xml',
-  'yaml',
-  'yacc',
-  'yml',
-];
 
-export const languagesByExtension: { [ext: string] : string } = {
+export function groupFileExtensions(extensions: Set<string>): { [lang: string]: string[] } {
+  const extensionsByLanguage: {[lang: string]: string[]} = {};
+
+		for (const ext of extensions) {
+			const lang = languagesByExtension[ext];
+			if (!lang) {
+				continue;
+			}
+
+			if (lang in extensionsByLanguage) {
+				extensionsByLanguage[lang].push(ext);
+			} else {
+				extensionsByLanguage[lang] = [ext];
+			}
+		}
+
+    return extensionsByLanguage;
+}
+
+const languagesByExtension: { [ext: string] : string } = {
   'c': 'C/C++',
   'cc': 'C/C++',
   'cpp': 'C/C++',

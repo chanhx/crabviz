@@ -1,13 +1,12 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import * as fs from 'fs';
-import * as path from 'path';
 // const crabviz = await import('../../../pkg/crabviz');
-import { graphviz } from "@hpcc-js/wasm";
-import * as languages from "./languages";
-import { convertSymbol } from './lspTypesConversion';
-import * as utils from "./utils";
+import { graphviz } from '@hpcc-js/wasm';
+import { groupFileExtensions } from './utils/languages';
+import { convertSymbol } from './utils/lspTypesConversion';
+import { retryCommand } from './utils/command';
+import { ignoredExtensions, readIgnoreRules } from './utils/ignores';
 
 // wasmFolder("https://cdn.jsdelivr.net/npm/@hpcc-js/wasm/dist");
 
@@ -17,7 +16,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	let disposable = vscode.commands.registerCommand('crabviz.generateCallGraph', async () => {
 		let cancelled = false;
 
-		const ignores = await readIgnoreFiles();
+		const ignores = await readIgnoreRules();
 
 		const extensions = await vscode.window.withProgress({
 			location: vscode.ProgressLocation.Notification,
@@ -34,20 +33,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			return;
 		}
 
-		const extensionsByLanguage: {[lang: string]: string[]} = {};
-
-		for (const ext of extensions) {
-			const lang = languages.languagesByExtension[ext];
-			if (!lang) {
-				continue;
-			}
-
-			if (lang in extensionsByLanguage) {
-				extensionsByLanguage[lang].push(ext);
-			} else {
-				extensionsByLanguage[lang] = [ext];
-			}
-		}
+		const extensionsByLanguage = groupFileExtensions(extensions);
 
 		const selections = Object.keys(extensionsByLanguage).map(lang => ({ label: lang }));
 		let lang: string;
@@ -59,7 +45,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			if (!selectedItem) {
 				return;
 			}
-			lang = typeof selectedItem === 'string'? selectedItem : selectedItem.label;
+			lang = selectedItem.label;
 		} else if (selections.length === 1) {
 			lang = selections[0].label;
 		} else {
@@ -71,23 +57,25 @@ export async function activate(context: vscode.ExtensionContext) {
 			location: vscode.ProgressLocation.Window,
 			title: "Crabviz: Generating call graph",
 		}, _ => {
-			return generateCallGraph(context, extensionsByLanguage[lang], ignores);
+			const include = `**/*.{${extensionsByLanguage[lang].join(',')}}`;
+			const exclude = `{${ignores.join(',')}}`;
+			return generateCallGraph(context, include, exclude);
 		});
 	});
 
 	context.subscriptions.push(disposable);
 }
 
-async function generateCallGraph(context: vscode.ExtensionContext, extensions: string[], ignores: string[]) {
+async function generateCallGraph(context: vscode.ExtensionContext, include: string, exclude: string) {
 	const crabviz = await import('../../../pkg');
 	crabviz.set_panic_hook();
 	let generator = new crabviz.GraphGenerator();
 
-	const files = await vscode.workspace.findFiles(`**/*.{${extensions.join(',')}}`, `{${ignores.join(',')}}`);
+	const files = await vscode.workspace.findFiles(include, exclude);
 
 	for await (const file of files) {
 		// retry several times if the LSP server is not ready
-		let symbols = await utils.retryCommand<vscode.DocumentSymbol[]>(5, 600, 'vscode.executeDocumentSymbolProvider', file);
+		let symbols = await retryCommand<vscode.DocumentSymbol[]>(5, 600, 'vscode.executeDocumentSymbolProvider', file);
 		if (symbols === undefined) {
 			vscode.window.showErrorMessage(`Document symbol information not available for '${file.fsPath}'`);
 			continue;
@@ -165,7 +153,7 @@ async function collectFileExtensions(token: vscode.CancellationToken, ignores: s
 	let files: vscode.Uri[];
 	let exclude = undefined;
 	while (true) {
-		exclude = `{${Array.from(extensions).concat(languages.ignores).map(ext => `**/*.${ext}`).concat(ignores).join(',')}}`;
+		exclude = `{${Array.from(extensions).concat(ignoredExtensions).map(ext => `**/*.${ext}`).concat(ignores).join(',')}}`;
 
 		files = await vscode.workspace.findFiles('**/*.*', exclude, 1, token);
 		if (files.length <= 0 || token.isCancellationRequested) {
@@ -177,37 +165,6 @@ async function collectFileExtensions(token: vscode.CancellationToken, ignores: s
 	}
 
 	return extensions;
-}
-
-async function readIgnoreFiles(): Promise<string[]> {
-	let excludes: string[] = [];
-
-	const folders = await vscode.workspace.workspaceFolders;
-	if (!folders) {
-		return [];
-	}
-
-	for (const folder of folders) {
-		const ignores = await vscode.workspace.findFiles(new vscode.RelativePattern(folder, '**/.gitignore'));
-
-		for (const ignore of ignores) {
-			const dir = path.dirname(ignore.path);
-			const relativePath = path.relative(folder.uri.path, dir);
-
-			const rules = await vscode.workspace.fs.readFile(ignore)
-				.then(content => content.toString()
-				.split('\n')
-				.filter(rule => rule.trim().length > 0));
-			excludes = excludes.concat(rules.map(rule => {
-				if (rule.startsWith("/")) {
-					rule = rule.slice(1);
-				}
-				return path.join(relativePath, rule);
-			}));
-		}
-	}
-
-	return excludes;
 }
 
 async function activateWebviewPanel(context: vscode.ExtensionContext, panel: vscode.WebviewPanel, dot: string) {
