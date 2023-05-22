@@ -26,7 +26,7 @@ export const ignoredExtensions = [
 export async function readIgnoreRules(): Promise<string[]> {
 	let excludes: string[] = [];
 
-	const folders = await vscode.workspace.workspaceFolders;
+	const folders = vscode.workspace.workspaceFolders;
 	if (!folders) {
 		return [];
 	}

@@ -28,7 +28,16 @@
         "command": "crabviz.generateCallGraph",
         "title": "Crabviz: Generate Call Graph"
       }
-    ]
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "when": "explorerResourceIsFolder",
+          "command": "crabviz.generateCallGraph",
+          "group": "crabviz"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",

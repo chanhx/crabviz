@@ -1,6 +1,7 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import * as path from 'path';
 // const crabviz = await import('../../../pkg/crabviz');
 import { graphviz } from '@hpcc-js/wasm';
 import { groupFileExtensions } from './utils/languages';
@@ -13,10 +14,20 @@ import { ignoredExtensions, readIgnoreRules } from './utils/ignores';
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export async function activate(context: vscode.ExtensionContext) {
-	let disposable = vscode.commands.registerCommand('crabviz.generateCallGraph', async () => {
+	let disposable = vscode.commands.registerCommand('crabviz.generateCallGraph', async (entry: vscode.Uri | undefined) => {
 		let cancelled = false;
 
 		const ignores = await readIgnoreRules();
+
+		let scanPath: string | vscode.RelativePattern = '**';
+		if (entry !== undefined) {
+			let folder = vscode.workspace.workspaceFolders!
+				.find(folder => entry.path.startsWith(folder.uri.path))!
+				.uri
+				.path;
+
+			scanPath = new vscode.RelativePattern(folder, `${path.relative(folder, entry.path)}/**`);
+		}
 
 		const extensions = await vscode.window.withProgress({
 			location: vscode.ProgressLocation.Notification,
@@ -26,7 +37,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			token.onCancellationRequested(() => {
 				cancelled = true;
 			});
-			return collectFileExtensions(token, ignores);
+			return collectFileExtensions(scanPath, token, ignores);
 		});;
 
 		if (cancelled) {
@@ -57,7 +68,13 @@ export async function activate(context: vscode.ExtensionContext) {
 			location: vscode.ProgressLocation.Window,
 			title: "Crabviz: Generating call graph",
 		}, _ => {
-			const include = `**/*.{${extensionsByLanguage[lang].join(',')}}`;
+			let include: string | vscode.RelativePattern;
+			if (typeof scanPath === 'string') {
+				include = scanPath + `/*.{${extensionsByLanguage[lang].join(',')}}`;
+			} else {
+				include = new vscode.RelativePattern(scanPath.baseUri, `${scanPath.pattern}/*.{${extensionsByLanguage[lang].join(',')}}`);
+			}
+
 			const exclude = `{${ignores.join(',')}}`;
 			return generateCallGraph(context, include, exclude);
 		});
@@ -66,7 +83,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(disposable);
 }
 
-async function generateCallGraph(context: vscode.ExtensionContext, include: string, exclude: string) {
+async function generateCallGraph(context: vscode.ExtensionContext, include: string | vscode.RelativePattern, exclude: string) {
 	const crabviz = await import('../../../pkg');
 	crabviz.set_panic_hook();
 	let generator = new crabviz.GraphGenerator();
@@ -147,15 +164,23 @@ async function generateCallGraph(context: vscode.ExtensionContext, include: stri
 	await activateWebviewPanel(context, panel, dot);
 }
 
-async function collectFileExtensions(token: vscode.CancellationToken, ignores: string[]): Promise<Set<string>> {
+async function collectFileExtensions(scanPath: string | vscode.RelativePattern, token: vscode.CancellationToken, ignores: string[]): Promise<Set<string>> {
 	const extensions: Set<string> = new Set();
 
 	let files: vscode.Uri[];
 	let exclude = undefined;
+
+	let include: string | vscode.RelativePattern;
+	if (typeof scanPath === 'string') {
+		include = scanPath + '/*.*';
+	} else {
+		include = new vscode.RelativePattern(scanPath.baseUri, `${scanPath.pattern}/*.*`);
+	}
+
 	while (true) {
 		exclude = `{${Array.from(extensions).concat(ignoredExtensions).map(ext => `**/*.${ext}`).concat(ignores).join(',')}}`;
 
-		files = await vscode.workspace.findFiles('**/*.*', exclude, 1, token);
+		files = await vscode.workspace.findFiles(include, exclude, 1, token);
 		if (files.length <= 0 || token.isCancellationRequested) {
 			break;
 		}
