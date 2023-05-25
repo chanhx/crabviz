@@ -14,34 +14,48 @@ import { ignoredExtensions, readIgnoreRules } from './utils/ignores';
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export async function activate(context: vscode.ExtensionContext) {
-	let disposable = vscode.commands.registerCommand('crabviz.generateCallGraph', async (entry: vscode.Uri | undefined) => {
+	let disposable = vscode.commands.registerCommand('crabviz.generateCallGraph', async (contextSelection: vscode.Uri, allSelections: vscode.Uri[]) => {
 		let cancelled = false;
 
 		const ignores = await readIgnoreRules();
+		const selectedFiles: vscode.Uri[] = [];
 
-		let scanPath: string | vscode.RelativePattern = '**';
-		if (entry !== undefined) {
-			let folder = vscode.workspace.workspaceFolders!
-				.find(folder => entry.path.startsWith(folder.uri.path))!
-				.uri
-				.path;
+		let extensions = new Set<string>();
+		const folder = vscode.workspace.workspaceFolders!
+			.find(folder => contextSelection.path.startsWith(folder.uri.path))!;
 
-			scanPath = new vscode.RelativePattern(folder, `${path.relative(folder, entry.path)}/**`);
-		}
+		const scanDirectories = allSelections.map(selection => {
+			const ext = selection.path.slice((selection.path.lastIndexOf(".") - 1 >>> 0) + 2);
+			if (ext.length > 0) {
+				selectedFiles.push(selection);
+				extensions.add(ext);
+				return undefined;
+			} else {
+				if (!selection.path.startsWith(folder.uri.path)) {
+					vscode.window.showErrorMessage("Call graph across multiple workspace folders is not supported");
+					return;
+				}
 
-		const extensions = await vscode.window.withProgress({
-			location: vscode.ProgressLocation.Notification,
-			title: "Detecting project languages",
-			cancellable: true
-		}, (_, token) => {
-			token.onCancellationRequested(() => {
-				cancelled = true;
-			});
-			return collectFileExtensions(scanPath, token, ignores);
-		});;
+				return path.relative(folder.uri.path, selection.path);
+			}
+		})
+		.filter((scanPath): scanPath is string => scanPath !== undefined);
 
-		if (cancelled) {
-			return;
+		if (scanDirectories.length > 0) {
+			await vscode.window.withProgress({
+				location: vscode.ProgressLocation.Notification,
+				title: "Detecting project languages",
+				cancellable: true
+			}, (_, token) => {
+				token.onCancellationRequested(() => {
+					cancelled = true;
+				});
+				return collectFileExtensions(folder, scanDirectories, extensions, ignores, token);
+			});;
+
+			if (cancelled) {
+				return;
+			}
 		}
 
 		const extensionsByLanguage = groupFileExtensions(extensions);
@@ -68,29 +82,26 @@ export async function activate(context: vscode.ExtensionContext) {
 			location: vscode.ProgressLocation.Window,
 			title: "Crabviz: Generating call graph",
 		}, _ => {
-			let include: string | vscode.RelativePattern;
-			if (typeof scanPath === 'string') {
-				include = scanPath + `/*.{${extensionsByLanguage[lang].join(',')}}`;
-			} else {
-				include = new vscode.RelativePattern(scanPath.baseUri, `${scanPath.pattern}/*.{${extensionsByLanguage[lang].join(',')}}`);
-			}
+			let paths = scanDirectories.map(dir => extensionsByLanguage[lang].map(ext => `${dir}/**/*.${ext}`).join(','));
+			const include = new vscode.RelativePattern(folder, `{${paths.join(',')}}`);
 
 			const exclude = `{${ignores.join(',')}}`;
-			return generateCallGraph(context, include, exclude);
+			return generateCallGraph(context, selectedFiles, include, exclude);
 		});
 	});
 
 	context.subscriptions.push(disposable);
 }
 
-async function generateCallGraph(context: vscode.ExtensionContext, include: string | vscode.RelativePattern, exclude: string) {
+async function generateCallGraph(context: vscode.ExtensionContext, selectedFiles: vscode.Uri[], includePattern: vscode.RelativePattern, exclude: string) {
 	const crabviz = await import('../../../pkg');
 	crabviz.set_panic_hook();
 	let generator = new crabviz.GraphGenerator();
 
-	const files = await vscode.workspace.findFiles(include, exclude);
+	const files = await vscode.workspace.findFiles(includePattern, exclude);
+	const allFiles = new Set(files.concat(selectedFiles));
 
-	for await (const file of files) {
+	for await (const file of allFiles) {
 		// retry several times if the LSP server is not ready
 		let symbols = await retryCommand<vscode.DocumentSymbol[]>(5, 600, 'vscode.executeDocumentSymbolProvider', file);
 		if (symbols === undefined) {
@@ -164,18 +175,17 @@ async function generateCallGraph(context: vscode.ExtensionContext, include: stri
 	await activateWebviewPanel(context, panel, dot);
 }
 
-async function collectFileExtensions(scanPath: string | vscode.RelativePattern, token: vscode.CancellationToken, ignores: string[]): Promise<Set<string>> {
-	const extensions: Set<string> = new Set();
-
+async function collectFileExtensions(
+	folder: vscode.WorkspaceFolder,
+	scanDirectories: string[],
+	extensions: Set<string>,
+	ignores: string[],
+	token: vscode.CancellationToken
+) {
 	let files: vscode.Uri[];
 	let exclude = undefined;
-
-	let include: string | vscode.RelativePattern;
-	if (typeof scanPath === 'string') {
-		include = scanPath + '/*.*';
-	} else {
-		include = new vscode.RelativePattern(scanPath.baseUri, `${scanPath.pattern}/*.*`);
-	}
+	let paths = scanDirectories.map(dir => `${dir}/**/*.*`);
+	const include = new vscode.RelativePattern(folder, `{${paths.join(',')}}`);
 
 	while (true) {
 		exclude = `{${Array.from(extensions).concat(ignoredExtensions).map(ext => `**/*.${ext}`).concat(ignores).join(',')}}`;
@@ -188,8 +198,6 @@ async function collectFileExtensions(scanPath: string | vscode.RelativePattern, 
 		const ext = files[0].path.split('.').pop()!;
 		extensions.add(ext);
 	}
-
-	return extensions;
 }
 
 async function activateWebviewPanel(context: vscode.ExtensionContext, panel: vscode.WebviewPanel, dot: string) {

@@ -30,9 +30,14 @@
       }
     ],
     "menus": {
+      "commandPalette": [
+        {
+          "command": "crabviz.generateCallGraph",
+          "when": "never"
+        }
+      ],
       "explorer/context": [
         {
-          "when": "explorerResourceIsFolder",
           "command": "crabviz.generateCallGraph",
           "group": "crabviz"
         }
