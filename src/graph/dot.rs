@@ -252,23 +252,3 @@ digraph {{
         }
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn export_svg() {
-        let edges = vec![Edge {
-            from_table_id: "abc".to_string(),
-            from_node_id: "1".to_string(),
-            to_table_id: "def".to_string(),
-            to_node_id: "2".to_string(),
-            styles: vec![],
-        }];
-
-        let svg = Dot::generate_dot_source(&[], &edges, &[]);
-
-        println!("{}", svg);
-    }
-}

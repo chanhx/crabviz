@@ -1,5 +1,3 @@
-#![feature(map_try_insert)]
-
 mod error;
 mod generator;
 mod graph;
