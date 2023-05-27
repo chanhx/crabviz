@@ -25,7 +25,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			.find(folder => contextSelection.path.startsWith(folder.uri.path))!;
 
 		const scanDirectories = allSelections.map(selection => {
-			const ext = selection.path.slice((selection.path.lastIndexOf(".") - 1 >>> 0) + 2);
+			const ext = path.extname(selection.path).substring(1);
 			if (ext.length > 0) {
 				selectedFiles.push(selection);
 				extensions.add(ext);
@@ -195,7 +195,7 @@ async function collectFileExtensions(
 			break;
 		}
 
-		const ext = files[0].path.split('.').pop()!;
+		const ext = path.extname(files[0].path).substring(1);
 		extensions.add(ext);
 	}
 }
