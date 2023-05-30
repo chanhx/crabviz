@@ -16,16 +16,7 @@ use {
         collections::{hash_map::Entry, BTreeMap, HashMap, HashSet},
         path::{Path, PathBuf},
     },
-    wasm_bindgen::prelude::*,
 };
-
-#[wasm_bindgen]
-extern "C" {
-    // Use `js_namespace` here to bind `console.log(..)` instead of just
-    // `log(..)`
-    #[wasm_bindgen(js_namespace = console)]
-    fn log(s: String);
-}
 
 struct GraphGenerator {
     // TODO: use a trie map to store files

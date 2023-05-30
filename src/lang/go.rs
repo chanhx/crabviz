@@ -1,8 +1,9 @@
 use {
     super::Language,
-    crate::graph::Style,
-    // lsp_types::{DocumentSymbol, SymbolKind},
-    crate::lsp_types::{DocumentSymbol, SymbolKind},
+    crate::{
+        graph::Style,
+        lsp_types::{DocumentSymbol, SymbolKind},
+    },
 };
 
 pub(crate) struct Go;
