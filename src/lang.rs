@@ -6,7 +6,7 @@ use {
     self::{go::Go, java::Java, rust::Rust},
     crate::{
         generator::FileOutline,
-        graph::{Cell, CellStyle, TableNode, TableStyle},
+        graph::{Cell, Style, TableNode},
         lsp_types::{DocumentSymbol, SymbolKind},
     },
     std::path::Path,
@@ -33,7 +33,8 @@ pub(crate) trait Language {
         let children = symbol
             .children
             .iter()
-            .map(|item| self.symbol_repr(file_id, item, path))
+            .filter(|symbol| self.filter_symbol(symbol))
+            .map(|symbol| self.symbol_repr(file_id, symbol, path))
             .collect();
 
         let port = format!(
@@ -51,14 +52,24 @@ pub(crate) trait Language {
         }
     }
 
-    fn symbol_style(&self, symbol: &DocumentSymbol) -> Vec<CellStyle> {
+    fn filter_symbol(&self, symbol: &DocumentSymbol) -> bool {
+        match symbol.kind {
+            SymbolKind::Field | SymbolKind::Constant => false,
+            _ => true,
+        }
+    }
+
+    fn symbol_style(&self, symbol: &DocumentSymbol) -> Vec<Style> {
         match symbol.kind {
             SymbolKind::Function | SymbolKind::Method | SymbolKind::Constructor => {
-                vec![CellStyle::CssClass("fn".to_string()), CellStyle::Rounded]
+                vec![Style::CssClass("fn".to_string()), Style::Rounded]
             }
             SymbolKind::Interface => {
-                let table_style = vec![TableStyle::CssClass("interface".to_string())];
-                vec![CellStyle::Table(table_style), CellStyle::Border(0)]
+                vec![
+                    Style::CssClass("interface".to_string()),
+                    Style::Border(0),
+                    Style::Rounded,
+                ]
             }
             _ => vec![],
         }

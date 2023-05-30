@@ -45,15 +45,19 @@ svg {
 
 /* Cell */
 
-.cell :is(polygon, path) {
+/* background */
+.cell :is(polygon, path):first-of-type {
   fill: var(--node-color);
+}
+/* border */
+.cell :is(polygon, path):last-of-type {
   stroke-width: 1.13pt;
 }
 
-.cell.fn:hover:not(.selected) :is(polygon, path) {
+.cell.fn:not(.selected):not(:has(.fn:hover)):hover :is(polygon, path):first-of-type {
   fill: var(--hover-cell-color);
 }
-.cell.selected :is(polygon, path) {
+.cell.selected :is(polygon, path):first-of-type {
   fill: var(--selected-cell-color);
 }
 
@@ -157,14 +161,14 @@ svg {
   stroke-dasharray: 5, 3;
 }
 
-.interface :is(path, polygon) {
+.interface :is(path, polygon):first-child {
   fill: cornsilk;
 }
 
-.module :is(path, polygon) {
+.module :is(path, polygon):first-child {
   fill: blanchedalmond;
 }
 
-.method-block :is(path, polygon) {
+.method-block :is(path, polygon):first-child {
   fill: burlywood;
 }

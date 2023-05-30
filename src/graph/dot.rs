@@ -1,5 +1,5 @@
 use {
-    crate::graph::{Cell, CellStyle, Edge, EdgeStyle, Subgraph, TableNode, TableStyle},
+    crate::graph::{Cell, Edge, EdgeStyle, Style, Subgraph, TableNode},
     std::iter,
 };
 
@@ -116,75 +116,73 @@ digraph {{
     }
 
     fn process_cell(cell: &Cell) -> String {
-        let children = cell
-            .children
-            .iter()
-            .map(|item| Dot::process_cell(item))
-            .collect::<Vec<_>>();
-
         let classes = cell
             .styles
             .iter()
             .filter_map(|s| match s {
-                CellStyle::CssClass(cls) => Some(cls.clone()),
+                Style::CssClass(cls) => Some(cls.clone()),
                 _ => None,
             })
             .chain(iter::once("cell".to_string()))
             .collect::<Vec<_>>();
 
-        let mut table_styles = None;
-
         let styles = cell
             .styles
             .iter()
-            .filter(|s| !matches!(s, CellStyle::CssClass(_)))
+            .filter(|s| !matches!(s, Style::CssClass(_)))
             .map(|s| match s {
-                CellStyle::Border(w) => format!(r#"BORDER="{}""#, w),
-                CellStyle::Rounded => r#"STYLE="ROUNDED""#.to_string(),
-                CellStyle::Table(styles) => {
-                    table_styles = Some(styles);
-                    "".to_string()
-                }
+                Style::Border(w) => format!(r#"BORDER="{}""#, w),
+                Style::Rounded => r#"STYLE="ROUNDED""#.to_string(),
                 _ => "".to_string(),
             })
             .collect::<Vec<_>>()
             .join(" ");
 
-        let cell = format!(
-            r#"     <TR><TD PORT="{port}" ID="{id}" {styles} {href}>{name}</TD></TR>"#,
-            port = cell.port,
-            id = cell.id,
-            href = Dot::css_classes_href(&classes),
-            name = escape_html(&cell.title),
-        );
+        let (cell_styles, table_styles) = if cell.children.is_empty() {
+            (styles, "".to_string())
+        } else {
+            (r#"BORDER="0""#.to_string(), styles)
+        };
 
-        match table_styles {
-            Some(styles) => {
-                let classes = styles
-                    .iter()
-                    .filter_map(|s| match s {
-                        TableStyle::CssClass(cls) => Some(cls.clone()),
-                        _ => None,
-                    })
-                    .collect::<Vec<_>>();
+        if cell.children.is_empty() {
+            format!(
+                r#"     <TR><TD PORT="{port}" ID="{id}" {cell_styles} {href}>{name}</TD></TR>"#,
+                port = cell.port,
+                id = cell.id,
+                href = if cell.children.len() > 0 {
+                    "".to_string()
+                } else {
+                    Dot::css_classes_href(&classes)
+                },
+                name = escape_html(&cell.title),
+            )
+        } else {
+            let dot_cell = format!(
+                r#"     <TR><TD PORT="{port}" {cell_styles} {href}>{name}</TD></TR>"#,
+                port = cell.port,
+                href = if cell.children.len() > 0 {
+                    "".to_string()
+                } else {
+                    Dot::css_classes_href(&classes)
+                },
+                name = escape_html(&cell.title),
+            );
 
-                format!(
-                    r#"
-                <TR><TD BORDER="0" CELLPADDING="0">
-                <TABLE CELLSPACING="4" CELLPADDING="4" BORDER="0" CELLBORDER="1" STYLE="ROUNDED" BGCOLOR="green" {href}>
-                {}
-                </TABLE>
-                </TD></TR>
-                "#,
-                    iter::once(cell)
-                        .chain(children.into_iter())
-                        .collect::<Vec<_>>()
-                        .join("\n"),
-                    href = Dot::css_classes_href(&classes),
-                )
-            }
-
-            None => cell,
+            format!(
+                r#"
+            <TR><TD BORDER="0" CELLPADDING="0">
+            <TABLE ID="{id}" CELLSPACING="4" CELLPADDING="4" CELLBORDER="1" {table_styles} BGCOLOR="green" {href}>
+            {}
+            </TABLE>
+            </TD></TR>
+            "#,
+                iter::once(dot_cell)
+                    .chain(cell.children.iter().map(|item| Dot::process_cell(item)))
+                    .collect::<Vec<_>>()
+                    .join("\n"),
+                id = cell.id,
+                href = Dot::css_classes_href(&classes),
+            )
         }
     }
 

@@ -1,7 +1,7 @@
 use {
     super::Language,
     crate::{
-        graph::{CellStyle, TableStyle},
+        graph::Style,
         lsp_types::{DocumentSymbol, SymbolKind},
     },
 };
@@ -9,22 +9,17 @@ use {
 pub(crate) struct Java;
 
 impl Language for Java {
-    fn symbol_style(&self, symbol: &DocumentSymbol) -> Vec<CellStyle> {
+    fn symbol_style(&self, symbol: &DocumentSymbol) -> Vec<Style> {
         match symbol.kind {
             // different style for constructor?
             SymbolKind::Function | SymbolKind::Method | SymbolKind::Constructor => {
-                vec![CellStyle::CssClass("fn".to_string()), CellStyle::Rounded]
+                vec![Style::CssClass("fn".to_string()), Style::Rounded]
             }
             SymbolKind::Interface => {
-                let table_style = vec![TableStyle::CssClass("interface".to_string())];
-                vec![CellStyle::Table(table_style), CellStyle::Border(0)]
+                vec![Style::CssClass("interface".to_string()), Style::Rounded]
             }
             SymbolKind::Class => {
-                let table_style = vec![
-                    TableStyle::Border(0),
-                    TableStyle::CssClass("method-block".to_string()),
-                ];
-                vec![CellStyle::Table(table_style), CellStyle::Border(0)]
+                vec![Style::CssClass("method-block".to_string()), Style::Rounded]
             }
             _ => vec![],
         }

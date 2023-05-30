@@ -19,36 +19,34 @@ pub struct Edge {
     pub styles: Vec<EdgeStyle>,
 }
 
+#[derive(Debug)]
 pub struct Cell {
     pub id: String,
     pub port: String,
     pub title: String,
-    pub styles: Vec<CellStyle>,
+    pub styles: Vec<Style>,
     pub children: Vec<Cell>,
 }
 
+#[derive(Debug)]
 pub struct TableNode {
     pub id: String,
     pub title: String,
     pub sections: Vec<Cell>,
 }
 
+#[derive(Debug)]
 pub struct Subgraph {
     pub title: String,
     pub nodes: Vec<String>,
     pub subgraphs: Vec<Subgraph>,
 }
 
-pub enum TableStyle {
-    Border(u8),
-    CssClass(String),
-}
-
-pub enum CellStyle {
+#[derive(Debug)]
+pub enum Style {
     Border(u8),
     CssClass(String),
     Rounded,
-    Table(Vec<TableStyle>),
 }
 
 #[derive(Debug, Clone)]

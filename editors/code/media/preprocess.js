@@ -15,7 +15,9 @@ const removeClass = (parent, selector, ...classes) => {
 
 const getParent = (elem, className) => {
   while (elem && elem.tagName !== "svg") {
-    if (elem.classList.contains(className)) return elem;
+    if (elem.classList.contains(className)) {
+      return elem;
+    }
     elem = elem.parentNode;
   }
 
@@ -23,13 +25,13 @@ const getParent = (elem, className) => {
 };
 
 const isCell = (elem) => {
-  return getParent(elem, "cell") != null;
+  return getParent(elem, "cell") !== null;
 };
 const isEdge = (elem) => {
-  return getParent(elem, "edge") != null;
+  return getParent(elem, "edge") !== null;
 };
 const isNode = (elem) => {
-  return getParent(elem, "node") != null;
+  return getParent(elem, "node") !== null;
 };
 
 const preprocessSVG = (svg) => {
@@ -42,7 +44,7 @@ const preprocessSVG = (svg) => {
 
   forEachNode(svg, "a", (a) => {
     let urlComps = a.href.baseVal.split(".");
-    if (urlComps[0] != "remove_me_url") {
+    if (urlComps[0] !== "remove_me_url") {
       return;
     }
 
@@ -73,7 +75,7 @@ const onSelectEdge = (svg, target) => {
   let id = edge.id;
 
   let selectedEdgeID = svg.state.selectedEdgeID;
-  if (selectedEdgeID == id) {
+  if (selectedEdgeID === id) {
     svg.state.selectedEdgeID = null;
   } else {
     edge.classList.add("selected");
@@ -92,7 +94,7 @@ const onSelectCell = (svg, target) => {
   let id = cell.id;
 
   let selectedCellID = svg.state.selectedCellID;
-  if (selectedCellID == id) {
+  if (selectedCellID === id) {
     svg.state.selectedCellID = null;
   } else {
     addClass(svg, `g.edge[edge-from="${id}"]`, "incoming");
@@ -109,7 +111,7 @@ const onSelectNode = (svg, target) => {
   let id = node.id;
 
   let selectedNodeID = svg.state.selectedNodeID;
-  if (selectedNodeID == id) {
+  if (selectedNodeID === id) {
     svg.state.selectedNodeID = null;
   } else {
     addClass(svg, `g.edge[edge-from^="${id}:"]`, "incoming");
