@@ -86,17 +86,23 @@ export async function activate(context: vscode.ExtensionContext) {
 			const include = new vscode.RelativePattern(folder, `{${paths.join(',')}}`);
 
 			const exclude = `{${ignores.join(',')}}`;
-			return generateCallGraph(context, selectedFiles, include, exclude);
+			return generateCallGraph(context, folder.uri, selectedFiles, include, exclude);
 		});
 	});
 
 	context.subscriptions.push(disposable);
 }
 
-async function generateCallGraph(context: vscode.ExtensionContext, selectedFiles: vscode.Uri[], includePattern: vscode.RelativePattern, exclude: string) {
+async function generateCallGraph(
+	context: vscode.ExtensionContext,
+	root: vscode.Uri,
+	selectedFiles: vscode.Uri[],
+	includePattern: vscode.RelativePattern,
+	exclude: string
+) {
 	const crabviz = await import('../../../pkg');
 	crabviz.set_panic_hook();
-	let generator = new crabviz.GraphGenerator();
+	let generator = new crabviz.GraphGenerator(root.path);
 
 	const files = await vscode.workspace.findFiles(includePattern, exclude);
 	const allFiles = new Set(files.concat(selectedFiles));

@@ -20,6 +20,7 @@ use {
 
 struct GraphGenerator {
     // TODO: use a trie map to store files
+    root: String,
     files: HashMap<String, FileOutline>,
     next_file_id: PathId,
 
@@ -28,8 +29,9 @@ struct GraphGenerator {
 }
 
 impl GraphGenerator {
-    fn new() -> Self {
+    fn new(root: String) -> Self {
         Self {
+            root,
             files: HashMap::new(),
             next_file_id: 1,
             outgoing_calls: HashMap::new(),
@@ -81,39 +83,6 @@ impl GraphGenerator {
             })
             .collect();
         self.interfaces.insert(location, implementations);
-    }
-
-    fn subgraphs<'a, I>(&'a self, files: I) -> Vec<Subgraph>
-    where
-        I: Iterator<Item = &'a FileOutline>,
-    {
-        let mut dirs = BTreeMap::new();
-        for f in files {
-            let parent = f.path.parent().unwrap();
-            dirs.entry(parent)
-                .or_insert(Vec::new())
-                .push(f.path.clone());
-        }
-
-        fn subgraph_recursive(
-            parent: &Path,
-            dirs: &BTreeMap<&Path, Vec<PathBuf>>,
-            map: &HashMap<String, FileOutline>,
-        ) -> Vec<Subgraph> {
-            dirs.iter()
-                .filter(|(dir, _)| dir.parent().is_some_and(|p| p == parent))
-                .map(|(dir, v)| Subgraph {
-                    title: dir.file_name().unwrap().to_str().unwrap().into(),
-                    nodes: v
-                        .iter()
-                        .map(|path| map.get(path.to_str().unwrap()).unwrap().id.to_string())
-                        .collect::<Vec<_>>(),
-                    subgraphs: subgraph_recursive(dir, dirs, map),
-                })
-                .collect()
-        }
-
-        subgraph_recursive(dirs.keys().next().unwrap(), &dirs, &self.files)
     }
 
     pub fn generate_dot_source(&self) -> String {
@@ -193,6 +162,60 @@ impl GraphGenerator {
         let subgraphs = self.subgraphs(files.iter().map(|(_, f)| f));
 
         Dot::generate_dot_source(&tables, edges.into_values(), &subgraphs)
+    }
+
+    fn subgraphs<'a, I>(&'a self, files: I) -> Vec<Subgraph>
+    where
+        I: Iterator<Item = &'a FileOutline>,
+    {
+        let mut dirs = BTreeMap::new();
+        for f in files {
+            let parent = f.path.parent().unwrap();
+            dirs.entry(parent)
+                .or_insert(Vec::new())
+                .push(f.path.clone());
+        }
+
+        let mut subgraphs: Vec<Subgraph> = vec![];
+
+        dirs.iter().for_each(|(dir, files)| {
+            let nodes = files
+                .iter()
+                .map(|path| {
+                    self.files
+                        .get(path.to_str().unwrap())
+                        .unwrap()
+                        .id
+                        .to_string()
+                })
+                .collect::<Vec<_>>();
+
+            let dir = dir.strip_prefix(&self.root).unwrap_or(dir);
+            self.add_subgraph(dir, nodes, &mut subgraphs);
+        });
+
+        subgraphs
+    }
+
+    fn add_subgraph<'a, 'b, 'c>(
+        &'a self,
+        dir: &'b Path,
+        nodes: Vec<String>,
+        subgraphs: &'c mut Vec<Subgraph>,
+    ) {
+        let ancestor = subgraphs.iter_mut().find(|g| dir.starts_with(&g.title));
+
+        match ancestor {
+            None => subgraphs.push(Subgraph {
+                title: dir.to_str().unwrap().into(),
+                nodes,
+                subgraphs: vec![],
+            }),
+            Some(ancestor) => {
+                let dir = dir.strip_prefix(&ancestor.title).unwrap();
+                self.add_subgraph(dir, nodes, &mut ancestor.subgraphs);
+            }
+        }
     }
 
     fn collect_cell_ids(&self, cell: &Cell, ids: &mut HashSet<String>) {
