@@ -95,6 +95,7 @@ impl GraphGenerator {
             .unwrap_or("");
         let lang = lang::language_handler(ext);
 
+        // TODO: it's better to construct tables before fetching call hierarchy, so that we can skip the filtered out symbols.
         let tables = files
             .values()
             .map(|f| lang.file_repr(f))
@@ -148,8 +149,11 @@ impl GraphGenerator {
         calls
             .chain(implementations)
             .filter(|edge| {
-                let id = format!("{}:{}", edge.to_table_id, edge.to_node_id);
-                cell_ids.contains(&id)
+                // some cells may have been filtered out, so we need to check the `from_id`
+                let from_id = format!("{}:{}", edge.from_table_id, edge.from_node_id);
+                let to_id = format!("{}:{}", edge.to_table_id, edge.to_node_id);
+
+                cell_ids.contains(&from_id) && cell_ids.contains(&to_id)
             })
             .for_each(|edge| {
                 let key = format!(
