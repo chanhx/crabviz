@@ -8,7 +8,7 @@ pub(crate) use types::*;
 pub use wasm::GraphGeneratorWasm;
 use {
     crate::{
-        graph::{dot::Dot, Edge, EdgeStyle, Subgraph},
+        graph::{dot::Dot, Cell, Edge, EdgeStyle, Subgraph},
         lang,
         lsp_types::{CallHierarchyOutgoingCall, DocumentSymbol, Location, Position},
     },
@@ -131,40 +131,24 @@ impl GraphGenerator {
             .map(|f| lang.file_repr(f))
             .collect::<Vec<_>>();
 
-        let paths = files
-            .iter()
-            .map(|(_, outline)| &outline.path)
-            .collect::<HashSet<_>>();
+        let calls = self.outgoing_calls.iter().flat_map(|(caller, callee)| {
+            let from_table_id = files.get(&caller.path).unwrap().id.to_string();
+            let from_node_id = format!("{}_{}", caller.line, caller.character);
 
-        let calls = self
-            .outgoing_calls
-            .iter()
-            .flat_map(|(caller, callee)| {
-                let from_table_id = files.get(&caller.path).unwrap().id.to_string();
-                let from_node_id = format!("{}_{}", caller.line, caller.character);
-
-                callee
-                    .into_iter()
-                    .filter(|callee| {
-                        let path = callee.to.uri.path();
-                        let path = PathBuf::from(path);
-
-                        paths.contains(&path)
-                    })
-                    .map(|call| Edge {
-                        from_table_id: from_table_id.clone(),
-                        from_node_id: from_node_id.clone(),
-                        to_table_id: files.get(call.to.uri.path()).unwrap().id.to_string(),
-                        to_node_id: format!(
-                            "{}_{}",
-                            call.to.selection_range.start.line,
-                            call.to.selection_range.start.character
-                        ),
-                        styles: vec![],
-                    })
-                    .collect::<Vec<_>>()
+            callee.into_iter().filter_map(move |call| {
+                let to_table_id = files.get(call.to.uri.path())?.id.to_string();
+                Some(Edge {
+                    from_table_id: from_table_id.clone(),
+                    from_node_id: from_node_id.clone(),
+                    to_table_id,
+                    to_node_id: format!(
+                        "{}_{}",
+                        call.to.selection_range.start.line, call.to.selection_range.start.character
+                    ),
+                    styles: vec![],
+                })
             })
-            .collect::<Vec<_>>();
+        });
 
         let implementations = self
             .interfaces
@@ -173,29 +157,48 @@ impl GraphGenerator {
                 let to_table_id = files.get(&interface.path).unwrap().id.to_string();
                 let to_node_id = format!("{}_{}", interface.line, interface.character);
 
-                implementations
-                    .into_iter()
-                    .filter(|location| {
-                        let path = &location.path;
-                        let path = PathBuf::from(path);
-
-                        paths.contains(&path)
-                    })
-                    .map(|location| Edge {
-                        from_table_id: files.get(&location.path).unwrap().id.to_string(),
+                implementations.into_iter().filter_map(move |location| {
+                    let from_table_id = files.get(&location.path)?.id.to_string();
+                    Some(Edge {
+                        from_table_id,
                         from_node_id: format!("{}_{}", location.line, location.character),
                         to_table_id: to_table_id.clone(),
                         to_node_id: to_node_id.clone(),
                         styles: vec![EdgeStyle::CssClass("impl".to_string())],
                     })
-                    .collect::<Vec<_>>()
-            })
-            .collect::<Vec<_>>();
+                })
+            });
 
-        let edges = [calls, implementations].concat();
+        let mut cell_ids = HashSet::new();
+        tables
+            .iter()
+            .flat_map(|tbl| tbl.sections.iter())
+            .for_each(|cell| self.collect_cell_ids(cell, &mut cell_ids));
+
+        let mut edges = HashMap::new();
+        calls
+            .chain(implementations)
+            .filter(|edge| {
+                let id = format!("{}:{}", edge.to_table_id, edge.to_node_id);
+                cell_ids.contains(&id)
+            })
+            .for_each(|edge| {
+                let key = format!(
+                    "{}:{}-{}:{}",
+                    edge.from_table_id, edge.from_node_id, edge.to_table_id, edge.to_node_id
+                );
+                edges.entry(key).or_insert(edge);
+            });
 
         let subgraphs = self.subgraphs(files.iter().map(|(_, f)| f));
 
-        Dot::generate_dot_source(&tables, &edges, &subgraphs)
+        Dot::generate_dot_source(&tables, edges.into_values(), &subgraphs)
+    }
+
+    fn collect_cell_ids(&self, cell: &Cell, ids: &mut HashSet<String>) {
+        ids.insert(cell.id.clone());
+        cell.children
+            .iter()
+            .for_each(|c| self.collect_cell_ids(c, ids));
     }
 }

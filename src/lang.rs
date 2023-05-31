@@ -9,7 +9,6 @@ use {
         graph::{Cell, Style, TableNode},
         lsp_types::{DocumentSymbol, SymbolKind},
     },
-    std::path::Path,
 };
 
 pub(crate) trait Language {
@@ -17,7 +16,8 @@ pub(crate) trait Language {
         let sections = file
             .symbols
             .iter()
-            .map(|symbol| self.symbol_repr(file.id, symbol, &file.path))
+            .filter(|symbol| self.filter_symbol(symbol))
+            .map(|symbol| self.symbol_repr(file.id, symbol))
             .collect();
 
         TableNode {
@@ -27,14 +27,14 @@ pub(crate) trait Language {
         }
     }
 
-    fn symbol_repr(&self, file_id: u32, symbol: &DocumentSymbol, path: &Path) -> Cell {
+    fn symbol_repr(&self, file_id: u32, symbol: &DocumentSymbol) -> Cell {
         let styles = self.symbol_style(symbol);
 
         let children = symbol
             .children
             .iter()
             .filter(|symbol| self.filter_symbol(symbol))
-            .map(|symbol| self.symbol_repr(file_id, symbol, path))
+            .map(|symbol| self.symbol_repr(file_id, symbol))
             .collect();
 
         let port = format!(
@@ -54,7 +54,7 @@ pub(crate) trait Language {
 
     fn filter_symbol(&self, symbol: &DocumentSymbol) -> bool {
         match symbol.kind {
-            SymbolKind::Field | SymbolKind::Constant => false,
+            SymbolKind::Constant | SymbolKind::Field | SymbolKind::EnumMember => false,
             _ => true,
         }
     }

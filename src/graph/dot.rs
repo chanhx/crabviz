@@ -55,12 +55,15 @@ pub(crate) struct Dot;
 // }
 
 impl Dot {
-    pub fn generate_dot_source(
+    pub fn generate_dot_source<E>(
         tables: &[TableNode],
         // nodes: &[Node],
-        edges: &[Edge],
+        edges: E,
         subgraphs: &[Subgraph],
-    ) -> String {
+    ) -> String
+    where
+        E: Iterator<Item = Edge>,
+    {
         let tables = tables
             .iter()
             .map(|table| {
@@ -186,9 +189,11 @@ digraph {{
         }
     }
 
-    fn process_edges(edges: &[Edge]) -> String {
+    fn process_edges<E>(edges: E) -> String
+    where
+        E: Iterator<Item = Edge>,
+    {
         edges
-            .iter()
             .map(|edge| {
                 let from = format!(r#"{}:"{}""#, edge.from_table_id, edge.from_node_id);
                 let to = format!(r#"{}:"{}""#, edge.to_table_id, edge.to_node_id);
