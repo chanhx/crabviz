@@ -176,6 +176,8 @@ async function generateCallGraph(
 		],
 		enableScripts: true
 	});
+	panel.iconPath = vscode.Uri.joinPath(context.extensionUri, 'media', 'icon.svg');
+
 	const dot = generator.generate_dot_source();
 
 	await activateWebviewPanel(context, panel, dot);
