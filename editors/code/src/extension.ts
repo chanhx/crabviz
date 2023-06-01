@@ -17,6 +17,11 @@ export async function activate(context: vscode.ExtensionContext) {
 	let disposable = vscode.commands.registerCommand('crabviz.generateCallGraph', async (contextSelection: vscode.Uri, allSelections: vscode.Uri[]) => {
 		let cancelled = false;
 
+		// selecting no file is actually selecting the entire workspace
+		if (allSelections.length === 0) {
+			allSelections.push(contextSelection);
+		}
+
 		const ignores = await readIgnoreRules();
 		const selectedFiles: vscode.Uri[] = [];
 
@@ -82,7 +87,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			location: vscode.ProgressLocation.Window,
 			title: "Crabviz: Generating call graph",
 		}, _ => {
-			let paths = scanDirectories.map(dir => extensionsByLanguage[lang].map(ext => `${dir}/**/*.${ext}`).join(','));
+			let paths = scanDirectories.map(dir => extensionsByLanguage[lang].map(ext => dir.length > 0 ? `${dir}/**/*.${ext}` : `**/*.${ext}`).join(','));
 			const include = new vscode.RelativePattern(folder, `{${paths.join(',')}}`);
 
 			const exclude = `{${ignores.join(',')}}`;
@@ -192,7 +197,7 @@ async function collectFileExtensions(
 ) {
 	let files: vscode.Uri[];
 	let exclude = undefined;
-	let paths = scanDirectories.map(dir => `${dir}/**/*.*`);
+	let paths = scanDirectories.map(dir => dir.length > 0 ? `${dir}/**/*.*` : `**/*.*`);
 	const include = new vscode.RelativePattern(folder, `{${paths.join(',')}}`);
 
 	while (true) {
