@@ -54,7 +54,10 @@ pub(crate) trait Language {
 
     fn filter_symbol(&self, symbol: &DocumentSymbol) -> bool {
         match symbol.kind {
-            SymbolKind::Constant | SymbolKind::Field | SymbolKind::EnumMember => false,
+            SymbolKind::Constant
+            | SymbolKind::Variable
+            | SymbolKind::Field
+            | SymbolKind::EnumMember => false,
             _ => true,
         }
     }
