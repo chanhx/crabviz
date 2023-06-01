@@ -19,6 +19,17 @@
 
 /* background */
 
+html {
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+}
+
 body,
 svg {
   width: 100%;
@@ -155,14 +166,13 @@ svg {
 
 /* langugage */
 
-.interface > :first-child {
+.interface :is(path, polygon):first-child {
+  fill: cornsilk;
+}
+.interface > :is(path, polygon):last-of-type {
   stroke: black;
   stroke-width: 1.13pt;
   stroke-dasharray: 5, 3;
-}
-
-.interface :is(path, polygon):first-child {
-  fill: cornsilk;
 }
 
 .module :is(path, polygon):first-child {
