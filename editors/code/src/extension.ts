@@ -196,12 +196,13 @@ async function collectFileExtensions(
 	token: vscode.CancellationToken
 ) {
 	let files: vscode.Uri[];
-	let exclude = undefined;
+
 	let paths = scanDirectories.map(dir => dir.length > 0 ? `${dir}/**/*.*` : `**/*.*`);
 	const include = new vscode.RelativePattern(folder, `{${paths.join(',')}}`);
+	let hiddenFiles = [];
 
 	while (true) {
-		exclude = `{${Array.from(extensions).concat(ignoredExtensions).map(ext => `**/*.${ext}`).concat(ignores).join(',')}}`;
+		let exclude = `{${Array.from(extensions).concat(ignoredExtensions).map(ext => `**/*.${ext}`).concat(ignores).concat(hiddenFiles).join(',')}}`;
 
 		files = await vscode.workspace.findFiles(include, exclude, 1, token);
 		if (files.length <= 0 || token.isCancellationRequested) {
@@ -209,7 +210,12 @@ async function collectFileExtensions(
 		}
 
 		const ext = path.extname(files[0].path).substring(1);
-		extensions.add(ext);
+		if (ext.length > 0) {
+			extensions.add(ext);
+		} else {
+			let relativePath = path.relative(folder.uri.path, files[0].path);
+			hiddenFiles.push(relativePath);
+		}
 	}
 }
 
