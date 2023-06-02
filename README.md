@@ -1,6 +1,6 @@
 # Crabviz
 
-a static code analysis tool that generates interactive call graph
+A static code analysis tool that generates interactive call graph.
 
 ## Introdution
 
@@ -10,22 +10,22 @@ you can generate call graph with Crabviz for your project.
 
 ## Features
 
-* show types, methods and functions, and group them by file
-* display function calling relationships and interface implementation relationships
+* Show types, methods, functions and interfaces, grouped by file
+* Display function calling relationships and interface implementation relationships
+* Specify folders and files for analysis
 
 ## Preview
 
-![preview](https://user-images.githubusercontent.com/20551552/238906454-8bc073c1-b593-4a99-84f5-5bfdd9525d7c.gif)
+![preview](https://user-images.githubusercontent.com/20551552/242812058-60584f59-a8f0-4a56-90eb-373c3f3b8cd5.gif)
 
 ## Editors
 
-Because Crabviz utilizes the capabilities of LSP server, it is more suitable as an editor extension than a command line tool.
+Because Crabviz utilizes the capabilities of LSP server, it is better suited as an IDE/editor extension instead of a standalone command line tool.
 
 It is currently available in [VS Code](editors/code/), and PRs for other editors are welcome.
 
 ## TODO
 
-* Specify files to scan and ignore
 * Collapse folder
 * Beautify UI
 
