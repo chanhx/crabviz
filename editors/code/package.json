@@ -7,6 +7,7 @@
   "author": {
     "name": "Chan HoCheung"
   },
+  "icon": "media/icon.png",
   "repository": {
     "url": "https://github.com/chanhx/crabviz"
   },
