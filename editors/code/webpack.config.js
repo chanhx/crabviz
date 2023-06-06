@@ -38,7 +38,15 @@ const extensionConfig = {
             loader: 'ts-loader'
           }
         ]
-      }
+      },
+      // {
+      //   test: /\.wasm$/,
+      //   type: "javascript/auto",
+      //   loader: 'file-loader',
+      //   options: {
+      //     name: '[name].[ext]'
+      //   }
+      // }
     ]
   },
   devtool: 'nosources-source-map',
@@ -48,6 +56,9 @@ const extensionConfig = {
   plugins: [
     new WasmPackPlugin({
       crateDirectory: path.resolve(__dirname, '../..'),
+      outDir: path.resolve(__dirname, 'crabviz'),
+      // outName: 'crabviz',
+      // extraArgs: '--target nodejs',
     }),
   ],
   experiments: {
