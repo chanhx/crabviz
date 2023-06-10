@@ -131,7 +131,24 @@ const reset = (svg) => {
 };
 
 const addListeners = (svg) => {
+  const delta = 6;
+  let startX;
+  let startY;
+
+  svg.addEventListener('mousedown', (event) => {
+    startX = event.pageX;
+    startY = event.pageY;
+  });
+
   svg.addEventListener("mouseup", (event) => {
+    const diffX = Math.abs(event.pageX - startX);
+    const diffY = Math.abs(event.pageY - startY);
+
+    if (diffX > delta || diffY > delta) {
+      // a mouse drag event
+      return;
+    }
+
     reset(svg);
 
     let target = event.target;
