@@ -2,8 +2,7 @@
 
 All notable changes to the "crabviz" extension will be documented in this file.
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+## 0.1.1 (2023.6.17)
 
-## [Unreleased]
-
-- Initial release
+### Fixed
+* Focus won't get cleared when dragging the graph

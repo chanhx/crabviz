@@ -2,7 +2,7 @@
   "name": "crabviz",
   "displayName": "Crabviz",
   "description": "interactive call graph generator",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "chanhx",
   "author": {
     "name": "Chan HoCheung"
@@ -16,7 +16,7 @@
   },
   "categories": [
     "Programming Languages",
-    "Other"
+    "Visualization"
   ],
   "keywords": [
     "call graph"
