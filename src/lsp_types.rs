@@ -136,16 +136,15 @@ pub struct CallHierarchyItem {
     pub data: Option<Value>,
 }
 
-/// Represents an outgoing call, e.g. calling a getter from a method or a method from a constructor etc.
+/// Represents an incoming call, e.g. a caller of a method or constructor.
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct CallHierarchyOutgoingCall {
-    /// The item that is called.
-    pub to: CallHierarchyItem,
+pub struct CallHierarchyIncomingCall {
+    /// The item that makes the call.
+    pub from: CallHierarchyItem,
 
-    /// The range at which this item is called. This is the range relative to the caller, e.g the item
-    /// passed to [`provideCallHierarchyOutgoingCalls`](#CallHierarchyItemProvider.provideCallHierarchyOutgoingCalls)
-    /// and not [`this.to`](#CallHierarchyOutgoingCall.to).
+    /// The range at which at which the calls appears. This is relative to the caller
+    /// denoted by [`this.from`](#CallHierarchyIncomingCall.from).
     pub from_ranges: Vec<Range>,
 }
 

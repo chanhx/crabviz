@@ -57,9 +57,9 @@ export class Generator {
           }
 
           for await (const item of items) {
-            await vscode.commands.executeCommand<vscode.CallHierarchyOutgoingCall[]>('vscode.provideOutgoingCalls', item)
-              .then(outgoings => {
-                inner.add_outgoing_calls(file.path, item.selectionRange.start, outgoings);
+            await vscode.commands.executeCommand<vscode.CallHierarchyIncomingCall[]>('vscode.provideIncomingCalls', item)
+              .then(calls => {
+                inner.add_incoming_calls(file.path, item.selectionRange.start, calls);
               })
               .then(undefined, err => {
                 console.error(err);
