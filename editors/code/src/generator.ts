@@ -21,15 +21,25 @@ export class Generator {
   public async generateCallGraph(
     selectedFiles: vscode.Uri[],
     includePattern: vscode.RelativePattern,
-    exclude: string
+    exclude: string,
+    search: boolean
   ): Promise<string> {
     // Help needed: import the module every time the method is called has some performance implications.
     // Any best practices for loading wasm modules in VS Code extension?
     const crabviz = await import('../crabviz');
     const inner = new crabviz.GraphGenerator(this.root.path);
 
-    const files = await vscode.workspace.findFiles(includePattern, exclude);
-    const allFiles = new Set(files.concat(selectedFiles));
+    let allFiles = new Set(selectedFiles);
+
+    /* 
+     * only search for files if directories have been selected
+     * this bypasses the ENAMETOOLONG for massive projects when selecting individual files
+     */
+    if (search) {
+      const files = await vscode.workspace.findFiles(includePattern, exclude);
+      allFiles = new Set(files.concat(selectedFiles));
+    }
+    
 
     for await (const file of allFiles) {
       // retry several times if the LSP server is not ready
@@ -40,7 +50,14 @@ export class Generator {
       }
 
       let lspSymbols = symbols.map(convertSymbol);
-      inner.add_file(file.path, lspSymbols);
+
+      let correctedPath = file.path;
+
+      // fixup Windows path, for some reason the selector returns paths with lower case drive letters, everywhere else uses uppercase
+      if (file.path.charAt(2) === ":") {
+        correctedPath = file.path.charAt(0) + file.path.charAt(1).toUpperCase() + file.path.slice(2);
+      }
+      inner.add_file(correctedPath, lspSymbols);
 
       while (symbols.length > 0) {
         for await (const symbol of symbols) {
@@ -59,7 +76,7 @@ export class Generator {
           for await (const item of items) {
             await vscode.commands.executeCommand<vscode.CallHierarchyOutgoingCall[]>('vscode.provideOutgoingCalls', item)
               .then(outgoings => {
-                inner.add_outgoing_calls(file.path, item.selectionRange.start, outgoings);
+                inner.add_outgoing_calls(correctedPath, item.selectionRange.start, outgoings);
               })
               .then(undefined, err => {
                 console.error(err);
@@ -82,7 +99,7 @@ export class Generator {
                 } else {
                   locations = result as vscode.Location[];
                 }
-                inner.add_interface_implementations(file.path, symbol.selectionRange.start, locations);
+                inner.add_interface_implementations(correctedPath, symbol.selectionRange.start, locations);
               })
               .then(undefined, err => {
                 console.log(err);

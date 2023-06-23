@@ -89,7 +89,9 @@ export async function activate(context: vscode.ExtensionContext) {
 			const include = new vscode.RelativePattern(folder, `{${paths.join(',')}}`);
 			const exclude = `{${ignores.join(',')}}`;
 
-			return generator.generateCallGraph(selectedFiles, include, exclude);
+			let search = scanDirectories.length > 0;
+
+			return generator.generateCallGraph(selectedFiles, include, exclude, search);
 		})
 		.then(svg => showCallGraph(context, svg));
 	});
