@@ -2,7 +2,7 @@
   "name": "crabviz",
   "displayName": "Crabviz",
   "description": "interactive call graph generator",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "publisher": "chanhx",
   "author": {
     "name": "Chan HoCheung"
@@ -23,11 +23,18 @@
   ],
   "activationEvents": [],
   "main": "./dist/extension.js",
+  "enabledApiProposals": [
+    "contribWebviewContext"
+  ],
   "contributes": {
     "commands": [
       {
         "command": "crabviz.generateCallGraph",
         "title": "Crabviz: Generate Call Graph"
+      },
+      {
+        "command": "crabviz.exportCallGraph",
+        "title": "Export Call Graph"
       }
     ],
     "menus": {
@@ -35,12 +42,22 @@
         {
           "command": "crabviz.generateCallGraph",
           "when": "never"
+        },
+        {
+          "command": "crabviz.exportCallGraph",
+          "when": "never"
         }
       ],
       "explorer/context": [
         {
           "command": "crabviz.generateCallGraph",
           "group": "crabviz"
+        }
+      ],
+      "webview/context": [
+        {
+          "command": "crabviz.exportCallGraph",
+          "when": "webviewId == 'crabviz.callgraph'"
         }
       ]
     }
