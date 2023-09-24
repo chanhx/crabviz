@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 
 import { Generator } from './generator';
-import { showCallGraph } from './webview';
+import { CallGraphPanel } from './webview';
 import { groupFileExtensions } from './utils/languages';
 import { ignoredExtensions, readIgnoreRules } from './utils/ignores';
 
@@ -91,10 +91,17 @@ export async function activate(context: vscode.ExtensionContext) {
 
 			return generator.generateCallGraph(selectedFiles, include, exclude);
 		})
-		.then(svg => showCallGraph(context, svg));
+		.then(svg => {
+			const panel = new CallGraphPanel(context.extensionUri);
+			panel.showCallGraph(svg);
+		});
 	});
 
 	context.subscriptions.push(disposable);
+
+	context.subscriptions.push(vscode.commands.registerCommand('crabviz.exportCallGraph', () => {
+		CallGraphPanel.currentPanel?.exportSVG();
+	}));
 }
 
 async function collectFileExtensions(

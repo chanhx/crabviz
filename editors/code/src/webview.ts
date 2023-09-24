@@ -1,46 +1,135 @@
 import * as vscode from 'vscode';
 
-export function showCallGraph(context: vscode.ExtensionContext, svg: string) {
-	const panel = vscode.window.createWebviewPanel('crabviz', 'crabviz', vscode.ViewColumn.One, {
-		localResourceRoots: [
-			vscode.Uri.joinPath(context.extensionUri, 'media')
-		],
-		enableScripts: true
-	});
+export class CallGraphPanel {
+	public static readonly viewType = 'crabviz.callgraph';
 
-	panel.iconPath = vscode.Uri.joinPath(context.extensionUri, 'media', 'icon.svg');
-	panel.webview.html = renderContent(context, panel.webview, svg);
-}
+	public static currentPanel: CallGraphPanel | null = null;
+	private static num = 1;
 
-function renderContent(context: vscode.ExtensionContext, webview: vscode.Webview, svg: String) {
-	const resourceUri = vscode.Uri.joinPath(context.extensionUri, 'media');
+	private readonly _panel: vscode.WebviewPanel;
+	private readonly _extensionUri: vscode.Uri;
+	private _disposables: vscode.Disposable[] = [];
 
-	const stylesPath = vscode.Uri.joinPath(resourceUri, 'styles.css');
-	const preprocessJsPath = vscode.Uri.joinPath(resourceUri, 'preprocess.js');
-	const svgPanZoomJsPath = vscode.Uri.joinPath(resourceUri, 'svg-pan-zoom.min.js');
+	public constructor(extensionUri: vscode.Uri) {
+		this._extensionUri = extensionUri;
 
-	const stylesUri = webview.asWebviewUri(stylesPath);
-	const preprossessJsUri = webview.asWebviewUri(preprocessJsPath);
-	const svgPanZoomJsUri = webview.asWebviewUri(svgPanZoomJsPath);
+		const panel = vscode.window.createWebviewPanel(CallGraphPanel.viewType, `Crabviz #${CallGraphPanel.num}`, vscode.ViewColumn.One, {
+			localResourceRoots: [
+				vscode.Uri.joinPath(this._extensionUri, 'media')
+			],
+			enableScripts: true
+		});
 
-	const nonce = getNonce();
+		panel.iconPath = vscode.Uri.joinPath(this._extensionUri, 'media', 'icon.svg');
 
-  return `<!DOCTYPE html>
+		this._panel = panel;
+
+		this._panel.webview.onDidReceiveMessage(
+			message => {
+				switch (message.command) {
+					case 'saveImage':
+						this.saveSVG(message.svg);
+
+						break;
+				}
+			},
+			null,
+			this._disposables
+		);
+
+		this._panel.onDidChangeViewState(
+			e => {
+				if (panel.active) {
+					CallGraphPanel.currentPanel = this;
+				} else if (CallGraphPanel.currentPanel !== this) {
+					return;
+				} else {
+					CallGraphPanel.currentPanel = null;
+				}
+			},
+			null,
+			this._disposables
+		);
+
+		this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
+
+		CallGraphPanel.num += 1;
+	}
+
+	public dispose() {
+		if (CallGraphPanel.currentPanel === this) {
+			CallGraphPanel.currentPanel = null;
+		}
+
+		while (this._disposables.length) {
+			const x = this._disposables.pop();
+			if (x) {
+				x.dispose();
+			}
+		}
+	}
+
+	public showCallGraph(svg: string) {
+		const resourceUri = vscode.Uri.joinPath(this._extensionUri, 'media');
+
+		const stylesPath = vscode.Uri.joinPath(resourceUri, 'styles.css');
+		const preprocessJsPath = vscode.Uri.joinPath(resourceUri, 'preprocess.js');
+		const svgPanZoomJsPath = vscode.Uri.joinPath(resourceUri, 'svg-pan-zoom.min.js');
+		const exportJsPath = vscode.Uri.joinPath(resourceUri, 'export.js');
+
+		const webview = this._panel.webview;
+		const stylesUri = webview.asWebviewUri(stylesPath);
+		const preprossessJsUri = webview.asWebviewUri(preprocessJsPath);
+		const svgPanZoomJsUri = webview.asWebviewUri(svgPanZoomJsPath);
+		const exportJsUri = webview.asWebviewUri(exportJsPath);
+
+		CallGraphPanel.currentPanel = this;
+
+		const nonce = getNonce();
+
+		this._panel.webview.html = `<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+		<meta charset="UTF-8">
 		<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; img-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<link rel="stylesheet" href="${stylesUri}">
 		<script nonce="${nonce}" src="${svgPanZoomJsUri}"></script>
-    <title>crabviz</title>
+		<script nonce="${nonce}" src="${exportJsUri}"></script>
+		<title>crabviz</title>
 </head>
-<body>
-<body>
-    ${svg}
+<body data-vscode-context='{ "preventDefaultContextMenuItems": true }'>
+		${svg}
 		<script nonce="${nonce}" src="${preprossessJsUri}"></script>
 </body>
 </html>`;
+	}
+
+	public exportSVG() {
+		this._panel.webview.postMessage({ command: 'export' });
+	}
+
+	saveSVG(svg: string) {
+		const writeData = Buffer.from(svg, 'utf8');
+
+		vscode.window.showSaveDialog({
+			saveLabel: "export",
+			filters: { 'Images': ['svg'] },
+		}).then((fileUri) => {
+			if (fileUri) {
+				try {
+					vscode.workspace.fs.writeFile(fileUri, writeData)
+						.then(() => {
+							console.log("File Saved");
+						}, (err : any) => {
+							vscode.window.showErrorMessage(`Error on writing file: ${err}`);
+						});
+				} catch (err) {
+					vscode.window.showErrorMessage(`Error on writing file: ${err}`);
+				}
+			}
+		});
+	}
 }
 
 function getNonce() {
