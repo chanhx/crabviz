@@ -101,25 +101,29 @@ impl GraphGenerator {
             .map(|f| lang.file_repr(f))
             .collect::<Vec<_>>();
 
-        let calls = self.incoming_calls.iter().flat_map(|(callee, calls)| {
-            let to_table_id = files.get(&callee.path).unwrap().id.to_string();
-            let to_node_id = format!("{}_{}", callee.line, callee.character);
+        let calls = self
+            .incoming_calls
+            .iter()
+            .filter(|(callee, _)| files.contains_key(&callee.path))
+            .flat_map(|(callee, calls)| {
+                let to_table_id = files.get(&callee.path).unwrap().id.to_string();
+                let to_node_id = format!("{}_{}", callee.line, callee.character);
 
-            calls.into_iter().filter_map(move |call| {
-                let from_table_id = files.get(call.from.uri.path())?.id.to_string();
-                Some(Edge {
-                    from_table_id: from_table_id.clone(),
-                    from_node_id: format!(
-                        "{}_{}",
-                        call.from.selection_range.start.line,
-                        call.from.selection_range.start.character
-                    ),
-                    to_table_id: to_table_id.clone(),
-                    to_node_id: to_node_id.clone(),
-                    styles: vec![],
+                calls.into_iter().filter_map(move |call| {
+                    let from_table_id = files.get(call.from.uri.path())?.id.to_string();
+                    Some(Edge {
+                        from_table_id: from_table_id.clone(),
+                        from_node_id: format!(
+                            "{}_{}",
+                            call.from.selection_range.start.line,
+                            call.from.selection_range.start.character
+                        ),
+                        to_table_id: to_table_id.clone(),
+                        to_node_id: to_node_id.clone(),
+                        styles: vec![],
+                    })
                 })
-            })
-        });
+            });
 
         let implementations = self
             .interfaces
