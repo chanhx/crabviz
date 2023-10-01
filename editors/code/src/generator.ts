@@ -1,21 +1,19 @@
 import * as vscode from 'vscode';
 
-// require('../crabviz/crabviz_bg.wasm');
-// import * as crabviz from '../crabviz';
-
 import { graphviz } from '@hpcc-js/wasm';
 import { retryCommand } from './utils/command';
 import { convertSymbol } from './utils/lspTypesConversion';
+import { set_panic_hook, GraphGenerator  } from '../crabviz';
 
-// crabviz.set_panic_hook();
+await import('../crabviz');
+
+set_panic_hook();
 
 export class Generator {
-  private root: vscode.Uri;
-  // private inner: crabviz.GraphGenerator;
+  private inner: GraphGenerator;
 
   public constructor(root: vscode.Uri) {
-    this.root = root;
-    // inner = new crabviz.GraphGenerator(root.path);
+    this.inner = new GraphGenerator(root.path);
   }
 
   public async generateCallGraph(
@@ -23,11 +21,6 @@ export class Generator {
     includePattern: vscode.RelativePattern,
     exclude: string
   ): Promise<string> {
-    // Help needed: import the module every time the method is called has some performance implications.
-    // Any best practices for loading wasm modules in VS Code extension?
-    const crabviz = await import('../crabviz');
-    const inner = new crabviz.GraphGenerator(this.root.path);
-
     const files = await vscode.workspace.findFiles(includePattern, exclude);
     const allFiles = new Set(files.concat(selectedFiles));
 
@@ -40,7 +33,7 @@ export class Generator {
       }
 
       let lspSymbols = symbols.map(convertSymbol);
-      inner.add_file(file.path, lspSymbols);
+      this.inner.add_file(file.path, lspSymbols);
 
       while (symbols.length > 0) {
         for await (const symbol of symbols) {
@@ -59,7 +52,7 @@ export class Generator {
           for await (const item of items) {
             await vscode.commands.executeCommand<vscode.CallHierarchyIncomingCall[]>('vscode.provideIncomingCalls', item)
               .then(calls => {
-                inner.add_incoming_calls(file.path, item.selectionRange.start, calls);
+                this.inner.add_incoming_calls(file.path, item.selectionRange.start, calls);
               })
               .then(undefined, err => {
                 console.error(err);
@@ -82,7 +75,7 @@ export class Generator {
                 } else {
                   locations = result as vscode.Location[];
                 }
-                inner.add_interface_implementations(file.path, symbol.selectionRange.start, locations);
+                this.inner.add_interface_implementations(file.path, symbol.selectionRange.start, locations);
               })
               .then(undefined, err => {
                 console.log(err);
@@ -94,7 +87,7 @@ export class Generator {
       }
     }
 
-    const dot = inner.generate_dot_source();
+    const dot = this.inner.generate_dot_source();
 
     return graphviz.dot(dot);
   }

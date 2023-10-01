@@ -5,7 +5,7 @@ mod wasm;
 mod tests;
 
 pub(crate) use types::*;
-pub use wasm::GraphGeneratorWasm;
+pub use wasm::{set_panic_hook, GraphGeneratorWasm};
 use {
     crate::{
         graph::{dot::Dot, Cell, Edge, EdgeStyle, Subgraph},
