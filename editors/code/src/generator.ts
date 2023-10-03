@@ -9,6 +9,8 @@ await import('../crabviz');
 
 set_panic_hook();
 
+const FUNC_KINDS: readonly vscode.SymbolKind[] = [vscode.SymbolKind.Function, vscode.SymbolKind.Method, vscode.SymbolKind.Constructor];
+
 export class Generator {
   private inner: GraphGenerator;
 
@@ -24,7 +26,12 @@ export class Generator {
     const files = await vscode.workspace.findFiles(includePattern, exclude);
     const allFiles = new Set(files.concat(selectedFiles));
 
-    for await (const file of allFiles) {
+    const sortedFiles = Array.from(allFiles);
+    sortedFiles.sort((f1, f2) => f2.path.split('/').length - f1.path.split('/').length);
+
+    const funcMap = new Map<string, Set<string>>(sortedFiles.map(f => [f.path, new Set()]));
+
+    for await (const file of sortedFiles) {
       // retry several times if the LSP server is not ready
       let symbols = await retryCommand<vscode.DocumentSymbol[]>(5, 600, 'vscode.executeDocumentSymbolProvider', file);
       if (symbols === undefined) {
@@ -37,29 +44,21 @@ export class Generator {
 
       while (symbols.length > 0) {
         for await (const symbol of symbols) {
-          if (![vscode.SymbolKind.Function, vscode.SymbolKind.Method, vscode.SymbolKind.Constructor, vscode.SymbolKind.Interface].includes(symbol.kind)) {
-            continue;
-          }
+          const symbolStart = symbol.selectionRange.start;
 
-          let items: vscode.CallHierarchyItem[];
-          try {
-            items = await vscode.commands.executeCommand<vscode.CallHierarchyItem[]>('vscode.prepareCallHierarchy', file, symbol.selectionRange.start);
-          } catch (e) {
-            vscode.window.showErrorMessage(`${e}\n${file}\n${symbol.name}`);
-            continue;
-          }
+          if (FUNC_KINDS.includes(symbol.kind) && !hasFunc(funcMap, file.path, symbolStart)) {
+            let items: vscode.CallHierarchyItem[];
+            try {
+              items = await vscode.commands.executeCommand<vscode.CallHierarchyItem[]>('vscode.prepareCallHierarchy', file, symbolStart);
+            } catch (e) {
+              vscode.window.showErrorMessage(`${e}\n${file}\n${symbol.name}`);
+              continue;
+            }
 
-          for await (const item of items) {
-            await vscode.commands.executeCommand<vscode.CallHierarchyIncomingCall[]>('vscode.provideIncomingCalls', item)
-              .then(calls => {
-                this.inner.add_incoming_calls(file.path, item.selectionRange.start, calls);
-              })
-              .then(undefined, err => {
-                console.error(err);
-              });
-          }
-
-          if (symbol.kind === vscode.SymbolKind.Interface) {
+            for await (const item of items) {
+              await this.resolveCalls(item, funcMap);
+            }
+          } else if (symbol.kind === vscode.SymbolKind.Interface) {
             await vscode.commands.executeCommand<vscode.Location[] | vscode.LocationLink[]>('vscode.executeImplementationProvider', file, symbol.selectionRange.start)
               .then(result => {
                 if (result.length <= 0) {
@@ -91,4 +90,28 @@ export class Generator {
 
     return graphviz.dot(dot);
   }
+
+  async resolveCalls(item: vscode.CallHierarchyItem, funcMap: Map<string, Set<string>>) {
+    await vscode.commands.executeCommand<vscode.CallHierarchyIncomingCall[]>('vscode.provideIncomingCalls', item)
+      .then(calls => {
+        const symbolStart = item.selectionRange.start;
+        this.inner.add_incoming_calls(item.uri.path, symbolStart, calls);
+
+        funcMap.get(item.uri.path)?.add(`${symbolStart}`);
+
+        calls
+          .filter(call => {
+            const funcs = funcMap.get(call.from.uri.path);
+            return funcs !== undefined && !funcs.has(`${call.from.selectionRange.start}`);
+          })
+          .forEach(async call => await this.resolveCalls(call.from, funcMap));
+      })
+      .then(undefined, err => {
+        console.error(err);
+      });
+  }
+}
+
+function hasFunc(funcMap: Map<string, Set<string>>, filePath: string, position: vscode.Position): boolean {
+  return funcMap.get(filePath)?.has(`${position}`) ?? false;
 }
