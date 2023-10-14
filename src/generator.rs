@@ -10,7 +10,10 @@ use {
     crate::{
         graph::{dot::Dot, Cell, Edge, EdgeStyle, Subgraph},
         lang,
-        lsp_types::{CallHierarchyIncomingCall, DocumentSymbol, Location, Position},
+        lsp_types::{
+            CallHierarchyIncomingCall, CallHierarchyOutgoingCall, DocumentSymbol, Location,
+            Position,
+        },
     },
     std::{
         collections::{hash_map::Entry, BTreeMap, HashMap, HashSet},
@@ -25,6 +28,7 @@ struct GraphGenerator {
     next_file_id: PathId,
 
     incoming_calls: HashMap<SymbolLocation, Vec<CallHierarchyIncomingCall>>,
+    outgoing_calls: HashMap<SymbolLocation, Vec<CallHierarchyOutgoingCall>>,
     interfaces: HashMap<SymbolLocation, Vec<SymbolLocation>>,
 }
 
@@ -35,6 +39,7 @@ impl GraphGenerator {
             files: HashMap::new(),
             next_file_id: 1,
             incoming_calls: HashMap::new(),
+            outgoing_calls: HashMap::new(),
             interfaces: HashMap::new(),
         }
     }
@@ -69,6 +74,16 @@ impl GraphGenerator {
         self.incoming_calls.insert(location, calls);
     }
 
+    fn add_outgoing_calls(
+        &mut self,
+        file_path: String,
+        position: Position,
+        calls: Vec<CallHierarchyOutgoingCall>,
+    ) {
+        let location = SymbolLocation::new(file_path, &position);
+        self.outgoing_calls.insert(location, calls);
+    }
+
     fn add_interface_implementations(
         &mut self,
         file_path: String,
@@ -101,7 +116,7 @@ impl GraphGenerator {
             .map(|f| lang.file_repr(f))
             .collect::<Vec<_>>();
 
-        let calls = self
+        let incoming_calls = self
             .incoming_calls
             .iter()
             .filter(|(callee, _)| files.contains_key(&callee.path))
@@ -120,6 +135,30 @@ impl GraphGenerator {
                         ),
                         to_table_id: to_table_id.clone(),
                         to_node_id: to_node_id.clone(),
+                        styles: vec![],
+                    })
+                })
+            });
+
+        let outgoing_calls = self
+            .outgoing_calls
+            .iter()
+            .filter(|(caller, _)| files.contains_key(&caller.path))
+            .flat_map(|(caller, calls)| {
+                let from_table_id = files.get(&caller.path).unwrap().id.to_string();
+                let from_node_id = format!("{}_{}", caller.line, caller.character);
+
+                calls.into_iter().filter_map(move |call| {
+                    let to_table_id = files.get(call.to.uri.path())?.id.to_string();
+                    Some(Edge {
+                        from_table_id: from_table_id.clone(),
+                        from_node_id: from_node_id.clone(),
+                        to_table_id,
+                        to_node_id: format!(
+                            "{}_{}",
+                            call.to.selection_range.start.line,
+                            call.to.selection_range.start.character
+                        ),
                         styles: vec![],
                     })
                 })
@@ -151,7 +190,8 @@ impl GraphGenerator {
             .for_each(|cell| self.collect_cell_ids(cell, &mut cell_ids));
 
         let mut edges = HashMap::new();
-        calls
+        incoming_calls
+            .chain(outgoing_calls)
             .chain(implementations)
             .filter(|edge| {
                 // some cells may have been filtered out, so we need to check the `from_id`

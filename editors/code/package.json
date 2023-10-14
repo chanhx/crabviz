@@ -33,6 +33,10 @@
         "title": "Crabviz: Generate Call Graph"
       },
       {
+        "command": "crabviz.generateFuncCallGraph",
+        "title": "Crabviz: Generate Function Call Graph"
+      },
+      {
         "command": "crabviz.exportCallGraph",
         "title": "Export Call Graph"
       }
@@ -44,8 +48,18 @@
           "when": "never"
         },
         {
+          "command": "crabviz.generateFuncCallGraph",
+          "when": "never"
+        },
+        {
           "command": "crabviz.exportCallGraph",
           "when": "never"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "crabviz.generateFuncCallGraph",
+          "when": "editorHasCallHierarchyProvider"
         }
       ],
       "explorer/context": [

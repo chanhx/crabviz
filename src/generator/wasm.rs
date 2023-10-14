@@ -1,6 +1,8 @@
 use {
     super::GraphGenerator,
-    crate::lsp_types::{CallHierarchyIncomingCall, DocumentSymbol, Location, Position},
+    crate::lsp_types::{
+        CallHierarchyIncomingCall, CallHierarchyOutgoingCall, DocumentSymbol, Location, Position,
+    },
     std::cell::RefCell,
     wasm_bindgen::prelude::*,
 };
@@ -53,6 +55,16 @@ impl GraphGeneratorWasm {
         self.inner
             .borrow_mut()
             .add_incoming_calls(file_path, position, calls);
+    }
+
+    pub fn add_outgoing_calls(&self, file_path: String, position: JsValue, calls: JsValue) {
+        let position = serde_wasm_bindgen::from_value::<Position>(position).unwrap();
+        let calls =
+            serde_wasm_bindgen::from_value::<Vec<CallHierarchyOutgoingCall>>(calls).unwrap();
+
+        self.inner
+            .borrow_mut()
+            .add_outgoing_calls(file_path, position, calls);
     }
 
     pub fn add_interface_implementations(

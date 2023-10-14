@@ -99,6 +99,32 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(disposable);
 
+	context.subscriptions.push(vscode.commands.registerTextEditorCommand('crabviz.generateFuncCallGraph', editor => {
+		const uri = editor.document.uri;
+		const anchor = editor.selection.start;
+
+		const folder = vscode.workspace.workspaceFolders!
+			.find(folder => uri.path.startsWith(folder.uri.path))!;
+
+		const generator = new Generator(folder.uri);
+
+		vscode.window.withProgress({
+			location: vscode.ProgressLocation.Window,
+			title: "Crabviz: Generating call graph",
+		}, _ => {
+			return generator.generateFuncCallGraph(uri, anchor);
+		})
+		.then(svg => {
+			if (!svg) {
+				vscode.window.showErrorMessage('No results');
+				return;
+			}
+
+			const panel = new CallGraphPanel(context.extensionUri);
+			panel.showCallGraph(svg);
+		});
+	}));
+
 	context.subscriptions.push(vscode.commands.registerCommand('crabviz.exportCallGraph', () => {
 		CallGraphPanel.currentPanel?.exportSVG();
 	}));
