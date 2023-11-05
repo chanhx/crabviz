@@ -7,6 +7,7 @@
 
   --hover-cell-color: #ffffa1;
   --selected-cell-color: yellow;
+  --highlight-cell-color: bisque;
 
   --incoming-edge-color: blue;
   --outgoing-edge-color: green;
@@ -70,6 +71,10 @@ svg {
 }
 .cell.selected :is(polygon, path):first-of-type {
   fill: var(--selected-cell-color);
+}
+.cell.highlight path {
+  stroke: var(--highlight-cell-color);
+  fill: var(--highlight-cell-color);
 }
 
 /* Edge */
@@ -179,6 +184,9 @@ svg {
   fill: blanchedalmond;
 }
 
-.method-block :is(path, polygon):first-child {
+.method-block > :is(path, polygon):first-child {
+  fill: burlywood;
+}
+.method-block :not(.highlight) :is(path, polygon):first-child {
   fill: burlywood;
 }

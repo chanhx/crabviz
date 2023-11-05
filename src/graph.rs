@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 pub mod dot;
 
 pub trait GenerateSVG {
@@ -28,11 +30,26 @@ pub struct Cell {
     pub children: Vec<Cell>,
 }
 
+impl Cell {
+    pub fn highlight(&mut self, cells: &HashSet<String>) {
+        if cells.contains(&self.port) {
+            self.styles.push(Style::CssClass(String::from("highlight")));
+        }
+        self.children.iter_mut().for_each(|c| c.highlight(cells));
+    }
+}
+
 #[derive(Debug)]
 pub struct TableNode {
     pub id: String,
     pub title: String,
     pub sections: Vec<Cell>,
+}
+
+impl TableNode {
+    pub fn highlight_cells(&mut self, cells: &HashSet<String>) {
+        self.sections.iter_mut().for_each(|c| c.highlight(cells));
+    }
 }
 
 #[derive(Debug)]

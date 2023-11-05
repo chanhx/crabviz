@@ -126,6 +126,10 @@ export class Generator {
       this.inner.add_file(file.uri.path, lspSymbols);
     }
 
+    for await (const item of items) {
+      this.inner.highlight(item.uri.path, item.selectionRange.start);
+    }
+
     const dot = this.inner.generate_dot_source();
 
     return graphviz.dot(dot);

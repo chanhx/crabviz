@@ -30,6 +30,8 @@ struct GraphGenerator {
     incoming_calls: HashMap<SymbolLocation, Vec<CallHierarchyIncomingCall>>,
     outgoing_calls: HashMap<SymbolLocation, Vec<CallHierarchyOutgoingCall>>,
     interfaces: HashMap<SymbolLocation, Vec<SymbolLocation>>,
+
+    highlights: HashMap<PathId, HashSet<String>>,
 }
 
 impl GraphGenerator {
@@ -41,6 +43,7 @@ impl GraphGenerator {
             incoming_calls: HashMap::new(),
             outgoing_calls: HashMap::new(),
             interfaces: HashMap::new(),
+            highlights: HashMap::new(),
         }
     }
 
@@ -58,7 +61,8 @@ impl GraphGenerator {
                 self.next_file_id += 1;
             }
             Entry::Occupied(mut entry) => {
-                entry.insert(file);
+                let entry_file = entry.get_mut();
+                *entry_file = file;
             }
         }
     }
@@ -82,6 +86,27 @@ impl GraphGenerator {
     ) {
         let location = SymbolLocation::new(file_path, &position);
         self.outgoing_calls.insert(location, calls);
+    }
+
+    fn highlight(&mut self, file_path: String, position: Position) {
+        let file_id = match self.files.get(&file_path) {
+            None => return,
+            Some(file) => file.id,
+        };
+
+        let port = format!("{}_{}", position.line, position.character).to_string();
+
+        match self.highlights.entry(file_id) {
+            Entry::Vacant(entry) => {
+                let mut set = HashSet::new();
+                set.insert(port);
+
+                entry.insert(set);
+            }
+            Entry::Occupied(mut entry) => {
+                entry.get_mut().insert(port);
+            }
+        }
     }
 
     fn add_interface_implementations(
@@ -113,7 +138,14 @@ impl GraphGenerator {
         // TODO: it's better to construct tables before fetching call hierarchy, so that we can skip the filtered out symbols.
         let tables = files
             .values()
-            .map(|f| lang.file_repr(f))
+            .map(|f| {
+                let mut table = lang.file_repr(f);
+                if let Some(cells) = self.highlights.get(&f.id) {
+                    table.highlight_cells(cells);
+                }
+
+                table
+            })
             .collect::<Vec<_>>();
 
         let incoming_calls = self
