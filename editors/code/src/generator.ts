@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 
 import { graphviz } from '@hpcc-js/wasm';
 import { retryCommand } from './utils/command';
-import { convertSymbol } from './utils/lspTypesConversion';
 import { set_panic_hook, GraphGenerator  } from '../crabviz';
 
 await import('../crabviz');
@@ -41,8 +40,7 @@ export class Generator {
         continue;
       }
 
-      let lspSymbols = symbols.map(convertSymbol);
-      this.inner.add_file(file.path, lspSymbols);
+      this.inner.add_file(file.path, symbols);
 
       while (symbols.length > 0) {
         for await (const symbol of symbols) {
@@ -121,9 +119,9 @@ export class Generator {
       }
 
       const funcs = file.sortedFuncs();
-      const lspSymbols = this.filterSymbols(symbols, funcs, 0, true).map(convertSymbol);
+      symbols = this.filterSymbols(symbols, funcs, 0, true);
 
-      this.inner.add_file(file.uri.path, lspSymbols);
+      this.inner.add_file(file.uri.path, symbols);
     }
 
     for await (const item of items) {

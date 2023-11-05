@@ -1,11 +1,14 @@
 mod types;
+
+#[cfg(feature = "wasm")]
 mod wasm;
+#[cfg(feature = "wasm")]
+pub use wasm::{set_panic_hook, GraphGeneratorWasm};
 
 #[cfg(test)]
 mod tests;
 
 pub(crate) use types::*;
-pub use wasm::{set_panic_hook, GraphGeneratorWasm};
 use {
     crate::{
         graph::{dot::Dot, Cell, Edge, EdgeStyle, Subgraph},
@@ -21,7 +24,7 @@ use {
     },
 };
 
-struct GraphGenerator {
+pub struct GraphGenerator {
     // TODO: use a trie map to store files
     root: String,
     files: HashMap<String, FileOutline>,
@@ -35,7 +38,7 @@ struct GraphGenerator {
 }
 
 impl GraphGenerator {
-    fn new(root: String) -> Self {
+    pub fn new(root: String) -> Self {
         Self {
             root,
             files: HashMap::new(),
@@ -47,7 +50,7 @@ impl GraphGenerator {
         }
     }
 
-    fn add_file(&mut self, file_path: String, symbols: Vec<DocumentSymbol>) {
+    pub fn add_file(&mut self, file_path: String, symbols: Vec<DocumentSymbol>) {
         let path = PathBuf::from(&file_path);
         let file = FileOutline {
             id: self.next_file_id,
@@ -68,7 +71,7 @@ impl GraphGenerator {
     }
 
     // TODO: graph database
-    fn add_incoming_calls(
+    pub fn add_incoming_calls(
         &mut self,
         file_path: String,
         position: Position,
@@ -78,7 +81,7 @@ impl GraphGenerator {
         self.incoming_calls.insert(location, calls);
     }
 
-    fn add_outgoing_calls(
+    pub fn add_outgoing_calls(
         &mut self,
         file_path: String,
         position: Position,
@@ -88,7 +91,7 @@ impl GraphGenerator {
         self.outgoing_calls.insert(location, calls);
     }
 
-    fn highlight(&mut self, file_path: String, position: Position) {
+    pub fn highlight(&mut self, file_path: String, position: Position) {
         let file_id = match self.files.get(&file_path) {
             None => return,
             Some(file) => file.id,
@@ -109,7 +112,7 @@ impl GraphGenerator {
         }
     }
 
-    fn add_interface_implementations(
+    pub fn add_interface_implementations(
         &mut self,
         file_path: String,
         position: Position,

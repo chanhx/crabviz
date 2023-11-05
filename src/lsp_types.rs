@@ -11,7 +11,8 @@ use {
 // #[serde(transparent)]
 #[repr(u8)]
 pub enum SymbolKind {
-    File = 1,
+    File = if cfg!(feature = "vscode") { 0 } else { 1 },
+
     Module,
     Namespace,
     Package,

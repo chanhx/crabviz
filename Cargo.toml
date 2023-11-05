@@ -9,7 +9,10 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [features]
-default = ["console_error_panic_hook"]
+default = []
+
+vscode = ["wasm", "console_error_panic_hook"]
+wasm = []
 
 [dependencies]
 snafu = { version = "0.7", features = ["backtraces-impl-std"] }
