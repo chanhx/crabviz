@@ -74,13 +74,13 @@ export class CallGraphPanel {
 
 		const stylesPath = vscode.Uri.joinPath(resourceUri, 'styles.css');
 		const preprocessJsPath = vscode.Uri.joinPath(resourceUri, 'preprocess.js');
-		const svgPanZoomJsPath = vscode.Uri.joinPath(resourceUri, 'svg-pan-zoom.min.js');
+		const panZoomJsPath = vscode.Uri.joinPath(resourceUri, 'panzoom.min.js');
 		const exportJsPath = vscode.Uri.joinPath(resourceUri, 'export.js');
 
 		const webview = this._panel.webview;
 		const stylesUri = webview.asWebviewUri(stylesPath);
 		const preprossessJsUri = webview.asWebviewUri(preprocessJsPath);
-		const svgPanZoomJsUri = webview.asWebviewUri(svgPanZoomJsPath);
+		const panZoomJsUri = webview.asWebviewUri(panZoomJsPath);
 		const exportJsUri = webview.asWebviewUri(exportJsPath);
 
 		CallGraphPanel.currentPanel = this;
@@ -94,7 +94,7 @@ export class CallGraphPanel {
 		<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; img-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<link rel="stylesheet" href="${stylesUri}">
-		<script nonce="${nonce}" src="${svgPanZoomJsUri}"></script>
+		<script nonce="${nonce}" src="${panZoomJsUri}"></script>
 		<script nonce="${nonce}" src="${exportJsUri}"></script>
 		<title>crabviz</title>
 </head>

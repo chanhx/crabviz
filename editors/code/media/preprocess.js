@@ -194,6 +194,7 @@ class CallGraph {
 const graph = new CallGraph(document.querySelector("svg"));
 graph.activate();
 
-svgPanZoom(graph.svg, {
-  "dblClickZoomEnabled": false,
+panzoom(graph.svg, {
+  minZoom: 0.5,
+  zoomDoubleClickSpeed: 1
 });

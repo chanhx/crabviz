@@ -23,9 +23,6 @@
   ],
   "activationEvents": [],
   "main": "./dist/extension.js",
-  "enabledApiProposals": [
-    "contribWebviewContext"
-  ],
   "contributes": {
     "commands": [
       {
