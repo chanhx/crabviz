@@ -1,178 +1,199 @@
-const forEachNode = (parent, selector, fn) => {
+const forEachSelectedChild = (parent, selector, fn) => {
   parent.querySelectorAll(selector).forEach(fn);
 };
 
-const addClass = (parent, selector, ...classes) => {
-  forEachNode(parent, selector, (elem) => {
-    elem.classList.add(...classes);
-  });
-};
-const removeClass = (parent, selector, ...classes) => {
-  forEachNode(parent, selector, (elem) => {
-    elem.classList.remove(...classes);
-  });
+const GraphElemType = {
+  NODE: 0,
+  CELL: 1,
+  EDGE: 2,
 };
 
-const getParent = (elem, className) => {
-  while (elem && elem.tagName !== "svg") {
-    if (elem.classList.contains(className)) {
-      return elem;
-    }
-    elem = elem.parentNode;
+class CallGraph {
+  svg;
+  edges;
+  nodes;
+
+  constructor(svg) {
+    this.svg = svg;
+    this.edges = svg.querySelectorAll("g.edge");
+    this.nodes = svg.querySelectorAll("g.node");
   }
 
-  return null;
-};
+  activate() {
+    this.processSVG();
+    this.addListeners();
+  }
 
-const isCell = (elem) => {
-  return getParent(elem, "cell") !== null;
-};
-const isEdge = (elem) => {
-  return getParent(elem, "edge") !== null;
-};
-const isNode = (elem) => {
-  return getParent(elem, "node") !== null;
-};
+  processSVG() {
+    this.edges.forEach(edge => forEachSelectedChild(edge, "path", (path) => {
+      let newPath = path.cloneNode();
+      newPath.classList.add("hover-path");
+      newPath.removeAttribute("stroke-dasharray");
+      path.parentNode.appendChild(newPath);
+    }));
 
-const preprocessSVG = (svg) => {
-  forEachNode(svg, "g.edge path", (path) => {
-    let newPath = path.cloneNode();
-    newPath.classList.add("hover-path");
-    newPath.removeAttribute("stroke-dasharray");
-    path.parentNode.appendChild(newPath);
-  });
+    forEachSelectedChild(this.svg, "a", (a) => {
+      let urlComps = a.href.baseVal.split(".");
+      if (urlComps[0] !== "remove_me_url") {
+        return;
+      }
 
-  forEachNode(svg, "a", (a) => {
-    let urlComps = a.href.baseVal.split(".");
-    if (urlComps[0] !== "remove_me_url") {
+      let docFrag = document.createDocumentFragment();
+      docFrag.append(...a.childNodes);
+
+      let g = a.parentNode;
+      g.replaceChild(docFrag, a);
+      g.id = g.id.replace(/^a_/, "");
+
+      if (urlComps.length > 1) {
+        g.classList.add(...urlComps.slice(1));
+      }
+    });
+
+    this.edges.forEach((edge) => {
+      let [from, to] = edge.id.split(" -> ");
+
+      edge.setAttribute("edge-from", from);
+      edge.setAttribute("edge-to", to);
+    });
+
+    forEachSelectedChild(this.svg, "title", (el) => el.remove());
+  }
+
+  addListeners() {
+    const delta = 6;
+    let startX;
+    let startY;
+
+    this.svg.addEventListener('mousedown', (event) => {
+      startX = event.pageX;
+      startY = event.pageY;
+    });
+
+    this.svg.addEventListener("mouseup", (event) => {
+      const diffX = Math.abs(event.pageX - startX);
+      const diffY = Math.abs(event.pageY - startY);
+
+      if (diffX > delta || diffY > delta) {
+        // a mouse drag event
+        return;
+      }
+
+      this.reset();
+
+      const target = event.target;
+      const elemTuple = this.findNearestGraphElem(target);
+
+      if (elemTuple === null) {
+        return;
+      }
+
+      const [elem, elemType] = elemTuple;
+
+      switch (elemType) {
+        case GraphElemType.NODE:
+          this.onSelectNode(elem);
+          break;
+        case GraphElemType.CELL:
+          this.onSelectCell(elem);
+          break;
+        case GraphElemType.EDGE:
+          this.onSelectEdge(elem);
+          break;
+      }
+    });
+  }
+
+  reset() {
+    this.nodes.forEach(node => {
+      node.classList.remove("selected");
+      forEachSelectedChild(node, "g.cell.selected", (elem) => {
+        elem.classList.remove("selected");
+      });
+    });
+    this.edges.forEach(edge => edge.classList.remove("fade", "incoming", "outgoing", "selected"));
+  };
+
+  onSelectEdge(edge) {
+    this.edges.forEach(e => {
+        e.classList.add(e === edge ? "selected" : "fade");
+    });
+  };
+
+  onSelectCell(cell) {
+    if (!cell.classList.contains("fn")) {
       return;
     }
 
-    let docFrag = document.createDocumentFragment();
-    docFrag.append(...a.childNodes);
+    const id = cell.id;
 
-    let g = a.parentNode;
-    g.replaceChild(docFrag, a);
-    g.id = g.id.replace(/^a_/, "");
+    this.edges.forEach(edge => {
+      let fade = true;
 
-    if (urlComps.length > 1) {
-      g.classList.add(...urlComps.slice(1));
-    }
-  });
+      if (edge.matches(`[edge-from="${id}"]`)) {
+        edge.classList.add("incoming");
+        fade = false;
+      }
+      if (edge.matches(`[edge-to="${id}"]`)) {
+        edge.classList.add("outgoing");
+        fade = false;
+      }
 
-  forEachNode(svg, "g.edge", (edge) => {
-    let [from, to] = edge.id.split(" -> ");
-
-    edge.setAttribute("edge-from", from);
-    edge.setAttribute("edge-to", to);
-  });
-
-  forEachNode(svg, "title", (el) => el.remove());
-};
-
-const onSelectEdge = (svg, target) => {
-  let edge = getParent(target, "edge");
-  let id = edge.id;
-
-  let selectedEdgeID = svg.state.selectedEdgeID;
-  if (selectedEdgeID === id) {
-    svg.state.selectedEdgeID = null;
-  } else {
-    edge.classList.add("selected");
-    addClass(svg, "g.edge:not(.selected)", "fade");
-
-    svg.state.selectedEdgeID = id;
-  }
-};
-
-const onSelectCell = (svg, target) => {
-  let cell = getParent(target, "cell");
-  if (!cell.classList.contains("fn")) {
-    return;
-  }
-
-  let id = cell.id;
-
-  let selectedCellID = svg.state.selectedCellID;
-  if (selectedCellID === id) {
-    svg.state.selectedCellID = null;
-  } else {
-    addClass(svg, `g.edge[edge-from="${id}"]`, "incoming");
-    addClass(svg, `g.edge[edge-to="${id}"]`, "outgoing");
-    addClass(svg, "g.edge:not(.incoming):not(.outgoing)", "fade");
+      if (fade) {
+        edge.classList.add("fade");
+      }
+    });
 
     cell.classList.add("selected");
-    svg.state.selectedCellID = id;
-  }
-};
+  };
 
-const onSelectNode = (svg, target) => {
-  let node = getParent(target, "node");
-  let id = node.id;
+  onSelectNode(node) {
+    const id = node.id;
 
-  let selectedNodeID = svg.state.selectedNodeID;
-  if (selectedNodeID === id) {
-    svg.state.selectedNodeID = null;
-  } else {
-    addClass(svg, `g.edge[edge-from^="${id}:"]`, "incoming");
-    addClass(svg, `g.edge[edge-to^="${id}:"]`, "outgoing");
-    addClass(svg, "g.edge:not(.incoming):not(.outgoing)", "fade");
+    this.edges.forEach(edge => {
+      let fade = true;
+
+      if (edge.matches(`[edge-from^="${id}:"]`)) {
+        edge.classList.add("incoming");
+        fade = false;
+      }
+      if (edge.matches(`[edge-to^="${id}:"]`)) {
+        edge.classList.add("outgoing");
+        fade = false;
+      }
+
+      if (fade) {
+        edge.classList.add("fade");
+      }
+    });
 
     node.classList.add("selected");
-
-    svg.state.selectedNodeID = id;
   }
-};
 
-const reset = (svg) => {
-  removeClass(svg, "g.cell.selected", "selected");
-  removeClass(svg, "g.edge", "fade", "incoming", "outgoing", "selected");
-  removeClass(svg, "g.node", "selected");
-};
+  findNearestGraphElem(elem) {
+    while (elem && elem !== this.svg) {
+      for (let i = 0; i < elem.classList.length; ++i) {
+        let cls = elem.classList.item(i);
 
-const addListeners = (svg) => {
-  const delta = 6;
-  let startX;
-  let startY;
+        if (cls === "node") {
+          return [elem, GraphElemType.NODE];
+        } else if (cls === "cell") {
+          return [elem, GraphElemType.CELL];
+        } else if (cls === "edge") {
+          return [elem, GraphElemType.EDGE];
+        }
+      }
 
-  svg.addEventListener('mousedown', (event) => {
-    startX = event.pageX;
-    startY = event.pageY;
-  });
-
-  svg.addEventListener("mouseup", (event) => {
-    const diffX = Math.abs(event.pageX - startX);
-    const diffY = Math.abs(event.pageY - startY);
-
-    if (diffX > delta || diffY > delta) {
-      // a mouse drag event
-      return;
+      elem = elem.parentNode;
     }
 
-    reset(svg);
+    return null;
+  }
+}
 
-    let target = event.target;
+const graph = new CallGraph(document.querySelector("svg"));
+graph.activate();
 
-    if (isEdge(target)) {
-      onSelectEdge(svg, target);
-    } else if (isCell(target)) {
-      onSelectCell(svg, target);
-    } else if (isNode(target)) {
-      onSelectNode(svg, target);
-    }
-  });
-};
-
-let svg = document.querySelector("svg");
-svg.state = {
-  selectedCellID: null,
-  selectedEdgeID: null,
-  selectedNodeID: null,
-};
-
-preprocessSVG(svg);
-addListeners(svg);
-
-svgPanZoom(svg, {
+svgPanZoom(graph.svg, {
   "dblClickZoomEnabled": false,
 });
