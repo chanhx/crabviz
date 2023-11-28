@@ -188,16 +188,11 @@ export class Generator {
           file = new VisitedFile(item.uri);
           funcMap.set(item.uri.path, file);
         }
-        file.addFunc(symbolStart);
-
-        if (file.incoming) {
-          return;
-        }
-        file.incoming = true;
+        file.visitFunc(symbolStart, FuncCallDirection.Incoming);
 
         calls = calls
           .filter(call =>
-            !funcMap.get(call.from.uri.path)?.hasFunc(call.from.selectionRange.start) ?? true
+            !funcMap.get(call.from.uri.path)?.hasVisitedFunc(call.from.selectionRange.start, FuncCallDirection.Incoming) ?? true
           );
 
         for await (const call of calls) {
@@ -220,17 +215,12 @@ export class Generator {
           file = new VisitedFile(item.uri);
           funcMap.set(item.uri.path, file);
         }
-        file.addFunc(symbolStart);
-
-        if (file.outgoing) {
-          return;
-        }
-        file.outgoing = true;
+        file.visitFunc(symbolStart, FuncCallDirection.Outgoing);
 
         calls = calls
           .filter(call =>
             call.to.uri.path.startsWith(this.root) &&
-            (!funcMap.get(call.to.uri.path)?.hasFunc(call.to.selectionRange.start) ?? true)
+            (!funcMap.get(call.to.uri.path)?.hasVisitedFunc(call.to.selectionRange.start, FuncCallDirection.Outgoing) ?? true)
           );
 
         for await (const call of calls) {
@@ -243,37 +233,46 @@ export class Generator {
   }
 }
 
+enum FuncCallDirection {
+  Incoming = 1 << 1,
+  Outgoing = 1 << 2,
+  Bidirection = Incoming | Outgoing,
+}
+
 class VisitedFile {
   uri: vscode.Uri;
-  incoming: boolean;
-  outgoing: boolean;
-  private funcs: Map<string, vscode.Position>;
+  private funcs: Map<string, [vscode.Position, FuncCallDirection]>;
 
   constructor(uri: vscode.Uri) {
     this.uri = uri;
-    this.incoming = false;
-    this.outgoing = false;
     this.funcs = new Map();
   }
 
-  addFunc(pos: vscode.Position) {
-    this.funcs.set(`${pos}`, pos);
+  visitFunc(pos: vscode.Position, direction: FuncCallDirection) {
+    let key = `${pos}`;
+    let val = this.funcs.get(key);
+
+    if (!val) {
+      this.funcs.set(key, [pos, direction]);
+    } else {
+      val[1] |= direction;
+    }
   }
 
-  hasFunc(pos: vscode.Position): boolean {
-    return this.funcs.has(`${pos}`);
+  hasVisitedFunc(pos: vscode.Position, direction: FuncCallDirection): boolean {
+    return ((this.funcs.get(`${pos}`)?.[1] ?? 0) & direction) === direction;
   }
 
   sortedFuncs(): vscode.Position[] {
     const funcs = Array.from(this.funcs.values());
     return funcs.sort((p1, p2) => {
-      const lineDiff = p1.line - p2.line;
+      const lineDiff = p1[0].line - p2[0].line;
       if (lineDiff !== 0) {
         return lineDiff;
       } else {
-        return p1.character - p2.character;
+        return p1[0].character - p2[0].character;
       }
-    });
+    }).map(tuple => tuple[0]);
   }
 };
 
