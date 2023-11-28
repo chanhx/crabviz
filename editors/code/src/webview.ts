@@ -69,17 +69,17 @@ export class CallGraphPanel {
 		}
 	}
 
-	public showCallGraph(svg: string) {
+	public showCallGraph(svg: string, focusMode: boolean) {
 		const resourceUri = vscode.Uri.joinPath(this._extensionUri, 'media');
 
 		const stylesPath = vscode.Uri.joinPath(resourceUri, 'styles.css');
-		const preprocessJsPath = vscode.Uri.joinPath(resourceUri, 'preprocess.js');
+		const graphJsPath = vscode.Uri.joinPath(resourceUri, 'graph.js');
 		const panZoomJsPath = vscode.Uri.joinPath(resourceUri, 'panzoom.min.js');
 		const exportJsPath = vscode.Uri.joinPath(resourceUri, 'export.js');
 
 		const webview = this._panel.webview;
 		const stylesUri = webview.asWebviewUri(stylesPath);
-		const preprossessJsUri = webview.asWebviewUri(preprocessJsPath);
+		const graphJsUri = webview.asWebviewUri(graphJsPath);
 		const panZoomJsUri = webview.asWebviewUri(panZoomJsPath);
 		const exportJsUri = webview.asWebviewUri(exportJsPath);
 
@@ -96,11 +96,21 @@ export class CallGraphPanel {
 		<link rel="stylesheet" href="${stylesUri}">
 		<script nonce="${nonce}" src="${panZoomJsUri}"></script>
 		<script nonce="${nonce}" src="${exportJsUri}"></script>
+		<script nonce="${nonce}" src="${graphJsUri}"></script>
 		<title>crabviz</title>
 </head>
 <body data-vscode-context='{ "preventDefaultContextMenuItems": true }'>
 		${svg}
-		<script nonce="${nonce}" src="${preprossessJsUri}"></script>
+
+		<script nonce="${nonce}">
+			const graph = new CallGraph(document.querySelector("svg"), ${focusMode});
+			graph.activate();
+
+			panzoom(graph.svg, {
+				minZoom: 0.8,
+				zoomDoubleClickSpeed: 1
+			});
+		</script>
 </body>
 </html>`;
 	}

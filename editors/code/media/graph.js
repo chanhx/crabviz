@@ -13,10 +13,17 @@ class CallGraph {
   edges;
   nodes;
 
-  constructor(svg) {
+  focusMode;
+  focus;
+
+  incomings;
+  outgoings;
+
+  constructor(svg, focusMode) {
     this.svg = svg;
     this.edges = svg.querySelectorAll("g.edge");
     this.nodes = svg.querySelectorAll("g.node");
+    this.focusMode = focusMode;
   }
 
   activate() {
@@ -50,11 +57,31 @@ class CallGraph {
       }
     });
 
+    if (this.focusMode) {
+      this.focus = this.svg.querySelector(".highlight").id;
+      this.incomings = new Map();
+      this.outgoings = new Map();
+    }
+
     this.edges.forEach((edge) => {
       let [from, to] = edge.id.split(" -> ");
 
       edge.setAttribute("edge-from", from);
       edge.setAttribute("edge-to", to);
+
+      if (this.focus) {
+        if (this.incomings.has(to)) {
+          this.incomings.get(to).push(edge);
+        } else {
+          this.incomings.set(to, [edge]);
+        }
+
+        if (this.outgoings.has(from)) {
+          this.outgoings.get(from).push(edge);
+        } else {
+          this.outgoings.set(from, [edge]);
+        }
+      }
     });
 
     forEachSelectedChild(this.svg, "title", (el) => el.remove());
@@ -127,22 +154,26 @@ class CallGraph {
 
     const id = cell.id;
 
-    this.edges.forEach(edge => {
-      let fade = true;
+    if (this.focus) {
+      this.highlightEdgeInFocusMode(id);
+    } else {
+      this.edges.forEach(edge => {
+        let fade = true;
 
-      if (edge.matches(`[edge-from="${id}"]`)) {
-        edge.classList.add("outgoing");
-        fade = false;
-      }
-      if (edge.matches(`[edge-to="${id}"]`)) {
-        edge.classList.add("incoming");
-        fade = false;
-      }
+        if (edge.matches(`[edge-from="${id}"]`)) {
+          edge.classList.add("incoming");
+          fade = false;
+        }
+        if (edge.matches(`[edge-to="${id}"]`)) {
+          edge.classList.add("outgoing");
+          fade = false;
+        }
 
-      if (fade) {
-        edge.classList.add("fade");
-      }
-    });
+        if (fade) {
+          edge.classList.add("fade");
+        }
+      });
+    }
 
     cell.classList.add("selected");
   };
@@ -189,12 +220,60 @@ class CallGraph {
 
     return null;
   }
+
+  highlightEdgeInFocusMode(cellId) {
+    let incomings = new Set();
+    let outgoings = new Set();
+    let visited1 = new Set([cellId, this.focus]);
+    let visited2 = new Set([cellId, this.focus]);
+
+    let newIncomings = this.incomings.get(cellId) ?? [];
+    let newOutgoings = this.outgoings.get(cellId) ?? [];
+
+    while (newIncomings.length > 0) {
+      newIncomings = newIncomings
+        .flatMap(e => {
+          incomings.add(e);
+
+          let id = e.getAttribute("edge-from");
+          if (visited1.has(id)) {
+            return [];
+          }
+
+          visited1.add(id);
+          return this.incomings.get(id) ?? [];
+        });
+    }
+    while (newOutgoings.length > 0) {
+      newOutgoings = newOutgoings
+        .flatMap(e => {
+          outgoings.add(e);
+
+          let id = e.getAttribute("edge-to");
+          if (visited2.has(id)) {
+            return [];
+          }
+
+          visited2.add(id);
+          return this.outgoings.get(id) ?? [];
+        });
+    }
+
+    this.edges.forEach(edge => {
+      let fade = true;
+
+      if (incomings.has(edge)) {
+        edge.classList.add("incoming");
+        fade = false;
+      }
+      if (outgoings.has(edge)) {
+        edge.classList.add("outgoing");
+        fade = false;
+      }
+
+      if (fade) {
+        edge.classList.add("fade");
+      }
+    });
+  }
 }
-
-const graph = new CallGraph(document.querySelector("svg"));
-graph.activate();
-
-panzoom(graph.svg, {
-  minZoom: 0.5,
-  zoomDoubleClickSpeed: 1
-});

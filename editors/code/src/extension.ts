@@ -93,7 +93,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		})
 		.then(svg => {
 			const panel = new CallGraphPanel(context.extensionUri);
-			panel.showCallGraph(svg);
+			panel.showCallGraph(svg, false);
 		});
 	});
 
@@ -121,7 +121,7 @@ export async function activate(context: vscode.ExtensionContext) {
 			}
 
 			const panel = new CallGraphPanel(context.extensionUri);
-			panel.showCallGraph(svg);
+			panel.showCallGraph(svg, true);
 		});
 	}));
 
