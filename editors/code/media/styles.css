@@ -9,8 +9,8 @@
   --selected-cell-color: yellow;
   --highlight-cell-color: bisque;
 
-  --incoming-edge-color: blue;
-  --outgoing-edge-color: green;
+  --incoming-edge-color: green;
+  --outgoing-edge-color: blue;
   --recurse-edge-color: black;
 
   --node-color: lightgray;

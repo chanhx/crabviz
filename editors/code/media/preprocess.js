@@ -131,11 +131,11 @@ class CallGraph {
       let fade = true;
 
       if (edge.matches(`[edge-from="${id}"]`)) {
-        edge.classList.add("incoming");
+        edge.classList.add("outgoing");
         fade = false;
       }
       if (edge.matches(`[edge-to="${id}"]`)) {
-        edge.classList.add("outgoing");
+        edge.classList.add("incoming");
         fade = false;
       }
 
@@ -154,11 +154,11 @@ class CallGraph {
       let fade = true;
 
       if (edge.matches(`[edge-from^="${id}:"]`)) {
-        edge.classList.add("incoming");
+        edge.classList.add("outgoing");
         fade = false;
       }
       if (edge.matches(`[edge-to^="${id}:"]`)) {
-        edge.classList.add("outgoing");
+        edge.classList.add("incoming");
         fade = false;
       }
 
