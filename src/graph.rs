@@ -17,28 +17,21 @@ pub trait GenerateSVG {
 
 #[derive(Debug, Clone)]
 pub struct Edge {
-    pub from_table_id: String,
-    pub from_node_id: String,
-    pub to_table_id: String,
-    pub to_node_id: String,
+    pub from: (u32, u32, u32),
+    pub to: (u32, u32, u32),
     pub styles: Vec<EdgeStyle>,
 }
 
 impl Hash for Edge {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.from_table_id.hash(state);
-        self.from_node_id.hash(state);
-        self.to_table_id.hash(state);
-        self.to_node_id.hash(state);
+        self.from.hash(state);
+        self.to.hash(state);
     }
 }
 
 impl PartialEq for Edge {
     fn eq(&self, other: &Self) -> bool {
-        self.from_table_id == other.from_table_id
-            && self.from_node_id == other.from_node_id
-            && self.to_table_id == other.to_table_id
-            && self.to_node_id == other.to_node_id
+        self.from == other.from && self.to == other.to
     }
 }
 
@@ -46,16 +39,16 @@ impl Eq for Edge {}
 
 #[derive(Debug)]
 pub struct Cell {
-    pub id: String,
-    pub port: String,
+    pub range_start: (u32, u32),
+    pub range_end: (u32, u32),
     pub title: String,
     pub styles: Vec<Style>,
     pub children: Vec<Cell>,
 }
 
 impl Cell {
-    pub fn highlight(&mut self, cells: &HashSet<String>) {
-        if cells.contains(&self.port) {
+    pub fn highlight(&mut self, cells: &HashSet<(u32, u32)>) {
+        if cells.contains(&self.range_start) {
             self.styles.push(Style::CssClass(String::from("highlight")));
         }
         self.children.iter_mut().for_each(|c| c.highlight(cells));
@@ -64,13 +57,13 @@ impl Cell {
 
 #[derive(Debug)]
 pub struct TableNode {
-    pub id: String,
+    pub id: u32,
     pub title: String,
     pub sections: Vec<Cell>,
 }
 
 impl TableNode {
-    pub fn highlight_cells(&mut self, cells: &HashSet<String>) {
+    pub fn highlight_cells(&mut self, cells: &HashSet<(u32, u32)>) {
         self.sections.iter_mut().for_each(|c| c.highlight(cells));
     }
 }

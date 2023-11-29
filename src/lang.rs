@@ -21,7 +21,7 @@ pub(crate) trait Language {
             .collect();
 
         TableNode {
-            id: file.id.to_string(),
+            id: file.id,
             title: file.path.file_name().unwrap().to_str().unwrap().to_string(),
             sections,
         }
@@ -37,15 +37,11 @@ pub(crate) trait Language {
             .map(|symbol| self.symbol_repr(file_id, symbol))
             .collect();
 
-        let port = format!(
-            "{}_{}",
-            symbol.selection_range.start.line, symbol.selection_range.start.character
-        )
-        .to_string();
+        let range = symbol.selection_range;
 
         Cell {
-            port: port.clone(),
-            id: format!("{}:{}", file_id, port),
+            range_start: (range.start.line, range.start.character),
+            range_end: (range.end.line, range.end.character),
             styles,
             title: symbol.name.clone(),
             children,

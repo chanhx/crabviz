@@ -82,7 +82,7 @@ impl Dot {
                     sections = table
                         .sections
                         .iter()
-                        .map(|node| Dot::process_cell(node))
+                        .map(|node| Dot::process_cell(table.id, node))
                         .collect::<Vec<_>>()
                         .join("\n"),
                 )
@@ -118,7 +118,7 @@ digraph {{
         )
     }
 
-    fn process_cell(cell: &Cell) -> String {
+    fn process_cell(table_id: u32, cell: &Cell) -> String {
         let classes = cell
             .styles
             .iter()
@@ -147,11 +147,10 @@ digraph {{
             (r#"BORDER="0""#.to_string(), styles)
         };
 
+        let port = format!("{}_{}", cell.range_start.0, cell.range_start.1);
         if cell.children.is_empty() {
             format!(
-                r#"     <TR><TD PORT="{port}" ID="{id}" {cell_styles} {href}>{name}</TD></TR>"#,
-                port = cell.port,
-                id = cell.id,
+                r#"     <TR><TD PORT="{port}" ID="{table_id}:{port}" {cell_styles} {href}>{name}</TD></TR>"#,
                 href = if cell.children.len() > 0 {
                     "".to_string()
                 } else {
@@ -162,7 +161,6 @@ digraph {{
         } else {
             let dot_cell = format!(
                 r#"     <TR><TD PORT="{port}" {cell_styles} {href}>{name}</TD></TR>"#,
-                port = cell.port,
                 href = if cell.children.len() > 0 {
                     "".to_string()
                 } else {
@@ -174,16 +172,19 @@ digraph {{
             format!(
                 r#"
             <TR><TD BORDER="0" CELLPADDING="0">
-            <TABLE ID="{id}" CELLSPACING="4" CELLPADDING="4" CELLBORDER="1" {table_styles} BGCOLOR="green" {href}>
+            <TABLE ID="{table_id}:{port}" CELLSPACING="4" CELLPADDING="4" CELLBORDER="1" {table_styles} BGCOLOR="green" {href}>
             {}
             </TABLE>
             </TD></TR>
             "#,
                 iter::once(dot_cell)
-                    .chain(cell.children.iter().map(|item| Dot::process_cell(item)))
+                    .chain(
+                        cell.children
+                            .iter()
+                            .map(|item| Dot::process_cell(table_id, item))
+                    )
                     .collect::<Vec<_>>()
                     .join("\n"),
-                id = cell.id,
                 href = Dot::css_classes_href(&classes),
             )
         }
@@ -195,8 +196,8 @@ digraph {{
     {
         edges
             .map(|edge| {
-                let from = format!(r#"{}:"{}""#, edge.from_table_id, edge.from_node_id);
-                let to = format!(r#"{}:"{}""#, edge.to_table_id, edge.to_node_id);
+                let from = format!(r#"{}:"{}_{}""#, edge.from.0, edge.from.1, edge.from.2);
+                let to = format!(r#"{}:"{}_{}""#, edge.to.0, edge.to.1, edge.to.2);
 
                 let classes = edge
                     .styles
@@ -206,17 +207,18 @@ digraph {{
                     })
                     .collect::<Vec<_>>();
 
-                let mut attrs = iter::once(format!(
-                    r#"id="{}:{} -> {}:{}""#,
-                    edge.from_table_id, edge.from_node_id, edge.to_table_id, edge.to_node_id
+                let attrs = iter::once(format!(
+                    r#"id="{}:{}_{} -> {}:{}_{}""#,
+                    edge.from.0, edge.from.1, edge.from.2, edge.to.0, edge.to.1, edge.to.2,
                 ))
+                .chain(iter::once(if edge.from.0 == edge.to.0 {
+                    r#"label=" ""#.to_string()
+                } else {
+                    String::new()
+                }))
                 .chain(iter::once(Dot::css_classes_href(&classes)))
                 .filter(|s| !s.is_empty())
                 .collect::<Vec<_>>();
-
-                if edge.from_table_id == edge.to_table_id {
-                    attrs.push(r#"label=" ""#.to_string());
-                };
 
                 format!("{} -> {} [{attrs}];", from, to, attrs = attrs.join(", "),)
             })

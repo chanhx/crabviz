@@ -28,13 +28,13 @@ pub struct GraphGenerator {
     // TODO: use a trie map to store files
     root: String,
     files: HashMap<String, FileOutline>,
-    next_file_id: PathId,
+    next_file_id: u32,
 
     incoming_calls: HashMap<SymbolLocation, Vec<CallHierarchyIncomingCall>>,
     outgoing_calls: HashMap<SymbolLocation, Vec<CallHierarchyOutgoingCall>>,
     interfaces: HashMap<SymbolLocation, Vec<SymbolLocation>>,
 
-    highlights: HashMap<PathId, HashSet<String>>,
+    highlights: HashMap<u32, HashSet<(u32, u32)>>,
 }
 
 impl GraphGenerator {
@@ -97,17 +97,17 @@ impl GraphGenerator {
             Some(file) => file.id,
         };
 
-        let port = format!("{}_{}", position.line, position.character).to_string();
+        let cell_pos = (position.line, position.character);
 
         match self.highlights.entry(file_id) {
             Entry::Vacant(entry) => {
                 let mut set = HashSet::new();
-                set.insert(port);
+                set.insert(cell_pos);
 
                 entry.insert(set);
             }
             Entry::Occupied(mut entry) => {
-                entry.get_mut().insert(port);
+                entry.get_mut().insert(cell_pos);
             }
         }
     }
@@ -156,19 +156,20 @@ impl GraphGenerator {
             .iter()
             .filter(|(callee, _)| files.contains_key(&callee.path))
             .flat_map(|(callee, calls)| {
-                let to_table_id = files.get(&callee.path).unwrap().id.to_string();
-                let to_node_id = format!("{}_{}", callee.line, callee.character);
+                let to = (
+                    files.get(&callee.path).unwrap().id,
+                    callee.line,
+                    callee.character,
+                );
 
                 calls.into_iter().filter_map(move |call| {
                     Some(Edge {
-                        from_table_id: files.get(call.from.uri.path())?.id.to_string(),
-                        from_node_id: format!(
-                            "{}_{}",
+                        from: (
+                            files.get(call.from.uri.path())?.id,
                             call.from.selection_range.start.line,
-                            call.from.selection_range.start.character
+                            call.from.selection_range.start.character,
                         ),
-                        to_table_id: to_table_id.clone(),
-                        to_node_id: to_node_id.clone(),
+                        to,
                         styles: vec![],
                     })
                 })
@@ -179,18 +180,19 @@ impl GraphGenerator {
             .iter()
             .filter(|(caller, _)| files.contains_key(&caller.path))
             .flat_map(|(caller, calls)| {
-                let from_table_id = files.get(&caller.path).unwrap().id.to_string();
-                let from_node_id = format!("{}_{}", caller.line, caller.character);
+                let from = (
+                    files.get(&caller.path).unwrap().id,
+                    caller.line,
+                    caller.character,
+                );
 
                 calls.into_iter().filter_map(move |call| {
                     Some(Edge {
-                        from_table_id: from_table_id.clone(),
-                        from_node_id: from_node_id.clone(),
-                        to_table_id: files.get(call.to.uri.path())?.id.to_string(),
-                        to_node_id: format!(
-                            "{}_{}",
+                        from,
+                        to: (
+                            files.get(call.to.uri.path())?.id,
                             call.to.selection_range.start.line,
-                            call.to.selection_range.start.character
+                            call.to.selection_range.start.character,
                         ),
                         styles: vec![],
                     })
@@ -201,15 +203,20 @@ impl GraphGenerator {
             .interfaces
             .iter()
             .flat_map(|(interface, implementations)| {
-                let to_table_id = files.get(&interface.path).unwrap().id.to_string();
-                let to_node_id = format!("{}_{}", interface.line, interface.character);
+                let to = (
+                    files.get(&interface.path).unwrap().id,
+                    interface.line,
+                    interface.character,
+                );
 
                 implementations.into_iter().filter_map(move |location| {
                     Some(Edge {
-                        from_table_id: files.get(&location.path)?.id.to_string(),
-                        from_node_id: format!("{}_{}", location.line, location.character),
-                        to_table_id: to_table_id.clone(),
-                        to_node_id: to_node_id.clone(),
+                        from: (
+                            files.get(&location.path)?.id,
+                            location.line,
+                            location.character,
+                        ),
+                        to,
                         styles: vec![EdgeStyle::CssClass("impl".to_string())],
                     })
                 })
@@ -218,18 +225,16 @@ impl GraphGenerator {
         let mut cell_ids = HashSet::new();
         tables
             .iter()
-            .flat_map(|tbl| tbl.sections.iter())
-            .for_each(|cell| self.collect_cell_ids(cell, &mut cell_ids));
+            .flat_map(|tbl| tbl.sections.iter().map(|cell| (tbl.id, cell)))
+            .for_each(|(tid, cell)| self.collect_cell_ids(tid, cell, &mut cell_ids));
 
         let edges = incoming_calls
             .chain(outgoing_calls)
             .chain(implementations)
             .filter(|edge| {
                 // some cells may have been filtered out, so we need to check the `from_id`
-                let from_id = format!("{}:{}", edge.from_table_id, edge.from_node_id);
-                let to_id = format!("{}:{}", edge.to_table_id, edge.to_node_id);
 
-                cell_ids.contains(&from_id) && cell_ids.contains(&to_id)
+                cell_ids.contains(&edge.from) && cell_ids.contains(&edge.to)
             })
             .collect::<HashSet<_>>();
 
@@ -292,10 +297,10 @@ impl GraphGenerator {
         }
     }
 
-    fn collect_cell_ids(&self, cell: &Cell, ids: &mut HashSet<String>) {
-        ids.insert(cell.id.clone());
+    fn collect_cell_ids(&self, table_id: u32, cell: &Cell, ids: &mut HashSet<(u32, u32, u32)>) {
+        ids.insert((table_id, cell.range_start.0, cell.range_start.1));
         cell.children
             .iter()
-            .for_each(|c| self.collect_cell_ids(c, ids));
+            .for_each(|child| self.collect_cell_ids(table_id, child, ids));
     }
 }

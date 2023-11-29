@@ -3,10 +3,8 @@ use {
     std::{fmt::Display, hash::Hash, path::PathBuf},
 };
 
-pub(crate) type PathId = u32;
-
 pub(crate) struct FileOutline {
-    pub id: PathId,
+    pub id: u32,
     pub path: PathBuf,
     pub symbols: Vec<DocumentSymbol>,
 }
