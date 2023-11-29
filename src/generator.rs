@@ -160,9 +160,8 @@ impl GraphGenerator {
                 let to_node_id = format!("{}_{}", callee.line, callee.character);
 
                 calls.into_iter().filter_map(move |call| {
-                    let from_table_id = files.get(call.from.uri.path())?.id.to_string();
                     Some(Edge {
-                        from_table_id: from_table_id.clone(),
+                        from_table_id: files.get(call.from.uri.path())?.id.to_string(),
                         from_node_id: format!(
                             "{}_{}",
                             call.from.selection_range.start.line,
@@ -184,11 +183,10 @@ impl GraphGenerator {
                 let from_node_id = format!("{}_{}", caller.line, caller.character);
 
                 calls.into_iter().filter_map(move |call| {
-                    let to_table_id = files.get(call.to.uri.path())?.id.to_string();
                     Some(Edge {
                         from_table_id: from_table_id.clone(),
                         from_node_id: from_node_id.clone(),
-                        to_table_id,
+                        to_table_id: files.get(call.to.uri.path())?.id.to_string(),
                         to_node_id: format!(
                             "{}_{}",
                             call.to.selection_range.start.line,
@@ -207,9 +205,8 @@ impl GraphGenerator {
                 let to_node_id = format!("{}_{}", interface.line, interface.character);
 
                 implementations.into_iter().filter_map(move |location| {
-                    let from_table_id = files.get(&location.path)?.id.to_string();
                     Some(Edge {
-                        from_table_id,
+                        from_table_id: files.get(&location.path)?.id.to_string(),
                         from_node_id: format!("{}_{}", location.line, location.character),
                         to_table_id: to_table_id.clone(),
                         to_node_id: to_node_id.clone(),
@@ -224,8 +221,7 @@ impl GraphGenerator {
             .flat_map(|tbl| tbl.sections.iter())
             .for_each(|cell| self.collect_cell_ids(cell, &mut cell_ids));
 
-        let mut edges = HashMap::new();
-        incoming_calls
+        let edges = incoming_calls
             .chain(outgoing_calls)
             .chain(implementations)
             .filter(|edge| {
@@ -235,17 +231,11 @@ impl GraphGenerator {
 
                 cell_ids.contains(&from_id) && cell_ids.contains(&to_id)
             })
-            .for_each(|edge| {
-                let key = format!(
-                    "{}:{}-{}:{}",
-                    edge.from_table_id, edge.from_node_id, edge.to_table_id, edge.to_node_id
-                );
-                edges.entry(key).or_insert(edge);
-            });
+            .collect::<HashSet<_>>();
 
         let subgraphs = self.subgraphs(files.iter().map(|(_, f)| f));
 
-        Dot::generate_dot_source(&tables, edges.into_values(), &subgraphs)
+        Dot::generate_dot_source(&tables, edges.into_iter(), &subgraphs)
     }
 
     fn subgraphs<'a, I>(&'a self, files: I) -> Vec<Subgraph>

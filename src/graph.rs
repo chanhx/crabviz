@@ -1,4 +1,7 @@
-use std::collections::HashSet;
+use std::{
+    collections::HashSet,
+    hash::{Hash, Hasher},
+};
 
 pub mod dot;
 
@@ -20,6 +23,26 @@ pub struct Edge {
     pub to_node_id: String,
     pub styles: Vec<EdgeStyle>,
 }
+
+impl Hash for Edge {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.from_table_id.hash(state);
+        self.from_node_id.hash(state);
+        self.to_table_id.hash(state);
+        self.to_node_id.hash(state);
+    }
+}
+
+impl PartialEq for Edge {
+    fn eq(&self, other: &Self) -> bool {
+        self.from_table_id == other.from_table_id
+            && self.from_node_id == other.from_node_id
+            && self.to_table_id == other.to_table_id
+            && self.to_node_id == other.to_node_id
+    }
+}
+
+impl Eq for Edge {}
 
 #[derive(Debug)]
 pub struct Cell {

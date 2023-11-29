@@ -144,7 +144,7 @@ pub struct CallHierarchyIncomingCall {
     /// The item that makes the call.
     pub from: CallHierarchyItem,
 
-    /// The range at which at which the calls appears. This is relative to the caller
+    /// The range at which the calls appears. This is relative to the caller
     /// denoted by [`this.from`](#CallHierarchyIncomingCall.from).
     pub from_ranges: Vec<Range>,
 }
