@@ -151,24 +151,27 @@ impl GraphGenerator {
             })
             .collect::<Vec<_>>();
 
+        let mut cell_ids = HashSet::new();
+        tables
+            .iter()
+            .flat_map(|tbl| tbl.sections.iter().map(|cell| (tbl.id, cell)))
+            .for_each(|(tid, cell)| self.collect_cell_ids(tid, cell, &mut cell_ids));
+        let cell_ids_ref = &cell_ids;
+
         let incoming_calls = self
             .incoming_calls
             .iter()
-            .filter(|(callee, _)| files.contains_key(&callee.path))
-            .flat_map(|(callee, calls)| {
-                let to = (
-                    files.get(&callee.path).unwrap().id,
-                    callee.line,
-                    callee.character,
-                );
+            .filter_map(|(callee, callers)| {
+                let to = callee.location_id(files)?;
 
+                cell_ids.contains(&to).then_some((to, callers))
+            })
+            .flat_map(|(to, calls)| {
                 calls.into_iter().filter_map(move |call| {
-                    Some(Edge {
-                        from: (
-                            files.get(call.from.uri.path())?.id,
-                            call.from.selection_range.start.line,
-                            call.from.selection_range.start.character,
-                        ),
+                    let from = call.from.location_id(files)?;
+
+                    cell_ids_ref.contains(&from).then_some(Edge {
+                        from,
                         to,
                         styles: vec![],
                     })
@@ -178,22 +181,18 @@ impl GraphGenerator {
         let outgoing_calls = self
             .outgoing_calls
             .iter()
-            .filter(|(caller, _)| files.contains_key(&caller.path))
-            .flat_map(|(caller, calls)| {
-                let from = (
-                    files.get(&caller.path).unwrap().id,
-                    caller.line,
-                    caller.character,
-                );
+            .filter_map(|(caller, callees)| {
+                let from = caller.location_id(files)?;
 
-                calls.into_iter().filter_map(move |call| {
-                    Some(Edge {
+                cell_ids.contains(&from).then_some((from, callees))
+            })
+            .flat_map(|(from, callees)| {
+                callees.into_iter().filter_map(move |call| {
+                    let to = call.to.location_id(files)?;
+
+                    cell_ids_ref.contains(&to).then_some(Edge {
                         from,
-                        to: (
-                            files.get(call.to.uri.path())?.id,
-                            call.to.selection_range.start.line,
-                            call.to.selection_range.start.character,
-                        ),
+                        to,
                         styles: vec![],
                     })
                 })
@@ -202,40 +201,26 @@ impl GraphGenerator {
         let implementations = self
             .interfaces
             .iter()
-            .flat_map(|(interface, implementations)| {
-                let to = (
-                    files.get(&interface.path).unwrap().id,
-                    interface.line,
-                    interface.character,
-                );
+            .filter_map(|(interface, implementations)| {
+                let to = interface.location_id(files)?;
 
+                cell_ids.contains(&to).then_some((to, implementations))
+            })
+            .flat_map(|(to, implementations)| {
                 implementations.into_iter().filter_map(move |location| {
-                    Some(Edge {
-                        from: (
-                            files.get(&location.path)?.id,
-                            location.line,
-                            location.character,
-                        ),
+                    let from = location.location_id(files)?;
+
+                    cell_ids_ref.contains(&&from).then_some(Edge {
+                        from,
                         to,
                         styles: vec![EdgeStyle::CssClass("impl".to_string())],
                     })
                 })
             });
 
-        let mut cell_ids = HashSet::new();
-        tables
-            .iter()
-            .flat_map(|tbl| tbl.sections.iter().map(|cell| (tbl.id, cell)))
-            .for_each(|(tid, cell)| self.collect_cell_ids(tid, cell, &mut cell_ids));
-
         let edges = incoming_calls
             .chain(outgoing_calls)
             .chain(implementations)
-            .filter(|edge| {
-                // some cells may have been filtered out, so we need to check the `from_id`
-
-                cell_ids.contains(&edge.from) && cell_ids.contains(&edge.to)
-            })
             .collect::<HashSet<_>>();
 
         let subgraphs = self.subgraphs(files.iter().map(|(_, f)| f));
