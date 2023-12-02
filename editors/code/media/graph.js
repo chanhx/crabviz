@@ -161,11 +161,11 @@ class CallGraph {
         let fade = true;
 
         if (edge.matches(`[edge-from="${id}"]`)) {
-          edge.classList.add("incoming");
+          edge.classList.add("outgoing");
           fade = false;
         }
         if (edge.matches(`[edge-to="${id}"]`)) {
-          edge.classList.add("outgoing");
+          edge.classList.add("incoming");
           fade = false;
         }
 
@@ -221,6 +221,11 @@ class CallGraph {
     return null;
   }
 
+  // TODO: fix highlight color problem in recursive calls
+  // consider a recursive call like this:
+  // a -> b -> c -> a
+  // focus: a
+  // at present, when b or c is selected, the edges are not highlighted in right color to show that they are in recursion.
   highlightEdgeInFocusMode(cellId) {
     let incomings = new Set();
     let outgoings = new Set();
