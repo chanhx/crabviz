@@ -170,6 +170,9 @@ impl GraphGenerator {
         let updated_files = RefCell::new(HashSet::new());
         let updated_files_ref = &updated_files;
 
+        let inserted_symbols = RefCell::new(HashSet::new());
+        let inserted_symbols_ref = &inserted_symbols;
+
         let incoming_calls = self
             .incoming_calls
             .iter()
@@ -187,9 +190,10 @@ impl GraphGenerator {
                     // another approach would be to modify edges to make them start from the outter functions, which is not so accurate
 
                     (cell_ids_ref.contains(&from)
-                        || updated_files_ref.borrow().contains(call.from.uri.path())
+                        || inserted_symbols_ref.borrow().contains(&from)
                         || {
-                            let file = files.get(call.from.uri.path())? as *const FileOutline;
+                            let path = call.from.uri.path();
+                            let file = files.get(path)? as *const FileOutline;
 
                             let updated = unsafe {
                                 self.try_insert_symbol(
@@ -199,9 +203,8 @@ impl GraphGenerator {
                             };
 
                             if updated {
-                                updated_files_ref
-                                    .borrow_mut()
-                                    .insert(call.from.uri.path().to_string());
+                                updated_files_ref.borrow_mut().insert(path.to_string());
+                                inserted_symbols_ref.borrow_mut().insert(from);
                             }
                             updated
                         })
