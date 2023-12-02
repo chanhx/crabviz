@@ -55,17 +55,17 @@ pub(crate) struct Dot;
 // }
 
 impl Dot {
-    pub fn generate_dot_source<E>(
-        tables: &[TableNode],
+    pub fn generate_dot_source<T, E>(
+        tables: T,
         // nodes: &[Node],
         edges: E,
         subgraphs: &[Subgraph],
     ) -> String
     where
+        T: Iterator<Item = TableNode>,
         E: Iterator<Item = Edge>,
     {
         let tables = tables
-            .iter()
             .map(|table| {
                 format!(
                     r#"

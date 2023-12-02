@@ -14,11 +14,12 @@ use {
         graph::{dot::Dot, Cell, Edge, EdgeStyle, Subgraph},
         lang,
         lsp_types::{
-            CallHierarchyIncomingCall, CallHierarchyOutgoingCall, DocumentSymbol, Location,
-            Position,
+            CallHierarchyIncomingCall, CallHierarchyItem, CallHierarchyOutgoingCall,
+            DocumentSymbol, Location, Position, SymbolKind,
         },
     },
     std::{
+        cell::RefCell,
         collections::{hash_map::Entry, BTreeMap, HashMap, HashSet},
         path::{Path, PathBuf},
     },
@@ -139,24 +140,27 @@ impl GraphGenerator {
         let lang = lang::language_handler(ext);
 
         // TODO: it's better to construct tables before fetching call hierarchy, so that we can skip the filtered out symbols.
-        let tables = files
+        let mut tables = files
             .values()
-            .map(|f| {
-                let mut table = lang.file_repr(f);
-                if let Some(cells) = self.highlights.get(&f.id) {
+            .map(|file| {
+                let mut table = lang.file_repr(file);
+                if let Some(cells) = self.highlights.get(&file.id) {
                     table.highlight_cells(cells);
                 }
 
-                table
+                (file.id, table)
             })
-            .collect::<Vec<_>>();
+            .collect::<HashMap<_, _>>();
 
         let mut cell_ids = HashSet::new();
         tables
             .iter()
-            .flat_map(|tbl| tbl.sections.iter().map(|cell| (tbl.id, cell)))
+            .flat_map(|(_, tbl)| tbl.sections.iter().map(|cell| (tbl.id, cell)))
             .for_each(|(tid, cell)| self.collect_cell_ids(tid, cell, &mut cell_ids));
         let cell_ids_ref = &cell_ids;
+
+        let updated_files = RefCell::new(HashSet::new());
+        let updated_files_ref = &updated_files;
 
         let incoming_calls = self
             .incoming_calls
@@ -170,7 +174,30 @@ impl GraphGenerator {
                 calls.into_iter().filter_map(move |call| {
                     let from = call.from.location_id(files)?;
 
-                    cell_ids_ref.contains(&from).then_some(Edge {
+                    // incoming calls may start from nested functions, which may not be included in file symbols in some lsp server implementations.
+                    // in that case, we add the missing nested symbol to the symbol list.
+                    // another approach would be to modify edges to make them start from the outter functions, which is not so accurate
+
+                    (cell_ids_ref.contains(&from)
+                        || updated_files_ref.borrow().contains(call.from.uri.path())
+                        || {
+                            let file = files.get(call.from.uri.path())? as *const FileOutline;
+
+                            let updated = unsafe {
+                                self.try_insert_symbol(
+                                    &call.from,
+                                    file.cast_mut().as_mut().unwrap(),
+                                )
+                            };
+
+                            if updated {
+                                updated_files_ref
+                                    .borrow_mut()
+                                    .insert(call.from.uri.path().to_string());
+                            }
+                            updated
+                        })
+                    .then_some(Edge {
                         from,
                         to,
                         styles: vec![],
@@ -223,9 +250,15 @@ impl GraphGenerator {
             .chain(implementations)
             .collect::<HashSet<_>>();
 
+        updated_files.borrow().iter().for_each(|path| {
+            let file = files.get(path).unwrap();
+            let table = tables.get_mut(&file.id).unwrap();
+            *table = lang.file_repr(file);
+        });
+
         let subgraphs = self.subgraphs(files.iter().map(|(_, f)| f));
 
-        Dot::generate_dot_source(&tables, edges.into_iter(), &subgraphs)
+        Dot::generate_dot_source(tables.into_values(), edges.into_iter(), &subgraphs)
     }
 
     fn subgraphs<'a, I>(&'a self, files: I) -> Vec<Subgraph>
@@ -287,5 +320,59 @@ impl GraphGenerator {
         cell.children
             .iter()
             .for_each(|child| self.collect_cell_ids(table_id, child, ids));
+    }
+
+    fn try_insert_symbol(&self, item: &CallHierarchyItem, file: &mut FileOutline) -> bool {
+        let range_start = (item.range.start.line, item.range.start.character);
+        let range_end = (item.range.end.line, item.range.end.character);
+
+        let mut symbols = &mut file.symbols;
+        let mut is_subsymbol = false;
+
+        loop {
+            let i = match symbols.binary_search_by_key(&range_start, |symbol| {
+                let start = symbol.range.start;
+                (start.line, start.character)
+            }) {
+                Ok(_) => return true, // should be unreachable
+                Err(i) => i,
+            };
+
+            if i > 0 {
+                let symbol = symbols.get(i - 1).unwrap();
+                let symbol_range_end = (symbol.range.end.line, symbol.range.end.character);
+
+                if symbol_range_end >= range_end {
+                    // we just deal with nested functions here
+                    if !matches!(symbol.kind, SymbolKind::Function | SymbolKind::Method) {
+                        return false;
+                    }
+                    is_subsymbol = true;
+
+                    // fight the borrow checker
+                    symbols = &mut symbols.get_mut(i - 1).unwrap().children;
+
+                    continue;
+                }
+            }
+
+            if is_subsymbol {
+                symbols.insert(
+                    i,
+                    DocumentSymbol {
+                        name: item.name.clone(),
+                        detail: item.detail.clone(),
+                        kind: item.kind,
+                        tags: item.tags.clone(),
+                        range: item.range,
+                        selection_range: item.selection_range,
+                        children: vec![],
+                        deprecated: None,
+                    },
+                );
+            }
+
+            return is_subsymbol;
+        }
     }
 }

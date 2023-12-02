@@ -24,7 +24,7 @@ extern "C" {
     // Use `js_namespace` here to bind `console.log(..)` instead of just
     // `log(..)`
     #[wasm_bindgen(js_namespace = console)]
-    fn log(s: String);
+    pub(crate) fn log(s: String);
 }
 
 #[wasm_bindgen(js_name = GraphGenerator)]
