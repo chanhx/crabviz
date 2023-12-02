@@ -35,16 +35,20 @@ pub struct GraphGeneratorWasm {
 #[wasm_bindgen(js_class = GraphGenerator)]
 impl GraphGeneratorWasm {
     #[wasm_bindgen(constructor)]
-    pub fn new(root: String) -> Self {
+    pub fn new(root: String, file_extension: String) -> Self {
         Self {
-            inner: RefCell::new(GraphGenerator::new(root)),
+            inner: RefCell::new(GraphGenerator::new(root, &file_extension)),
         }
     }
 
-    pub fn add_file(&self, file_path: String, symbols: JsValue) {
+    pub fn should_filter_out_file(&self, file_path: String) -> bool {
+        self.inner.borrow().should_filter_out_file(&file_path)
+    }
+
+    pub fn add_file(&self, file_path: String, symbols: JsValue) -> bool {
         let symbols = serde_wasm_bindgen::from_value::<Vec<DocumentSymbol>>(symbols).unwrap();
 
-        self.inner.borrow_mut().add_file(file_path, symbols);
+        self.inner.borrow_mut().add_file(file_path, symbols)
     }
 
     pub fn add_incoming_calls(&self, file_path: String, position: JsValue, calls: JsValue) {

@@ -23,8 +23,6 @@ export async function activate(context: vscode.ExtensionContext) {
 		const folder = vscode.workspace.workspaceFolders!
 			.find(folder => contextSelection.path.startsWith(folder.uri.path))!;
 
-		const generator = new Generator(folder.uri);
-
 		let extensions = new Set<string>();
 
 		const scanDirectories = allSelections.map(selection => {
@@ -81,6 +79,8 @@ export async function activate(context: vscode.ExtensionContext) {
 			return;
 		}
 
+		const generator = new Generator(folder.uri, extensionsByLanguage[lang][0]);
+
 		vscode.window.withProgress({
 			location: vscode.ProgressLocation.Window,
 			title: "Crabviz: Generating call graph",
@@ -106,7 +106,9 @@ export async function activate(context: vscode.ExtensionContext) {
 		const folder = vscode.workspace.workspaceFolders!
 			.find(folder => uri.path.startsWith(folder.uri.path))!;
 
-		const generator = new Generator(folder.uri);
+		const ext = path.extname(uri.path).substring(1);
+
+		const generator = new Generator(folder.uri, ext);
 
 		vscode.window.withProgress({
 			location: vscode.ProgressLocation.Window,

@@ -6,7 +6,7 @@ use {
 #[test]
 #[allow(deprecated)]
 fn nested_function() {
-    let mut generator = GraphGenerator::new("abc".to_string());
+    let mut generator = GraphGenerator::new("abc".to_string(), "");
     let parent_range = Range {
         start: Position {
             line: 1,

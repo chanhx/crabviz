@@ -31,6 +31,8 @@ pub struct GraphGenerator {
     files: HashMap<String, FileOutline>,
     next_file_id: u32,
 
+    lang: Box<dyn lang::Language>,
+
     incoming_calls: HashMap<SymbolLocation, Vec<CallHierarchyIncomingCall>>,
     outgoing_calls: HashMap<SymbolLocation, Vec<CallHierarchyOutgoingCall>>,
     interfaces: HashMap<SymbolLocation, Vec<SymbolLocation>>,
@@ -39,7 +41,7 @@ pub struct GraphGenerator {
 }
 
 impl GraphGenerator {
-    pub fn new(root: String) -> Self {
+    pub fn new(root: String, file_extension: &str) -> Self {
         Self {
             root,
             files: HashMap::new(),
@@ -48,11 +50,22 @@ impl GraphGenerator {
             outgoing_calls: HashMap::new(),
             interfaces: HashMap::new(),
             highlights: HashMap::new(),
+
+            lang: lang::language_handler(file_extension),
         }
     }
 
-    pub fn add_file(&mut self, file_path: String, symbols: Vec<DocumentSymbol>) {
+    pub fn should_filter_out_file(&self, file_path: &str) -> bool {
+        self.lang.should_filter_out_file(file_path)
+    }
+
+    pub fn add_file(&mut self, file_path: String, symbols: Vec<DocumentSymbol>) -> bool {
         let path = PathBuf::from(&file_path);
+
+        if self.lang.should_filter_out_file(&file_path) {
+            return false;
+        }
+
         let file = FileOutline {
             id: self.next_file_id,
             path,
@@ -69,6 +82,8 @@ impl GraphGenerator {
                 *entry_file = file;
             }
         }
+
+        return true;
     }
 
     // TODO: graph database
@@ -132,18 +147,11 @@ impl GraphGenerator {
     pub fn generate_dot_source(&self) -> String {
         let files = &self.files;
 
-        let ext = files
-            .iter()
-            .next()
-            .and_then(|(_, f)| f.path.extension().and_then(|ext| ext.to_str()))
-            .unwrap_or("");
-        let lang = lang::language_handler(ext);
-
         // TODO: it's better to construct tables before fetching call hierarchy, so that we can skip the filtered out symbols.
         let mut tables = files
             .values()
             .map(|file| {
-                let mut table = lang.file_repr(file);
+                let mut table = self.lang.file_repr(file);
                 if let Some(cells) = self.highlights.get(&file.id) {
                     table.highlight_cells(cells);
                 }
@@ -253,7 +261,7 @@ impl GraphGenerator {
         updated_files.borrow().iter().for_each(|path| {
             let file = files.get(path).unwrap();
             let table = tables.get_mut(&file.id).unwrap();
-            *table = lang.file_repr(file);
+            *table = self.lang.file_repr(file);
         });
 
         let subgraphs = self.subgraphs(files.iter().map(|(_, f)| f));

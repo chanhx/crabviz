@@ -9,6 +9,10 @@ use {
 pub(crate) struct Go;
 
 impl Language for Go {
+    fn should_filter_out_file(&self, file: &str) -> bool {
+        file.ends_with("_test.go")
+    }
+
     fn symbol_style(&self, symbol: &DocumentSymbol) -> Vec<Style> {
         match symbol.kind {
             SymbolKind::Function | SymbolKind::Method => {

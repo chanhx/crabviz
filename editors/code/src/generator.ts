@@ -14,9 +14,9 @@ export class Generator {
   private root: string;
   private inner: GraphGenerator;
 
-  public constructor(root: vscode.Uri) {
+  public constructor(root: vscode.Uri, fileExt: string) {
     this.root = root.path;
-    this.inner = new GraphGenerator(root.path);
+    this.inner = new GraphGenerator(root.path, fileExt);
   }
 
   public async generateCallGraph(
@@ -40,7 +40,9 @@ export class Generator {
         continue;
       }
 
-      this.inner.add_file(file.path, symbols);
+      if (!this.inner.add_file(file.path, symbols)) {
+        continue;
+      }
 
       while (symbols.length > 0) {
         for await (const symbol of symbols) {
@@ -186,7 +188,11 @@ export class Generator {
         let file = funcMap.get(item.uri.path);
         if (!file) {
           file = new VisitedFile(item.uri);
+          file.skip = this.inner.should_filter_out_file(item.uri.path);
           funcMap.set(item.uri.path, file);
+        }
+        if (file.skip) {
+          return;
         }
         file.visitFunc(symbolStart, FuncCallDirection.Incoming);
 
@@ -213,7 +219,11 @@ export class Generator {
         let file = funcMap.get(item.uri.path);
         if (!file) {
           file = new VisitedFile(item.uri);
+          file.skip = this.inner.should_filter_out_file(item.uri.path);
           funcMap.set(item.uri.path, file);
+        }
+        if (file.skip) {
+          return;
         }
         file.visitFunc(symbolStart, FuncCallDirection.Outgoing);
 
@@ -241,10 +251,12 @@ enum FuncCallDirection {
 
 class VisitedFile {
   uri: vscode.Uri;
+  skip: boolean;
   private funcs: Map<string, [vscode.Position, FuncCallDirection]>;
 
   constructor(uri: vscode.Uri) {
     this.uri = uri;
+    this.skip = false;
     this.funcs = new Map();
   }
 

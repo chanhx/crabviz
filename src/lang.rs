@@ -12,6 +12,10 @@ use {
 };
 
 pub(crate) trait Language {
+    fn should_filter_out_file(&self, _file: &str) -> bool {
+        false
+    }
+
     fn file_repr(&self, file: &FileOutline) -> TableNode {
         let sections = file
             .symbols
