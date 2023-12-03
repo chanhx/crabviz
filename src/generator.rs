@@ -334,26 +334,21 @@ impl GraphGenerator {
     }
 
     fn try_insert_symbol(&self, item: &CallHierarchyItem, file: &mut FileOutline) -> bool {
-        let range_start = (item.range.start.line, item.range.start.character);
-        let range_end = (item.range.end.line, item.range.end.character);
-
         let mut symbols = &mut file.symbols;
         let mut is_subsymbol = false;
 
         loop {
-            let i = match symbols.binary_search_by_key(&range_start, |symbol| {
-                let start = symbol.range.start;
-                (start.line, start.character)
-            }) {
+            let i = match symbols
+                .binary_search_by_key(&item.range.start, |symbol| symbol.range.start)
+            {
                 Ok(_) => return true, // should be unreachable
                 Err(i) => i,
             };
 
             if i > 0 {
                 let symbol = symbols.get(i - 1).unwrap();
-                let symbol_range_end = (symbol.range.end.line, symbol.range.end.character);
 
-                if symbol_range_end >= range_end {
+                if symbol.range.end > item.range.end {
                     // we just deal with nested functions here
                     if !matches!(symbol.kind, SymbolKind::Function | SymbolKind::Method) {
                         return false;
@@ -368,6 +363,17 @@ impl GraphGenerator {
             }
 
             if is_subsymbol {
+                let mut children = vec![];
+
+                if let Some(next_symbol) = symbols.get(i) {
+                    if next_symbol.range.start > item.range.start
+                        && next_symbol.range.end < item.range.end
+                    {
+                        let next_symbol = symbols.remove(i);
+                        children.push(next_symbol);
+                    }
+                }
+
                 symbols.insert(
                     i,
                     DocumentSymbol {
@@ -377,7 +383,7 @@ impl GraphGenerator {
                         tags: item.tags.clone(),
                         range: item.range,
                         selection_range: item.selection_range,
-                        children: vec![],
+                        children,
                         deprecated: None,
                     },
                 );
