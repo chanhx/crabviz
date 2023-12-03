@@ -12,11 +12,14 @@ you can generate call graph with Crabviz for your project.
 
 * Show types, methods, functions and interfaces, grouped by file
 * Display function calling relationships and interface implementation relationships
-* Specify folders and files for analysis
+* Analyze selected folders and files, or a selected function
+* Export call graphs to svg files
 
 ## Preview
 
-![preview](https://user-images.githubusercontent.com/20551552/242812058-60584f59-a8f0-4a56-90eb-373c3f3b8cd5.gif)
+![preview1](https://user-images.githubusercontent.com/20551552/242812058-60584f59-a8f0-4a56-90eb-373c3f3b8cd5.gif)
+
+![preview2](https://user-images.githubusercontent.com/20551552/287503577-1f0a4155-313c-44cd-a4e3-a8b0ce786eca.gif)
 
 ## Editors
 
