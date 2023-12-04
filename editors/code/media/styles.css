@@ -16,6 +16,11 @@
   --node-color: lightgray;
   --node-content-color: black;
   --node-highlight-color: red;
+
+
+  --interface-color: cornsilk;
+  --module-color: blanchedalmond;
+  --method-block-color: burlywood;
 }
 
 /* background */
@@ -172,7 +177,7 @@ svg {
 /* langugage */
 
 .interface :is(path, polygon):first-child {
-  fill: cornsilk;
+  fill: var(--interface-color);
 }
 .interface > :is(path, polygon):last-of-type {
   stroke: black;
@@ -181,12 +186,12 @@ svg {
 }
 
 .module :is(path, polygon):first-child {
-  fill: blanchedalmond;
+  fill: var(--module-color);
 }
 
 .method-block > :is(path, polygon):first-child {
-  fill: burlywood;
+  fill: var(--method-block-color);
 }
-.method-block :not(.highlight) :is(path, polygon):first-child {
-  fill: burlywood;
+.method-block :not(.highlight):not(.selected) :is(path, polygon):first-child {
+  fill: var(--method-block-color);
 }
