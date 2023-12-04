@@ -1,5 +1,16 @@
 # Change Log
 
+## 0.3.0 (2023.12.4)
+
+### Features
+
+* Generate a call graph for a selected function
+* Filter out test files when analyzing Go projects
+
+### Fixed
+
+* Calls from nested functions are not shown for Go projects
+
 ## 0.2.0 (2023.9.24)
 
 ### Features
