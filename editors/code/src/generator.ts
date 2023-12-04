@@ -121,7 +121,7 @@ export class Generator {
       }
 
       const funcs = file.sortedFuncs();
-      symbols = this.filterSymbols(symbols, funcs, 0, true);
+      symbols = this.filterSymbols(symbols, funcs);
 
       this.inner.add_file(file.uri.path, symbols);
     }
@@ -135,20 +135,16 @@ export class Generator {
     return graphviz.dot(dot);
   }
 
-  filterSymbols(symbols: vscode.DocumentSymbol[], funcsPos: vscode.Position[], i: number, top: boolean): vscode.DocumentSymbol[] {
-    let funcPos = funcsPos[i];
-
+  filterSymbols(symbols: vscode.DocumentSymbol[], funcsPos: vscode.Position[], i = 0): vscode.DocumentSymbol[] {
     return symbols.filter(symbol => {
-      const keep =
-        i < funcsPos.length &&
-        (symbol.range.start.line < funcPos.line || (symbol.range.start.line === funcPos.line && symbol.range.start.character <= funcPos.character)) &&
-        (symbol.range.end.line > funcPos.line || (symbol.range.end.line === funcPos.line && symbol.range.end.character >= funcPos.character));
+      const keep = i < funcsPos.length && symbol.range.contains(funcsPos[i]);
 
       if (keep) {
-        symbol.children = this.filterSymbols(symbol.children, funcsPos, i, false);
-
-        if (top) {
-          funcPos = funcsPos[++i];
+        if (symbol.children.length > 0) {
+          symbol.children = this.filterSymbols(symbol.children, funcsPos, i);
+          i += symbol.children.length > 0 ? symbol.children.length : 1;
+        } else {
+          i += 1;
         }
       }
 
@@ -277,14 +273,9 @@ class VisitedFile {
 
   sortedFuncs(): vscode.Position[] {
     const funcs = Array.from(this.funcs.values());
-    return funcs.sort((p1, p2) => {
-      const lineDiff = p1[0].line - p2[0].line;
-      if (lineDiff !== 0) {
-        return lineDiff;
-      } else {
-        return p1[0].character - p2[0].character;
-      }
-    }).map(tuple => tuple[0]);
+    return funcs
+            .sort((p1, p2) => p1[0].compareTo(p2[0]))
+            .map(tuple => tuple[0]);
   }
 };
 
