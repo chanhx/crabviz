@@ -120,7 +120,7 @@ export class Generator {
         continue;
       }
 
-      const funcs = file.sortedFuncs();
+      const funcs = file.sortedFuncs().filter(rng => !rng.isEmpty);
       symbols = this.filterSymbols(symbols, funcs);
 
       this.inner.add_file(file.uri.path, symbols);
@@ -135,7 +135,7 @@ export class Generator {
     return graphviz.dot(dot);
   }
 
-  filterSymbols(symbols: vscode.DocumentSymbol[], funcsPos: vscode.Position[], i = 0): vscode.DocumentSymbol[] {
+  filterSymbols(symbols: vscode.DocumentSymbol[], funcsPos: vscode.Range[], i = 0): vscode.DocumentSymbol[] {
     return symbols.filter(symbol => {
       const keep = i < funcsPos.length && symbol.range.contains(funcsPos[i]);
 
@@ -178,8 +178,7 @@ export class Generator {
   async resolveIncomingCalls(item: vscode.CallHierarchyItem, funcMap: Map<string, VisitedFile>) {
     await vscode.commands.executeCommand<vscode.CallHierarchyIncomingCall[]>('vscode.provideIncomingCalls', item)
       .then(async calls => {
-        const symbolStart = item.selectionRange.start;
-        this.inner.add_incoming_calls(item.uri.path, symbolStart, calls);
+        this.inner.add_incoming_calls(item.uri.path, item.selectionRange.start, calls);
 
         let file = funcMap.get(item.uri.path);
         if (!file) {
@@ -190,7 +189,7 @@ export class Generator {
         if (file.skip) {
           return;
         }
-        file.visitFunc(symbolStart, FuncCallDirection.Incoming);
+        file.visitFunc(item.range, FuncCallDirection.Incoming);
 
         calls = calls
           .filter(call =>
@@ -209,8 +208,7 @@ export class Generator {
   async resolveOutgoingCalls(item: vscode.CallHierarchyItem, funcMap: Map<string, VisitedFile>) {
     await vscode.commands.executeCommand<vscode.CallHierarchyOutgoingCall[]>('vscode.provideOutgoingCalls', item)
       .then(async calls => {
-        const symbolStart = item.selectionRange.start;
-        this.inner.add_outgoing_calls(item.uri.path, symbolStart, calls);
+        this.inner.add_outgoing_calls(item.uri.path, item.selectionRange.start, calls);
 
         let file = funcMap.get(item.uri.path);
         if (!file) {
@@ -221,7 +219,7 @@ export class Generator {
         if (file.skip) {
           return;
         }
-        file.visitFunc(symbolStart, FuncCallDirection.Outgoing);
+        file.visitFunc(item.range, FuncCallDirection.Outgoing);
 
         calls = calls
           .filter(call =>
@@ -248,7 +246,7 @@ enum FuncCallDirection {
 class VisitedFile {
   uri: vscode.Uri;
   skip: boolean;
-  private funcs: Map<string, [vscode.Position, FuncCallDirection]>;
+  private funcs: Map<string, [vscode.Range, FuncCallDirection]>;
 
   constructor(uri: vscode.Uri) {
     this.uri = uri;
@@ -256,12 +254,12 @@ class VisitedFile {
     this.funcs = new Map();
   }
 
-  visitFunc(pos: vscode.Position, direction: FuncCallDirection) {
-    let key = `${pos}`;
+  visitFunc(rng: vscode.Range, direction: FuncCallDirection) {
+    let key = `${rng.start}`;
     let val = this.funcs.get(key);
 
     if (!val) {
-      this.funcs.set(key, [pos, direction]);
+      this.funcs.set(key, [rng, direction]);
     } else {
       val[1] |= direction;
     }
@@ -271,10 +269,10 @@ class VisitedFile {
     return ((this.funcs.get(`${pos}`)?.[1] ?? 0) & direction) === direction;
   }
 
-  sortedFuncs(): vscode.Position[] {
+  sortedFuncs(): vscode.Range[] {
     const funcs = Array.from(this.funcs.values());
     return funcs
-            .sort((p1, p2) => p1[0].compareTo(p2[0]))
+            .sort((p1, p2) => p1[0].start.compareTo(p2[0].start))
             .map(tuple => tuple[0]);
   }
 };
