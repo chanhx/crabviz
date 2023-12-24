@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.3.1 (2023.12.24)
+
+### Fixed
+
+* Module loading issue
+
 ## 0.3.0 (2023.12.4)
 
 ### Features
