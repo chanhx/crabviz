@@ -1,11 +1,10 @@
 {
 	"compilerOptions": {
-		"module": "ES2022",
+		"module": "commonjs",
 		"target": "ES2022",
 		"lib": [
 			"ES2022"
 		],
-		"moduleResolution": "node",
 		"sourceMap": true,
 		"rootDir": "src",
 		"strict": true   /* enable all strict type-checking options */

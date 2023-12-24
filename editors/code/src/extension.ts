@@ -1,14 +1,22 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
+import { extname, relative } from 'path';
+
+import { initSync, set_panic_hook } from '../crabviz';
 
 import { Generator } from './generator';
 import { CallGraphPanel } from './webview';
 import { groupFileExtensions } from './utils/languages';
 import { ignoredExtensions, readIgnoreRules } from './utils/ignores';
 
-// wasmFolder("https://cdn.jsdelivr.net/npm/@hpcc-js/wasm/dist");
-
 export async function activate(context: vscode.ExtensionContext) {
+	const bits = await vscode.workspace.fs.readFile(
+		vscode.Uri.joinPath(context.extensionUri, './crabviz/index_bg.wasm')
+	);
+
+	initSync(bits);
+
+	set_panic_hook();
+
 	let disposable = vscode.commands.registerCommand('crabviz.generateCallGraph', async (contextSelection: vscode.Uri, allSelections: vscode.Uri[]) => {
 		let cancelled = false;
 
@@ -26,7 +34,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		let extensions = new Set<string>();
 
 		const scanDirectories = allSelections.map(selection => {
-			const ext = path.extname(selection.path).substring(1);
+			const ext = extname(selection.path).substring(1);
 			if (ext.length > 0) {
 				selectedFiles.push(selection);
 				extensions.add(ext);
@@ -37,7 +45,7 @@ export async function activate(context: vscode.ExtensionContext) {
 					return;
 				}
 
-				return path.relative(folder.uri.path, selection.path);
+				return relative(folder.uri.path, selection.path);
 			}
 		})
 		.filter((scanPath): scanPath is string => scanPath !== undefined);
@@ -106,7 +114,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		const folder = vscode.workspace.workspaceFolders!
 			.find(folder => uri.path.startsWith(folder.uri.path))!;
 
-		const ext = path.extname(uri.path).substring(1);
+		const ext = extname(uri.path).substring(1);
 
 		const generator = new Generator(folder.uri, ext);
 
@@ -153,11 +161,11 @@ async function collectFileExtensions(
 			break;
 		}
 
-		const ext = path.extname(files[0].path).substring(1);
+		const ext = extname(files[0].path).substring(1);
 		if (ext.length > 0) {
 			extensions.add(ext);
 		} else {
-			let relativePath = path.relative(folder.uri.path, files[0].path);
+			let relativePath = relative(folder.uri.path, files[0].path);
 			hiddenFiles.push(relativePath);
 		}
 	}

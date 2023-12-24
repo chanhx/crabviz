@@ -2,11 +2,7 @@ import * as vscode from 'vscode';
 
 import { graphviz } from '@hpcc-js/wasm';
 import { retryCommand } from './utils/command';
-import { set_panic_hook, GraphGenerator  } from '../crabviz';
-
-await import('../crabviz');
-
-set_panic_hook();
+import { GraphGenerator } from '../crabviz';
 
 const FUNC_KINDS: readonly vscode.SymbolKind[] = [vscode.SymbolKind.Function, vscode.SymbolKind.Method, vscode.SymbolKind.Constructor];
 

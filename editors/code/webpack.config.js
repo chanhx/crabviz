@@ -49,7 +49,7 @@ const extensionConfig = {
     new WasmPackPlugin({
       crateDirectory: path.resolve(__dirname, '../..'),
       outDir: path.resolve(__dirname, 'crabviz'),
-      extraArgs: '--features vscode',
+      extraArgs: '--target=web --features vscode',
       forceMode: 'production',
     }),
   ],
