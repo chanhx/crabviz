@@ -1,8 +1,10 @@
 import * as vscode from 'vscode';
-
+import { Ignore } from 'ignore';
 import { graphviz } from '@hpcc-js/wasm';
+
 import { retryCommand } from './utils/command';
 import { GraphGenerator } from '../crabviz';
+import { collectFiles } from './utils/workspace';
 
 const FUNC_KINDS: readonly vscode.SymbolKind[] = [vscode.SymbolKind.Function, vscode.SymbolKind.Method, vscode.SymbolKind.Constructor];
 
@@ -17,13 +19,14 @@ export class Generator {
 
   public async generateCallGraph(
     selectedFiles: vscode.Uri[],
-    includePattern: vscode.RelativePattern,
-    exclude: string
+    selectedDirectories: vscode.Uri[],
+    fileExtensions: Set<string>,
+    ig: Ignore
   ): Promise<string> {
-    const files = await vscode.workspace.findFiles(includePattern, exclude);
-    const allFiles = new Set(files.concat(selectedFiles));
+    let files = await collectFiles(this.root, selectedDirectories, fileExtensions, ig);
+    selectedFiles.forEach(f => files.add(f));
 
-    const sortedFiles = Array.from(allFiles);
+    const sortedFiles = Array.from(files);
     sortedFiles.sort((f1, f2) => f2.path.split('/').length - f1.path.split('/').length);
 
     const funcMap = new Map<string, Set<string>>(sortedFiles.map(f => [f.path, new Set()]));

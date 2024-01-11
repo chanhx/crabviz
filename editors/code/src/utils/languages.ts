@@ -1,4 +1,3 @@
-
 export function groupFileExtensions(extensions: Set<string>): { [lang: string]: string[] } {
   const extensionsByLanguage: {[lang: string]: string[]} = {};
 
