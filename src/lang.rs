@@ -85,11 +85,11 @@ pub struct DefaultLang;
 
 impl Language for DefaultLang {}
 
-pub(crate) fn language_handler(ext: &str) -> Box<dyn Language + Sync + Send> {
-    match ext {
-        "go" => Box::new(Go),
-        "java" => Box::new(Java),
-        "rs" => Box::new(Rust),
+pub(crate) fn language_handler(lang: &str) -> Box<dyn Language + Sync + Send> {
+    match lang {
+        "Go" => Box::new(Go),
+        "Java" => Box::new(Java),
+        "Rust" => Box::new(Rust),
         _ => Box::new(DefaultLang {}),
     }
 }

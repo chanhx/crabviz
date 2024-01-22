@@ -35,9 +35,9 @@ pub struct GraphGeneratorWasm {
 #[wasm_bindgen(js_class = GraphGenerator)]
 impl GraphGeneratorWasm {
     #[wasm_bindgen(constructor)]
-    pub fn new(root: String, file_extension: String) -> Self {
+    pub fn new(root: String, lang: String) -> Self {
         Self {
-            inner: RefCell::new(GraphGenerator::new(root, &file_extension)),
+            inner: RefCell::new(GraphGenerator::new(root, &lang)),
         }
     }
 

@@ -1,10 +1,8 @@
 import * as vscode from 'vscode';
-import { Ignore } from 'ignore';
 import { graphviz } from '@hpcc-js/wasm';
 
 import { retryCommand } from './utils/command';
 import { GraphGenerator } from '../crabviz';
-import { collectFiles } from './utils/workspace';
 
 const FUNC_KINDS: readonly vscode.SymbolKind[] = [vscode.SymbolKind.Function, vscode.SymbolKind.Method, vscode.SymbolKind.Constructor];
 
@@ -12,26 +10,17 @@ export class Generator {
   private root: string;
   private inner: GraphGenerator;
 
-  public constructor(root: vscode.Uri, fileExt: string) {
+  public constructor(root: vscode.Uri, lang: string) {
     this.root = root.path;
-    this.inner = new GraphGenerator(root.path, fileExt);
+    this.inner = new GraphGenerator(root.path, lang);
   }
 
-  public async generateCallGraph(
-    selectedFiles: vscode.Uri[],
-    selectedDirectories: vscode.Uri[],
-    fileExtensions: Set<string>,
-    ig: Ignore
-  ): Promise<string> {
-    let files = await collectFiles(this.root, selectedDirectories, fileExtensions, ig);
-    selectedFiles.forEach(f => files.add(f));
+  public async generateCallGraph(files: vscode.Uri[]): Promise<string> {
+    files.sort((f1, f2) => f2.path.split('/').length - f1.path.split('/').length);
 
-    const sortedFiles = Array.from(files);
-    sortedFiles.sort((f1, f2) => f2.path.split('/').length - f1.path.split('/').length);
+    const funcMap = new Map<string, Set<string>>(files.map(f => [f.path, new Set()]));
 
-    const funcMap = new Map<string, Set<string>>(sortedFiles.map(f => [f.path, new Set()]));
-
-    for await (const file of sortedFiles) {
+    for await (const file of files) {
       // retry several times if the LSP server is not ready
       let symbols = await retryCommand<vscode.DocumentSymbol[]>(5, 600, 'vscode.executeDocumentSymbolProvider', file);
       if (symbols === undefined) {

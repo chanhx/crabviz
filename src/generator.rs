@@ -41,7 +41,7 @@ pub struct GraphGenerator {
 }
 
 impl GraphGenerator {
-    pub fn new(root: String, file_extension: &str) -> Self {
+    pub fn new(root: String, lang: &str) -> Self {
         Self {
             root,
             files: HashMap::new(),
@@ -51,7 +51,7 @@ impl GraphGenerator {
             interfaces: HashMap::new(),
             highlights: HashMap::new(),
 
-            lang: lang::language_handler(file_extension),
+            lang: lang::language_handler(lang),
         }
     }
 

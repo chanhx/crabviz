@@ -1,23 +1,4 @@
-export function groupFileExtensions(extensions: Set<string>): { [lang: string]: string[] } {
-  const extensionsByLanguage: {[lang: string]: string[]} = {};
-
-		for (const ext of extensions) {
-			const lang = languagesByExtension[ext];
-			if (!lang) {
-				continue;
-			}
-
-			if (lang in extensionsByLanguage) {
-				extensionsByLanguage[lang].push(ext);
-			} else {
-				extensionsByLanguage[lang] = [ext];
-			}
-		}
-
-    return extensionsByLanguage;
-}
-
-const languagesByExtension: { [ext: string] : string } = {
+export const languagesByExtension: { [ext: string] : string } = {
   'c': 'C/C++',
   'cc': 'C/C++',
   'cpp': 'C/C++',

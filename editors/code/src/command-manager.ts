@@ -2,8 +2,8 @@ import * as vscode from 'vscode';
 import { extname } from 'path';
 import { Ignore } from 'ignore';
 
-import { collectFileExtensions, ignoreManager } from './utils/workspace';
-import { groupFileExtensions } from './utils/languages';
+import { readIgnores } from './utils/ignore';
+import { FileClassifier } from './utils/file-classifier';
 import { Generator } from './generator';
 import { CallGraphPanel } from './webview';
 
@@ -33,67 +33,39 @@ export class CommandManager {
 		if (this.ignores.has(root.uri.path)) {
 			ig = this.ignores.get(root.uri.path)!;
 		} else {
-			ig = await ignoreManager(root);
+			ig = await readIgnores(root);
 			this.ignores.set(root.uri.path, ig);
 		}
-
-		// separate directories and files in selections, and collect file extensions of selected files
-
-		let selectedDirectories: vscode.Uri[] = [];
-		let selectedFiles: vscode.Uri[] = [];
-		let extensions = new Set<string>();
 
 		for await (const uri of allSelections) {
 			if (!uri.path.startsWith(root.uri.path)) {
 				vscode.window.showErrorMessage("Can not generate call graph across multiple workspace folders");
 				return;
 			}
-
-			let fileType = (await vscode.workspace.fs.stat(uri)).type;
-
-			if ((fileType & vscode.FileType.Directory) === vscode.FileType.Directory) {
-				selectedDirectories.push(uri);
-			} else if ((fileType & vscode.FileType.File) === vscode.FileType.File) {
-				selectedFiles.push(uri);
-
-				const ext = extname(uri.path).substring(1);
-				extensions.add(ext);
-			}
 		}
 
-		// collect file extensions in selected directories
+		// classify files by programming language
 
-		if (selectedDirectories.length > 0) {
-			extensions = await vscode.window.withProgress({
-				location: vscode.ProgressLocation.Notification,
-				title: "Detecting project languages",
-				cancellable: true
-			}, (_, token) => {
-				token.onCancellationRequested(() => {
-					cancelled = true;
-				});
-				return collectFileExtensions(root.uri.path, selectedDirectories, ig, token);
-			}).then(newExtensions => {
-				extensions.forEach(ext => {
-					newExtensions.add(ext);
-				});
-
-				return newExtensions;
+		const files = await vscode.window.withProgress({
+			location: vscode.ProgressLocation.Notification,
+			title: "Detecting project languages",
+			cancellable: true
+		}, (_, token) => {
+			token.onCancellationRequested(() => {
+				cancelled = true;
 			});
+			const classifer = new FileClassifier(root.uri.path, ig);
+			return classifer.classifyFilesByLanguage(allSelections, token);
+		});
 
-			if (cancelled) {
-				return;
-			}
+		if (cancelled) {
+			return;
 		}
 
-		// detect programming languages from file extensions
-
-		const extensionsByLanguage = groupFileExtensions(extensions);
-
-		const selections = Object.keys(extensionsByLanguage).map(lang => ({ label: lang }));
+		const languages = Array.from(files.keys()).map(lang => ({ label: lang }));
 		let lang: string;
-		if (selections.length > 1) {
-			const selectedItem = await vscode.window.showQuickPick(selections, {
+		if (languages.length > 1) {
+			const selectedItem = await vscode.window.showQuickPick(languages, {
 				title: "Pick a language to generate call graph",
 			});
 
@@ -101,8 +73,8 @@ export class CommandManager {
 				return;
 			}
 			lang = selectedItem.label;
-		} else if (selections.length === 1) {
-			lang = selections[0].label;
+		} else if (languages.length === 1) {
+			lang = languages[0].label;
 		} else {
 			return;
 		}
@@ -111,10 +83,9 @@ export class CommandManager {
 			location: vscode.ProgressLocation.Window,
 			title: "Crabviz: Generating call graph",
 		}, _ => {
-			const generator = new Generator(root.uri, extensionsByLanguage[lang][0]);
-			const fileExtensions = new Set(extensionsByLanguage[lang]);
+			const generator = new Generator(root.uri, lang);
 
-			return generator.generateCallGraph(selectedFiles, selectedDirectories, fileExtensions, ig);
+			return generator.generateCallGraph(files.get(lang)!);
 		})
 		.then(svg => {
 			const panel = new CallGraphPanel(this.context.extensionUri);
