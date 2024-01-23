@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.3.2 (2024.1.23)
+
+### Fixed
+
+* Error in language detection ([#25](https://github.com/chanhx/crabviz/issues/25))
+
 ## 0.3.1 (2023.12.24)
 
 ### Fixed
