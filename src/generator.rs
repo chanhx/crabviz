@@ -60,15 +60,13 @@ impl GraphGenerator {
     }
 
     pub fn add_file(&mut self, file_path: String, symbols: Vec<DocumentSymbol>) -> bool {
-        let path = PathBuf::from(&file_path);
-
         if self.lang.should_filter_out_file(&file_path) {
             return false;
         }
 
         let file = FileOutline {
             id: self.next_file_id,
-            path,
+            path: PathBuf::from(&file_path),
             symbols,
         };
 
@@ -77,10 +75,7 @@ impl GraphGenerator {
                 entry.insert(file);
                 self.next_file_id += 1;
             }
-            Entry::Occupied(mut entry) => {
-                let entry_file = entry.get_mut();
-                *entry_file = file;
-            }
+            Entry::Occupied(_) => return false,
         }
 
         return true;
