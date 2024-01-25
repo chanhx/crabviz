@@ -1,4 +1,3 @@
-mod error;
 mod generator;
 mod graph;
 mod lang;

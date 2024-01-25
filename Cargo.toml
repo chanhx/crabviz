@@ -15,8 +15,6 @@ vscode = ["wasm", "console_error_panic_hook"]
 wasm = []
 
 [dependencies]
-snafu = { version = "0.7", features = ["backtraces-impl-std"] }
-
 # graphviz-sys = "0.1"
 
 wasm-bindgen = "0.2"
