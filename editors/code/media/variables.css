@@ -1,18 +1,29 @@
 :root {
-  --background-color: blanchedalmond;
+  --background-color: #f5fffa;
 
   --edge-color: #548f9e;
   --highlight-edge-color: #00bcd4;
   --selected-edge-color: red;
 
-  --hover-cell-color: #ffffa1;
-  --selected-cell-color: yellow;
+  --hover-cell-color: #e0ffff;
+  --selected-cell-color: #e0ffff;
+  --highlight-cell-color: bisque;
 
-  --incoming-edge-color: blue;
-  --outgoing-edge-color: green;
+  --incoming-edge-color: #698b69;
+  --outgoing-edge-color: #008acd;
   --recurse-edge-color: black;
 
-  --node-color: lightgray;
+  --node-color: #f4f5f1;
   --node-content-color: black;
   --node-highlight-color: red;
+
+  /* symbols */
+
+  --interface-color: #fff8dc;
+  --module-color: #ffebcd;
+  --constructor-color: #ffdab9;
+  --function-color: #e4ffb5;
+  --method-color: #deb887;
+
+  --type-color: #f4f5f1;
 }

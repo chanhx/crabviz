@@ -1,4 +1,5 @@
 use {
+    super::CssClass,
     crate::graph::{Cell, Edge, EdgeStyle, Style, Subgraph, TableNode},
     std::iter,
 };
@@ -126,7 +127,7 @@ digraph {{
                 Style::CssClass(cls) => Some(cls.clone()),
                 _ => None,
             })
-            .chain(iter::once("cell".to_string()))
+            .chain(iter::once(CssClass::Cell))
             .collect::<Vec<_>>();
 
         let styles = cell
@@ -249,11 +250,18 @@ digraph {{
             .join("\n")
     }
 
-    fn css_classes_href(classes: &[String]) -> String {
+    fn css_classes_href(classes: &[CssClass]) -> String {
         if classes.is_empty() {
             "".to_string()
         } else {
-            format!(r#"href="remove_me_url.{}""#, classes.join("."))
+            format!(
+                r#"href="remove_me_url.{}""#,
+                classes
+                    .iter()
+                    .map(|c| c.to_str())
+                    .collect::<Vec<_>>()
+                    .join(".")
+            )
         }
     }
 }

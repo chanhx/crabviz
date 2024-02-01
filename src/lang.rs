@@ -1,12 +1,11 @@
 mod go;
-mod java;
 mod rust;
 
 use {
-    self::{go::Go, java::Java, rust::Rust},
+    self::{go::Go, rust::Rust},
     crate::{
         generator::FileOutline,
-        graph::{Cell, Style, TableNode},
+        graph::{Cell, CssClass, Style, TableNode},
         lsp_types::{DocumentSymbol, SymbolKind},
     },
 };
@@ -64,16 +63,30 @@ pub(crate) trait Language {
 
     fn symbol_style(&self, symbol: &DocumentSymbol) -> Vec<Style> {
         match symbol.kind {
-            SymbolKind::Function | SymbolKind::Method | SymbolKind::Constructor => {
-                vec![Style::CssClass("fn".to_string()), Style::Rounded]
-            }
-            SymbolKind::Interface => {
-                vec![
-                    Style::CssClass("interface".to_string()),
-                    Style::Border(0),
-                    Style::Rounded,
-                ]
-            }
+            SymbolKind::Module => vec![Style::CssClass(CssClass::Module), Style::Rounded],
+            SymbolKind::Function => vec![
+                Style::CssClass(CssClass::Function),
+                Style::CssClass(CssClass::Callable),
+                Style::Rounded,
+            ],
+            SymbolKind::Method => vec![
+                Style::CssClass(CssClass::Method),
+                Style::CssClass(CssClass::Callable),
+                Style::Rounded,
+            ],
+            SymbolKind::Constructor => vec![
+                Style::CssClass(CssClass::Constructor),
+                Style::CssClass(CssClass::Callable),
+                Style::Rounded,
+            ],
+            SymbolKind::Interface => vec![
+                Style::CssClass(CssClass::Interface),
+                Style::Border(0),
+                Style::Rounded,
+            ],
+            SymbolKind::Enum => vec![Style::CssClass(CssClass::Type)],
+            SymbolKind::Struct => vec![Style::CssClass(CssClass::Type)],
+            SymbolKind::Class => vec![Style::CssClass(CssClass::Type)],
             _ => vec![],
         }
     }
@@ -88,7 +101,6 @@ impl Language for DefaultLang {}
 pub(crate) fn language_handler(lang: &str) -> Box<dyn Language + Sync + Send> {
     match lang {
         "Go" => Box::new(Go),
-        "Java" => Box::new(Java),
         "Rust" => Box::new(Rust),
         _ => Box::new(DefaultLang {}),
     }

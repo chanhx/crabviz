@@ -72,12 +72,15 @@ export class CallGraphPanel {
 	public showCallGraph(svg: string, focusMode: boolean) {
 		const resourceUri = vscode.Uri.joinPath(this._extensionUri, 'media');
 
+		const variables = 'variables.css';
+		const variablesCssPath = vscode.Uri.joinPath(resourceUri, variables);
 		const stylesPath = vscode.Uri.joinPath(resourceUri, 'styles.css');
 		const graphJsPath = vscode.Uri.joinPath(resourceUri, 'graph.js');
 		const panZoomJsPath = vscode.Uri.joinPath(resourceUri, 'panzoom.min.js');
 		const exportJsPath = vscode.Uri.joinPath(resourceUri, 'export.js');
 
 		const webview = this._panel.webview;
+		const variablesCssUri = webview.asWebviewUri(variablesCssPath);
 		const stylesUri = webview.asWebviewUri(stylesPath);
 		const graphJsUri = webview.asWebviewUri(graphJsPath);
 		const panZoomJsUri = webview.asWebviewUri(panZoomJsPath);
@@ -93,6 +96,7 @@ export class CallGraphPanel {
 		<meta charset="UTF-8">
 		<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; img-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<link rel="stylesheet" href="${variablesCssUri}">
 		<link rel="stylesheet" href="${stylesUri}">
 		<script nonce="${nonce}" src="${panZoomJsUri}"></script>
 		<script nonce="${nonce}" src="${exportJsUri}"></script>

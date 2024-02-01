@@ -1,28 +1,3 @@
-:root {
-  --background-color: blanchedalmond;
-
-  --edge-color: #548f9e;
-  --highlight-edge-color: #00bcd4;
-  --selected-edge-color: red;
-
-  --hover-cell-color: #ffffa1;
-  --selected-cell-color: yellow;
-  --highlight-cell-color: bisque;
-
-  --incoming-edge-color: green;
-  --outgoing-edge-color: blue;
-  --recurse-edge-color: black;
-
-  --node-color: lightgray;
-  --node-content-color: black;
-  --node-highlight-color: red;
-
-
-  --interface-color: cornsilk;
-  --module-color: blanchedalmond;
-  --method-block-color: burlywood;
-}
-
 /* background */
 
 html {
@@ -49,7 +24,7 @@ svg {
 /* pointer */
 
 .edge,
-.cell.fn {
+.cell.callable {
   cursor: pointer;
 }
 .cell {
@@ -71,7 +46,7 @@ svg {
   stroke-width: 1.13pt;
 }
 
-.cell.fn:not(.selected):not(:has(.fn:hover)):hover :is(polygon, path):first-of-type {
+.cell.callable:not(.selected):not(:has(.callable:hover)):hover :is(polygon, path):first-of-type {
   fill: var(--hover-cell-color);
 }
 .cell.selected :is(polygon, path):first-of-type {
@@ -174,7 +149,11 @@ svg {
   opacity: 0.05;
 }
 
-/* langugage */
+/* symbols */
+
+.module :is(path, polygon):first-child {
+  fill: var(--module-color);
+}
 
 .interface :is(path, polygon):first-child {
   fill: var(--interface-color);
@@ -184,14 +163,16 @@ svg {
   stroke-width: 1.13pt;
   stroke-dasharray: 5, 3;
 }
-
-.module :is(path, polygon):first-child {
-  fill: var(--module-color);
+.type:not(.highlight) :is(path, polygon):first-child {
+  fill: var(--type-color);
 }
 
-.method-block > :is(path, polygon):first-child {
-  fill: var(--method-block-color);
+.constructor:not(.highlight):not(.selected) :is(path, polygon):first-child {
+  fill: var(--constructor-color);
 }
-.method-block :not(.highlight):not(.selected) :is(path, polygon):first-child {
-  fill: var(--method-block-color);
+.function:not(.highlight):not(.selected) :is(path, polygon):first-child {
+  fill: var(--function-color);
+}
+.method:not(.highlight):not(.selected) :is(path, polygon):first-child {
+  fill: var(--method-color);
 }

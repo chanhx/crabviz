@@ -49,7 +49,7 @@ pub struct Cell {
 impl Cell {
     pub fn highlight(&mut self, cells: &HashSet<(u32, u32)>) {
         if cells.contains(&self.range_start) {
-            self.styles.push(Style::CssClass(String::from("highlight")));
+            self.styles.push(Style::CssClass(CssClass::Highlight));
         }
         self.children.iter_mut().for_each(|c| c.highlight(cells));
     }
@@ -78,11 +78,51 @@ pub struct Subgraph {
 #[derive(Debug)]
 pub enum Style {
     Border(u8),
-    CssClass(String),
+    CssClass(CssClass),
     Rounded,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum CssClass {
+    Module,
+
+    Interface,
+
+    Function,
+    Method,
+    Constructor,
+
+    Type,
+
+    Callable,
+    Impl,
+
+    Highlight,
+    Cell,
+}
+
+impl CssClass {
+    pub fn to_str(&self) -> &'static str {
+        match self {
+            CssClass::Module => "module",
+
+            CssClass::Interface => "interface",
+            CssClass::Type => "type",
+
+            CssClass::Function => "function",
+            CssClass::Method => "method",
+            CssClass::Constructor => "constructor",
+
+            CssClass::Callable => "callable",
+            CssClass::Impl => "impl",
+
+            CssClass::Highlight => "highlight",
+            CssClass::Cell => "cell",
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
 pub enum EdgeStyle {
-    CssClass(String),
+    CssClass(CssClass),
 }

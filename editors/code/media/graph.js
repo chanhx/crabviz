@@ -148,7 +148,7 @@ class CallGraph {
   };
 
   onSelectCell(cell) {
-    if (!cell.classList.contains("fn")) {
+    if (!cell.classList.contains("callable")) {
       return;
     }
 
