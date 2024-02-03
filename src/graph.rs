@@ -42,14 +42,14 @@ pub struct Cell {
     pub range_start: (u32, u32),
     pub range_end: (u32, u32),
     pub title: String,
-    pub styles: Vec<Style>,
+    pub style: Style,
     pub children: Vec<Cell>,
 }
 
 impl Cell {
     pub fn highlight(&mut self, cells: &HashSet<(u32, u32)>) {
         if cells.contains(&self.range_start) {
-            self.styles.push(Style::CssClass(CssClass::Highlight));
+            self.style.classes.push(CssClass::Highlight);
         }
         self.children.iter_mut().for_each(|c| c.highlight(cells));
     }
@@ -75,11 +75,12 @@ pub struct Subgraph {
     pub subgraphs: Vec<Subgraph>,
 }
 
-#[derive(Debug)]
-pub enum Style {
-    Border(u8),
-    CssClass(CssClass),
-    Rounded,
+#[derive(Debug, Default)]
+pub struct Style {
+    pub rounded: bool,
+    pub border: Option<u8>,
+    pub icon: Option<char>,
+    pub classes: Vec<CssClass>,
 }
 
 #[derive(Debug, Clone, Copy)]

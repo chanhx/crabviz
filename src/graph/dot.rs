@@ -1,6 +1,6 @@
 use {
     super::CssClass,
-    crate::graph::{Cell, Edge, EdgeStyle, Style, Subgraph, TableNode},
+    crate::graph::{Cell, Edge, EdgeStyle, Subgraph, TableNode},
     std::iter,
 };
 
@@ -12,48 +12,6 @@ pub(crate) fn escape_html(s: &str) -> String {
 }
 
 pub(crate) struct Dot;
-
-// use graphviz_sys as gv;
-// use std::ffi::CString;
-// impl GenerateSVG for Dot {
-//     fn generate_svg(
-//         &self,
-//         tables: &[TableNode],
-//         // nodes: &[Node],
-//         edges: &[Edge],
-//         subgraphs: &[Subgraph],
-//     ) -> String {
-//         let dot_source = Dot::generate_dot_source(tables, edges, subgraphs);
-
-//         unsafe {
-//             let dot_source = CString::new(dot_source).unwrap();
-//             let graph = gv::agmemread(dot_source.as_ptr());
-
-//             let gvc = gv::gvContext();
-//             let input_format = CString::new("dot").unwrap();
-//             let output_format = CString::new("svg").unwrap();
-
-//             gv::gvLayout(gvc, graph, input_format.as_ptr());
-
-//             let mut data = std::ptr::null_mut();
-//             let data: *mut *mut i8 = &mut data;
-//             let mut data_size: u32 = 0;
-//             gv::gvRenderData(
-//                 gvc,
-//                 graph,
-//                 output_format.as_ptr(),
-//                 data,
-//                 &mut data_size as _,
-//             );
-
-//             gv::gvFreeLayout(gvc, graph);
-//             gv::agclose(graph);
-//             gv::gvFreeContext(gvc);
-
-//             String::from_raw_parts(*data as _, data_size as _, data_size as _)
-//         }
-//     }
-// }
 
 impl Dot {
     pub fn generate_dot_source<T, E>(
@@ -123,53 +81,36 @@ digraph {{
     }
 
     fn process_cell(table_id: u32, cell: &Cell) -> String {
-        let classes = cell
-            .styles
-            .iter()
-            .filter_map(|s| match s {
-                Style::CssClass(cls) => Some(cls.clone()),
-                _ => None,
-            })
-            .chain(iter::once(CssClass::Cell))
-            .collect::<Vec<_>>();
-
-        let styles = cell
-            .styles
-            .iter()
-            .filter(|s| !matches!(s, Style::CssClass(_)))
-            .map(|s| match s {
-                Style::Border(w) => format!(r#"BORDER="{}""#, w),
-                Style::Rounded => r#"STYLE="ROUNDED""#.to_string(),
-                _ => "".to_string(),
-            })
-            .collect::<Vec<_>>()
-            .join(" ");
-
-        let (cell_styles, table_styles) = if cell.children.is_empty() {
-            (styles, "".to_string())
-        } else {
-            (r#"BORDER="0""#.to_string(), styles)
-        };
+        let styles = [
+            cell.style
+                .border
+                .map_or(String::new(), |b| format!(r#"BORDER="{}""#, b)),
+            cell.style
+                .rounded
+                .then_some(r#"STYLE="ROUNDED""#.to_string())
+                .unwrap_or(String::new()),
+        ]
+        .join(" ");
 
         let port = format!("{}_{}", cell.range_start.0, cell.range_start.1);
+
         if cell.children.is_empty() {
             format!(
-                r#"     <TR><TD PORT="{port}" ID="{table_id}:{port}" {cell_styles} {href}>{name}</TD></TR>"#,
-                href = if cell.children.len() > 0 {
-                    "".to_string()
-                } else {
-                    Dot::css_classes_href(&classes)
-                },
+                r#"     <TR><TD PORT="{port}" ID="{table_id}:{port}" {styles} {href}>{i}{name}</TD></TR>"#,
+                href = Dot::css_classes_href(&cell.style.classes),
+                i = cell
+                    .style
+                    .icon
+                    .map(|c| format!("<B>{}</B>  ", c))
+                    .unwrap_or(String::new()),
                 name = escape_html(&cell.title),
             )
         } else {
+            let (cell_styles, table_styles) = (r#"BORDER="0""#.to_string(), styles);
+
             let dot_cell = format!(
                 r#"     <TR><TD PORT="{port}" {cell_styles} {href}>{name}</TD></TR>"#,
-                href = if cell.children.len() > 0 {
-                    "".to_string()
-                } else {
-                    Dot::css_classes_href(&classes)
-                },
+                href = String::new(),
                 name = escape_html(&cell.title),
             );
 
@@ -189,7 +130,7 @@ digraph {{
                     )
                     .collect::<Vec<_>>()
                     .join("\n"),
-                href = Dot::css_classes_href(&classes),
+                href = Dot::css_classes_href(&cell.style.classes),
             )
         }
     }

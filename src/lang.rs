@@ -31,8 +31,6 @@ pub(crate) trait Language {
     }
 
     fn symbol_repr(&self, file_id: u32, symbol: &DocumentSymbol) -> Cell {
-        let styles = self.symbol_style(symbol);
-
         let children = symbol
             .children
             .iter()
@@ -45,7 +43,7 @@ pub(crate) trait Language {
         Cell {
             range_start: (range.start.line, range.start.character),
             range_end: (range.end.line, range.end.character),
-            styles,
+            style: self.symbol_style(symbol),
             title: symbol.name.clone(),
             children,
         }
@@ -61,33 +59,50 @@ pub(crate) trait Language {
         }
     }
 
-    fn symbol_style(&self, symbol: &DocumentSymbol) -> Vec<Style> {
+    fn symbol_style(&self, symbol: &DocumentSymbol) -> Style {
         match symbol.kind {
-            SymbolKind::Module => vec![Style::CssClass(CssClass::Module), Style::Rounded],
-            SymbolKind::Function => vec![
-                Style::CssClass(CssClass::Function),
-                Style::CssClass(CssClass::Callable),
-                Style::Rounded,
-            ],
-            SymbolKind::Method => vec![
-                Style::CssClass(CssClass::Method),
-                Style::CssClass(CssClass::Callable),
-                Style::Rounded,
-            ],
-            SymbolKind::Constructor => vec![
-                Style::CssClass(CssClass::Constructor),
-                Style::CssClass(CssClass::Callable),
-                Style::Rounded,
-            ],
-            SymbolKind::Interface => vec![
-                Style::CssClass(CssClass::Interface),
-                Style::Border(0),
-                Style::Rounded,
-            ],
-            SymbolKind::Enum => vec![Style::CssClass(CssClass::Type)],
-            SymbolKind::Struct => vec![Style::CssClass(CssClass::Type)],
-            SymbolKind::Class => vec![Style::CssClass(CssClass::Type)],
-            _ => vec![],
+            SymbolKind::Module => Style {
+                rounded: true,
+                classes: vec![CssClass::Cell, CssClass::Module],
+                ..Default::default()
+            },
+            SymbolKind::Function => Style {
+                rounded: true,
+                classes: vec![CssClass::Cell, CssClass::Function, CssClass::Callable],
+                ..Default::default()
+            },
+            SymbolKind::Method => Style {
+                rounded: true,
+                classes: vec![CssClass::Cell, CssClass::Method, CssClass::Callable],
+                ..Default::default()
+            },
+            SymbolKind::Constructor => Style {
+                rounded: true,
+                classes: vec![CssClass::Cell, CssClass::Constructor, CssClass::Callable],
+                ..Default::default()
+            },
+            SymbolKind::Interface => Style {
+                border: Some(0),
+                rounded: true,
+                classes: vec![CssClass::Cell, CssClass::Interface],
+                ..Default::default()
+            },
+            SymbolKind::Enum => Style {
+                icon: Some('E'),
+                classes: vec![CssClass::Cell, CssClass::Type],
+                ..Default::default()
+            },
+            SymbolKind::Struct => Style {
+                icon: Some('S'),
+                classes: vec![CssClass::Cell, CssClass::Type],
+                ..Default::default()
+            },
+            SymbolKind::Class => Style {
+                icon: Some('C'),
+                classes: vec![CssClass::Cell, CssClass::Type],
+                ..Default::default()
+            },
+            _ => Default::default(),
         }
     }
 

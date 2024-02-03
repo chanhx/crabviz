@@ -163,8 +163,15 @@ svg {
   stroke-width: 1.13pt;
   stroke-dasharray: 5, 3;
 }
+
 .type:not(.highlight) :is(path, polygon):first-child {
   fill: var(--type-color);
+}
+.type text {
+  transform: translateY(1px);
+}
+.type text:first-of-type {
+  fill: lightcoral;
 }
 
 .constructor:not(.highlight):not(.selected) :is(path, polygon):first-child {
