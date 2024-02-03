@@ -105,6 +105,9 @@ digraph {{
         shape = "plaintext"
         style = "rounded, filled"
     ];
+    edge [
+        label = " "
+    ];
 
     {}
 
@@ -212,11 +215,6 @@ digraph {{
                     r#"id="{}:{}_{} -> {}:{}_{}""#,
                     edge.from.0, edge.from.1, edge.from.2, edge.to.0, edge.to.1, edge.to.2,
                 ))
-                .chain(iter::once(if edge.from.0 == edge.to.0 {
-                    r#"label=" ""#.to_string()
-                } else {
-                    String::new()
-                }))
                 .chain(iter::once(Dot::css_classes_href(&classes)))
                 .filter(|s| !s.is_empty())
                 .collect::<Vec<_>>();
