@@ -19,7 +19,7 @@ pub trait GenerateSVG {
 pub struct Edge {
     pub from: (u32, u32, u32),
     pub to: (u32, u32, u32),
-    pub styles: Vec<EdgeStyle>,
+    pub styles: Vec<CssClass>,
 }
 
 impl Hash for Edge {
@@ -121,9 +121,4 @@ impl CssClass {
             CssClass::Cell => "cell",
         }
     }
-}
-
-#[derive(Debug, Clone)]
-pub enum EdgeStyle {
-    CssClass(CssClass),
 }

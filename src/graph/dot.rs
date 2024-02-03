@@ -1,6 +1,6 @@
 use {
     super::CssClass,
-    crate::graph::{Cell, Edge, EdgeStyle, Subgraph, TableNode},
+    crate::graph::{Cell, Edge, Subgraph, TableNode},
     std::iter,
 };
 
@@ -144,19 +144,11 @@ digraph {{
                 let from = format!(r#"{}:"{}_{}""#, edge.from.0, edge.from.1, edge.from.2);
                 let to = format!(r#"{}:"{}_{}""#, edge.to.0, edge.to.1, edge.to.2);
 
-                let classes = edge
-                    .styles
-                    .iter()
-                    .filter_map(|s| match s {
-                        EdgeStyle::CssClass(cls) => Some(cls.clone()),
-                    })
-                    .collect::<Vec<_>>();
-
                 let attrs = iter::once(format!(
                     r#"id="{}:{}_{} -> {}:{}_{}""#,
                     edge.from.0, edge.from.1, edge.from.2, edge.to.0, edge.to.1, edge.to.2,
                 ))
-                .chain(iter::once(Dot::css_classes_href(&classes)))
+                .chain(iter::once(Dot::css_classes_href(&edge.styles)))
                 .filter(|s| !s.is_empty())
                 .collect::<Vec<_>>();
 

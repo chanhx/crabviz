@@ -11,7 +11,7 @@ mod tests;
 pub(crate) use types::*;
 use {
     crate::{
-        graph::{dot::Dot, Cell, CssClass, Edge, EdgeStyle, Subgraph},
+        graph::{dot::Dot, Cell, CssClass, Edge, Subgraph},
         lang,
         lsp_types::{
             CallHierarchyIncomingCall, CallHierarchyItem, CallHierarchyOutgoingCall,
@@ -246,7 +246,7 @@ impl GraphGenerator {
                     cell_ids_ref.contains(&&from).then_some(Edge {
                         from,
                         to,
-                        styles: vec![EdgeStyle::CssClass(CssClass::Impl)],
+                        styles: vec![CssClass::Impl],
                     })
                 })
             });
