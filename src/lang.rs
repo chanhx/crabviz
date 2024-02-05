@@ -63,43 +63,43 @@ pub(crate) trait Language {
         match symbol.kind {
             SymbolKind::Module => Style {
                 rounded: true,
-                classes: vec![CssClass::Cell, CssClass::Module],
+                classes: CssClass::Cell | CssClass::Module,
                 ..Default::default()
             },
             SymbolKind::Function => Style {
                 rounded: true,
-                classes: vec![CssClass::Cell, CssClass::Function, CssClass::Callable],
+                classes: CssClass::Cell | CssClass::Function | CssClass::Callable,
                 ..Default::default()
             },
             SymbolKind::Method => Style {
                 rounded: true,
-                classes: vec![CssClass::Cell, CssClass::Method, CssClass::Callable],
+                classes: CssClass::Cell | CssClass::Method | CssClass::Callable,
                 ..Default::default()
             },
             SymbolKind::Constructor => Style {
                 rounded: true,
-                classes: vec![CssClass::Cell, CssClass::Constructor, CssClass::Callable],
+                classes: CssClass::Cell | CssClass::Constructor | CssClass::Callable,
                 ..Default::default()
             },
             SymbolKind::Interface => Style {
                 border: Some(0),
                 rounded: true,
-                classes: vec![CssClass::Cell, CssClass::Interface],
+                classes: CssClass::Cell | CssClass::Interface,
                 ..Default::default()
             },
             SymbolKind::Enum => Style {
                 icon: Some('E'),
-                classes: vec![CssClass::Cell, CssClass::Type],
+                classes: CssClass::Cell | CssClass::Type,
                 ..Default::default()
             },
             SymbolKind::Struct => Style {
                 icon: Some('S'),
-                classes: vec![CssClass::Cell, CssClass::Type],
+                classes: CssClass::Cell | CssClass::Type,
                 ..Default::default()
             },
             SymbolKind::Class => Style {
                 icon: Some('C'),
-                classes: vec![CssClass::Cell, CssClass::Type],
+                classes: CssClass::Cell | CssClass::Type,
                 ..Default::default()
             },
             _ => Default::default(),

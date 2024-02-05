@@ -1,6 +1,9 @@
-use std::{
-    collections::HashSet,
-    hash::{Hash, Hasher},
+use {
+    enumset::{EnumSet, EnumSetType},
+    std::{
+        collections::HashSet,
+        hash::{Hash, Hasher},
+    },
 };
 
 pub mod dot;
@@ -19,7 +22,7 @@ pub trait GenerateSVG {
 pub struct Edge {
     pub from: (u32, u32, u32),
     pub to: (u32, u32, u32),
-    pub styles: Vec<CssClass>,
+    pub styles: EnumSet<CssClass>,
 }
 
 impl Hash for Edge {
@@ -49,7 +52,7 @@ pub struct Cell {
 impl Cell {
     pub fn highlight(&mut self, cells: &HashSet<(u32, u32)>) {
         if cells.contains(&self.range_start) {
-            self.style.classes.push(CssClass::Highlight);
+            self.style.classes.insert(CssClass::Highlight);
         }
         self.children.iter_mut().for_each(|c| c.highlight(cells));
     }
@@ -80,10 +83,10 @@ pub struct Style {
     pub rounded: bool,
     pub border: Option<u8>,
     pub icon: Option<char>,
-    pub classes: Vec<CssClass>,
+    pub classes: EnumSet<CssClass>,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(EnumSetType, Debug)]
 pub enum CssClass {
     Module,
 

@@ -18,6 +18,7 @@ use {
             DocumentSymbol, Location, Position, SymbolKind,
         },
     },
+    enumset::EnumSet,
     std::{
         cell::RefCell,
         collections::{hash_map::Entry, BTreeMap, HashMap, HashSet},
@@ -206,7 +207,7 @@ impl GraphGenerator {
                     .then_some(Edge {
                         from,
                         to,
-                        styles: vec![],
+                        styles: EnumSet::new(),
                     })
                 })
             });
@@ -226,7 +227,7 @@ impl GraphGenerator {
                     cell_ids_ref.contains(&to).then_some(Edge {
                         from,
                         to,
-                        styles: vec![],
+                        styles: EnumSet::new(),
                     })
                 })
             });
@@ -246,7 +247,7 @@ impl GraphGenerator {
                     cell_ids_ref.contains(&&from).then_some(Edge {
                         from,
                         to,
-                        styles: vec![CssClass::Impl],
+                        styles: CssClass::Impl.into(),
                     })
                 })
             });

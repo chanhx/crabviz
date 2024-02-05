@@ -1,6 +1,7 @@
 use {
     super::CssClass,
     crate::graph::{Cell, Edge, Subgraph, TableNode},
+    enumset::EnumSet,
     std::iter,
 };
 
@@ -97,7 +98,7 @@ digraph {{
         if cell.children.is_empty() {
             format!(
                 r#"     <TR><TD PORT="{port}" ID="{table_id}:{port}" {styles} {href}>{i}{name}</TD></TR>"#,
-                href = Dot::css_classes_href(&cell.style.classes),
+                href = Dot::css_classes_href(cell.style.classes),
                 i = cell
                     .style
                     .icon
@@ -130,7 +131,7 @@ digraph {{
                     )
                     .collect::<Vec<_>>()
                     .join("\n"),
-                href = Dot::css_classes_href(&cell.style.classes),
+                href = Dot::css_classes_href(cell.style.classes),
             )
         }
     }
@@ -148,7 +149,7 @@ digraph {{
                     r#"id="{}:{}_{} -> {}:{}_{}""#,
                     edge.from.0, edge.from.1, edge.from.2, edge.to.0, edge.to.1, edge.to.2,
                 ))
-                .chain(iter::once(Dot::css_classes_href(&edge.styles)))
+                .chain(iter::once(Dot::css_classes_href(edge.styles)))
                 .filter(|s| !s.is_empty())
                 .collect::<Vec<_>>();
 
@@ -181,7 +182,7 @@ digraph {{
             .join("\n")
     }
 
-    fn css_classes_href(classes: &[CssClass]) -> String {
+    fn css_classes_href(classes: EnumSet<CssClass>) -> String {
         if classes.is_empty() {
             "".to_string()
         } else {
