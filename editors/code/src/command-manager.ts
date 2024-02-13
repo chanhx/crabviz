@@ -6,6 +6,7 @@ import { readIgnores } from './utils/ignore';
 import { FileClassifier } from './utils/file-classifier';
 import { Generator } from './generator';
 import { CallGraphPanel } from './webview';
+import { languagesByExtension } from './utils/languages';
 
 export class CommandManager {
   private context: vscode.ExtensionContext;
@@ -101,8 +102,9 @@ export class CommandManager {
 			.find(folder => uri.path.startsWith(folder.uri.path))!;
 
 		const ext = extname(uri.path).substring(1);
+		const lang = languagesByExtension[ext];
 
-		const generator = new Generator(root.uri, ext);
+		const generator = new Generator(root.uri, lang);
 
 		vscode.window.withProgress({
 			location: vscode.ProgressLocation.Window,

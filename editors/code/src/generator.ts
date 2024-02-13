@@ -97,6 +97,8 @@ export class Generator {
     }
 
     for await (const item of items) {
+      files.set(item.uri.path, new VisitedFile(item.uri));
+
       await this.resolveIncomingCalls(item, files);
       await this.resolveOutgoingCalls(item, files);
     }
@@ -167,22 +169,21 @@ export class Generator {
     await vscode.commands.executeCommand<vscode.CallHierarchyIncomingCall[]>('vscode.provideIncomingCalls', item)
       .then(async calls => {
         this.inner.add_incoming_calls(item.uri.path, item.selectionRange.start, calls);
-
-        let file = funcMap.get(item.uri.path);
-        if (!file) {
-          file = new VisitedFile(item.uri);
-          file.skip = this.inner.should_filter_out_file(item.uri.path);
-          funcMap.set(item.uri.path, file);
-        }
-        if (file.skip) {
-          return;
-        }
-        file.visitFunc(item.range, FuncCallDirection.Incoming);
+        funcMap.get(item.uri.path)!.visitFunc(item.range, FuncCallDirection.Incoming);
 
         calls = calls
-          .filter(call =>
-            !funcMap.get(call.from.uri.path)?.hasVisitedFunc(call.from.selectionRange.start, FuncCallDirection.Incoming) ?? true
-          );
+          .filter(call => {
+            const uri = call.from.uri;
+
+            let file = funcMap.get(uri.path);
+            if (!file) {
+              file = new VisitedFile(uri);
+              file.skip = this.inner.should_filter_out_file(item.uri.path);
+              funcMap.set(uri.path, file);
+            }
+
+            return !file.skip && !file.hasVisitedFunc(call.from.selectionRange.start, FuncCallDirection.Incoming);
+          });
 
         for await (const call of calls) {
           await this.resolveIncomingCalls(call.from, funcMap);
@@ -197,23 +198,25 @@ export class Generator {
     await vscode.commands.executeCommand<vscode.CallHierarchyOutgoingCall[]>('vscode.provideOutgoingCalls', item)
       .then(async calls => {
         this.inner.add_outgoing_calls(item.uri.path, item.selectionRange.start, calls);
-
-        let file = funcMap.get(item.uri.path);
-        if (!file) {
-          file = new VisitedFile(item.uri);
-          file.skip = this.inner.should_filter_out_file(item.uri.path);
-          funcMap.set(item.uri.path, file);
-        }
-        if (file.skip) {
-          return;
-        }
-        file.visitFunc(item.range, FuncCallDirection.Outgoing);
+        funcMap.get(item.uri.path)!.visitFunc(item.range, FuncCallDirection.Outgoing);
 
         calls = calls
-          .filter(call =>
-            call.to.uri.path.startsWith(this.root) &&
-            (!funcMap.get(call.to.uri.path)?.hasVisitedFunc(call.to.selectionRange.start, FuncCallDirection.Outgoing) ?? true)
-          );
+          .filter(call => {
+            if (!call.to.uri.path.startsWith(this.root)) {
+              return false;
+            }
+
+            const uri = call.to.uri;
+
+            let file = funcMap.get(uri.path);
+            if (!file) {
+              file = new VisitedFile(uri);
+              file.skip = this.inner.should_filter_out_file(item.uri.path);
+              funcMap.set(uri.path, file);
+            }
+
+            return !file.skip && !file.hasVisitedFunc(call.to.selectionRange.start, FuncCallDirection.Outgoing);
+          });
 
         for await (const call of calls) {
           await this.resolveOutgoingCalls(call.to, funcMap);
