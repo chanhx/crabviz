@@ -52,9 +52,8 @@ export class CommandManager {
 			title: "Detecting project languages",
 			cancellable: true
 		}, (_, token) => {
-			token.onCancellationRequested(() => {
-				cancelled = true;
-			});
+			token.onCancellationRequested(() => cancelled = true);
+
 			const classifer = new FileClassifier(root.uri.path, ig);
 			return classifer.classifyFilesByLanguage(allSelections, token);
 		});
@@ -83,12 +82,16 @@ export class CommandManager {
 		vscode.window.withProgress({
 			location: vscode.ProgressLocation.Notification,
 			title: "Crabviz: Generating call graph",
-		}, (progress, _) => {
-			const generator = new Generator(root.uri, lang);
+			cancellable: true,
+		}, (progress, token) => {
+			token.onCancellationRequested(() => cancelled = true);
 
-			return generator.generateCallGraph(files.get(lang)!, progress);
+			const generator = new Generator(root.uri, lang);
+			return generator.generateCallGraph(files.get(lang)!, progress, token);
 		})
 		.then(svg => {
+			if (cancelled) { return; }
+
 			const panel = new CallGraphPanel(this.context.extensionUri);
 			panel.showCallGraph(svg, false);
 		});

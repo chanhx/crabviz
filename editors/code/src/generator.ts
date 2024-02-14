@@ -18,6 +18,7 @@ export class Generator {
   public async generateCallGraph(
     files: vscode.Uri[],
     progress: vscode.Progress<{ message?: string; increment?: number }>,
+    token: vscode.CancellationToken,
   ): Promise<string> {
     files.sort((f1, f2) => f2.path.split('/').length - f1.path.split('/').length);
 
@@ -25,6 +26,10 @@ export class Generator {
     let finishedCount = 0;
 
     for await (const file of files) {
+      if (token.isCancellationRequested) {
+        return "";
+      }
+
       // retry several times if the LSP server is not ready
       let symbols = await retryCommand<vscode.DocumentSymbol[]>(5, 600, 'vscode.executeDocumentSymbolProvider', file);
       if (symbols === undefined) {
@@ -40,6 +45,10 @@ export class Generator {
 
       while (symbols.length > 0) {
         for await (const symbol of symbols) {
+          if (token.isCancellationRequested) {
+            return "";
+          }
+
           const symbolStart = symbol.selectionRange.start;
 
           if (FUNC_KINDS.includes(symbol.kind) && !hasFunc(funcMap, file.path, symbolStart)) {
