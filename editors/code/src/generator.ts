@@ -187,7 +187,7 @@ export class Generator {
     await vscode.commands.executeCommand<vscode.CallHierarchyIncomingCall[]>('vscode.provideIncomingCalls', item)
       .then(async calls => {
         this.inner.add_incoming_calls(item.uri.path, item.selectionRange.start, calls);
-        funcMap.get(item.uri.path)!.visitFunc(item.range, FuncCallDirection.Incoming);
+        funcMap.get(item.uri.path)!.visitFunc(item.selectionRange, FuncCallDirection.Incoming);
 
         calls = calls
           .filter(call => {
@@ -216,7 +216,7 @@ export class Generator {
     await vscode.commands.executeCommand<vscode.CallHierarchyOutgoingCall[]>('vscode.provideOutgoingCalls', item)
       .then(async calls => {
         this.inner.add_outgoing_calls(item.uri.path, item.selectionRange.start, calls);
-        funcMap.get(item.uri.path)!.visitFunc(item.range, FuncCallDirection.Outgoing);
+        funcMap.get(item.uri.path)!.visitFunc(item.selectionRange, FuncCallDirection.Outgoing);
 
         calls = calls
           .filter(call => {
