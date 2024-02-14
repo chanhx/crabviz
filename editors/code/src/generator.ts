@@ -3,6 +3,8 @@ import { graphviz } from '@hpcc-js/wasm';
 
 import { retryCommand } from './utils/command';
 import { GraphGenerator } from '../crabviz';
+import { Ignore } from 'ignore';
+import * as path from "path";
 
 const FUNC_KINDS: readonly vscode.SymbolKind[] = [vscode.SymbolKind.Function, vscode.SymbolKind.Method, vscode.SymbolKind.Constructor];
 
@@ -99,7 +101,7 @@ export class Generator {
     return graphviz.dot(dot);
   }
 
-  async generateFuncCallGraph(uri: vscode.Uri, anchor: vscode.Position): Promise<string | null> {
+  async generateFuncCallGraph(uri: vscode.Uri, anchor: vscode.Position, ig: Ignore): Promise<string | null> {
     const files = new Map<string, VisitedFile>();
 
     let items: vscode.CallHierarchyItem[];
@@ -117,11 +119,13 @@ export class Generator {
     for await (const item of items) {
       files.set(item.uri.path, new VisitedFile(item.uri));
 
-      await this.resolveIncomingCalls(item, files);
-      await this.resolveOutgoingCalls(item, files);
+      await this.resolveIncomingCalls(item, files, ig);
+      await this.resolveOutgoingCalls(item, files, ig);
     }
 
     for await (const file of files.values()) {
+      if (file.skip) { continue; }
+
       let symbols = await retryCommand<vscode.DocumentSymbol[]>(5, 600, 'vscode.executeDocumentSymbolProvider', file.uri);
       if (symbols === undefined) {
         // vscode.window.showErrorMessage(`Document symbol information not available for '${file.uri.fsPath}'`);
@@ -183,7 +187,7 @@ export class Generator {
       });
   }
 
-  async resolveIncomingCalls(item: vscode.CallHierarchyItem, funcMap: Map<string, VisitedFile>) {
+  async resolveIncomingCalls(item: vscode.CallHierarchyItem, funcMap: Map<string, VisitedFile>, ig: Ignore) {
     await vscode.commands.executeCommand<vscode.CallHierarchyIncomingCall[]>('vscode.provideIncomingCalls', item)
       .then(async calls => {
         this.inner.add_incoming_calls(item.uri.path, item.selectionRange.start, calls);
@@ -196,7 +200,7 @@ export class Generator {
             let file = funcMap.get(uri.path);
             if (!file) {
               file = new VisitedFile(uri);
-              file.skip = this.inner.should_filter_out_file(item.uri.path);
+              file.skip = ig.ignores(path.relative(this.root, uri.path)) || this.inner.should_filter_out_file(uri.path);
               funcMap.set(uri.path, file);
             }
 
@@ -204,7 +208,7 @@ export class Generator {
           });
 
         for await (const call of calls) {
-          await this.resolveIncomingCalls(call.from, funcMap);
+          await this.resolveIncomingCalls(call.from, funcMap, ig);
         }
       })
       .then(undefined, err => {
@@ -212,7 +216,7 @@ export class Generator {
       });
   }
 
-  async resolveOutgoingCalls(item: vscode.CallHierarchyItem, funcMap: Map<string, VisitedFile>) {
+  async resolveOutgoingCalls(item: vscode.CallHierarchyItem, funcMap: Map<string, VisitedFile>, ig: Ignore) {
     await vscode.commands.executeCommand<vscode.CallHierarchyOutgoingCall[]>('vscode.provideOutgoingCalls', item)
       .then(async calls => {
         this.inner.add_outgoing_calls(item.uri.path, item.selectionRange.start, calls);
@@ -229,7 +233,7 @@ export class Generator {
             let file = funcMap.get(uri.path);
             if (!file) {
               file = new VisitedFile(uri);
-              file.skip = this.inner.should_filter_out_file(item.uri.path);
+              file.skip = ig.ignores(path.relative(this.root, uri.path)) || this.inner.should_filter_out_file(uri.path);
               funcMap.set(uri.path, file);
             }
 
@@ -237,7 +241,7 @@ export class Generator {
           });
 
         for await (const call of calls) {
-          await this.resolveOutgoingCalls(call.to, funcMap);
+          await this.resolveOutgoingCalls(call.to, funcMap, ig);
         }
       })
       .then(undefined, err => {

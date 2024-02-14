@@ -30,13 +30,7 @@ export class CommandManager {
 		const root = vscode.workspace.workspaceFolders!
 			.find(folder => contextSelection.path.startsWith(folder.uri.path))!;
 
-		let ig: Ignore;
-		if (this.ignores.has(root.uri.path)) {
-			ig = this.ignores.get(root.uri.path)!;
-		} else {
-			ig = await readIgnores(root);
-			this.ignores.set(root.uri.path, ig);
-		}
+		const ig = await this.readIgnores(root);
 
 		for await (const uri of allSelections) {
 			if (!uri.path.startsWith(root.uri.path)) {
@@ -97,12 +91,14 @@ export class CommandManager {
 		});
 	}
 
-  public generateFuncCallGraph(editor: vscode.TextEditor) {
+  public async generateFuncCallGraph(editor: vscode.TextEditor) {
 		const uri = editor.document.uri;
 		const anchor = editor.selection.start;
 
 		const root = vscode.workspace.workspaceFolders!
 			.find(folder => uri.path.startsWith(folder.uri.path))!;
+
+		const ig = await this.readIgnores(root);
 
 		const ext = extname(uri.path).substring(1);
 		const lang = languagesByExtension[ext];
@@ -113,7 +109,7 @@ export class CommandManager {
 			location: vscode.ProgressLocation.Window,
 			title: "Crabviz: Generating call graph",
 		}, _ => {
-			return generator.generateFuncCallGraph(uri, anchor);
+			return generator.generateFuncCallGraph(uri, anchor, ig);
 		})
 		.then(svg => {
 			if (!svg) {
@@ -124,5 +120,16 @@ export class CommandManager {
 			const panel = new CallGraphPanel(this.context.extensionUri);
 			panel.showCallGraph(svg, true);
 		});
+	}
+
+	async readIgnores(root: vscode.WorkspaceFolder): Promise<Ignore> {
+		if (this.ignores.has(root.uri.path)) {
+			return this.ignores.get(root.uri.path)!;
+		} else {
+			const ig = await readIgnores(root);
+			this.ignores.set(root.uri.path, ig);
+
+			return ig;
+		}
 	}
 }
