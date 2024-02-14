@@ -15,10 +15,14 @@ export class Generator {
     this.inner = new GraphGenerator(root.path, lang);
   }
 
-  public async generateCallGraph(files: vscode.Uri[]): Promise<string> {
+  public async generateCallGraph(
+    files: vscode.Uri[],
+    progress: vscode.Progress<{ message?: string; increment?: number }>,
+  ): Promise<string> {
     files.sort((f1, f2) => f2.path.split('/').length - f1.path.split('/').length);
 
     const funcMap = new Map<string, Set<string>>(files.map(f => [f.path, new Set()]));
+    let finishedCount = 0;
 
     for await (const file of files) {
       // retry several times if the LSP server is not ready
@@ -29,6 +33,8 @@ export class Generator {
       }
 
       if (!this.inner.add_file(file.path, symbols)) {
+        finishedCount += 1;
+        progress.report({ message: `${finishedCount} / ${files.length}`, increment: 100 / files.length });
         continue;
       }
 
@@ -74,6 +80,9 @@ export class Generator {
 
         symbols = symbols.flatMap(symbol => symbol.children);
       }
+
+      finishedCount += 1;
+      progress.report({ message: `${finishedCount} / ${files.length}`, increment: 100 / files.length });
     }
 
     const dot = this.inner.generate_dot_source();

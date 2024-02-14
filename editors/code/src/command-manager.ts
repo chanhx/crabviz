@@ -81,12 +81,12 @@ export class CommandManager {
 		}
 
 		vscode.window.withProgress({
-			location: vscode.ProgressLocation.Window,
+			location: vscode.ProgressLocation.Notification,
 			title: "Crabviz: Generating call graph",
-		}, _ => {
+		}, (progress, _) => {
 			const generator = new Generator(root.uri, lang);
 
-			return generator.generateCallGraph(files.get(lang)!);
+			return generator.generateCallGraph(files.get(lang)!, progress);
 		})
 		.then(svg => {
 			const panel = new CallGraphPanel(this.context.extensionUri);
