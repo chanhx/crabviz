@@ -46,10 +46,10 @@ svg {
   stroke-width: 1.13pt;
 }
 
-.cell.clickable:not(.selected):not(:has(.clickable:hover)):hover :is(polygon, path):first-of-type {
+.cell.clickable:not(.selected):not(:has(.clickable:hover)):hover > :is(polygon, path):first-of-type {
   fill: var(--hover-cell-color);
 }
-.cell.selected :is(polygon, path):first-of-type {
+.cell.selected > :is(polygon, path):first-of-type {
   fill: var(--selected-cell-color);
 }
 .cell.highlight path {
