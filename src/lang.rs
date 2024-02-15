@@ -68,23 +68,23 @@ pub(crate) trait Language {
             },
             SymbolKind::Function => Style {
                 rounded: true,
-                classes: CssClass::Cell | CssClass::Function | CssClass::Callable,
+                classes: CssClass::Cell | CssClass::Function | CssClass::Clickable,
                 ..Default::default()
             },
             SymbolKind::Method => Style {
                 rounded: true,
-                classes: CssClass::Cell | CssClass::Method | CssClass::Callable,
+                classes: CssClass::Cell | CssClass::Method | CssClass::Clickable,
                 ..Default::default()
             },
             SymbolKind::Constructor => Style {
                 rounded: true,
-                classes: CssClass::Cell | CssClass::Constructor | CssClass::Callable,
+                classes: CssClass::Cell | CssClass::Constructor | CssClass::Clickable,
                 ..Default::default()
             },
             SymbolKind::Interface => Style {
                 border: Some(0),
                 rounded: true,
-                classes: CssClass::Cell | CssClass::Interface,
+                classes: CssClass::Cell | CssClass::Interface | CssClass::Clickable,
                 ..Default::default()
             },
             SymbolKind::Enum => Style {

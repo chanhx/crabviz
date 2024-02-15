@@ -98,9 +98,9 @@ pub enum CssClass {
 
     Type,
 
-    Callable,
     Impl,
 
+    Clickable,
     Highlight,
     Cell,
 }
@@ -117,9 +117,9 @@ impl CssClass {
             CssClass::Method => "method",
             CssClass::Constructor => "constructor",
 
-            CssClass::Callable => "callable",
             CssClass::Impl => "impl",
 
+            CssClass::Clickable => "clickable",
             CssClass::Highlight => "highlight",
             CssClass::Cell => "cell",
         }

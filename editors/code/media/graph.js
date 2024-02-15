@@ -148,7 +148,7 @@ class CallGraph {
   };
 
   onSelectCell(cell) {
-    if (!cell.classList.contains("callable")) {
+    if (!cell.classList.contains("clickable")) {
       return;
     }
 

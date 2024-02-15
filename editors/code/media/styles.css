@@ -24,7 +24,7 @@ svg {
 /* pointer */
 
 .edge,
-.cell.callable {
+.cell.clickable {
   cursor: pointer;
 }
 .cell {
@@ -46,7 +46,7 @@ svg {
   stroke-width: 1.13pt;
 }
 
-.cell.callable:not(.selected):not(:has(.callable:hover)):hover :is(polygon, path):first-of-type {
+.cell.clickable:not(.selected):not(:has(.clickable:hover)):hover :is(polygon, path):first-of-type {
   fill: var(--hover-cell-color);
 }
 .cell.selected :is(polygon, path):first-of-type {
