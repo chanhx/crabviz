@@ -11,6 +11,7 @@ pub(crate) fn escape_html(s: &str) -> String {
         .replace("<", "&lt;")
         .replace(">", "&gt;")
 }
+const EMPTY_STRING: String = String::new();
 
 pub(crate) struct Dot;
 
@@ -93,26 +94,27 @@ digraph {{
         ]
         .join(" ");
 
+        let title = format!(
+            "{}{}",
+            cell.style
+                .icon
+                .map(|c| format!("<B>{}</B>  ", c))
+                .unwrap_or(EMPTY_STRING),
+            escape_html(&cell.title)
+        );
         let port = format!("{}_{}", cell.range_start.0, cell.range_start.1);
 
         if cell.children.is_empty() {
             format!(
-                r#"     <TR><TD PORT="{port}" ID="{table_id}:{port}" {styles} {href}>{i}{name}</TD></TR>"#,
+                r#"     <TR><TD PORT="{port}" ID="{table_id}:{port}" {styles} {href}>{title}</TD></TR>"#,
                 href = Dot::css_classes_href(cell.style.classes),
-                i = cell
-                    .style
-                    .icon
-                    .map(|c| format!("<B>{}</B>  ", c))
-                    .unwrap_or(String::new()),
-                name = escape_html(&cell.title),
             )
         } else {
             let (cell_styles, table_styles) = (r#"BORDER="0""#.to_string(), styles);
 
             let dot_cell = format!(
-                r#"     <TR><TD PORT="{port}" {cell_styles} {href}>{name}</TD></TR>"#,
-                href = String::new(),
-                name = escape_html(&cell.title),
+                r#"     <TR><TD PORT="{port}" {cell_styles} {href}>{title}</TD></TR>"#,
+                href = EMPTY_STRING,
             );
 
             format!(
