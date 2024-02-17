@@ -95,6 +95,7 @@ pub enum CssClass {
     Function,
     Method,
     Constructor,
+    Property,
 
     Type,
 
@@ -116,6 +117,7 @@ impl CssClass {
             CssClass::Function => "function",
             CssClass::Method => "method",
             CssClass::Constructor => "constructor",
+            CssClass::Property => "property",
 
             CssClass::Impl => "impl",
 

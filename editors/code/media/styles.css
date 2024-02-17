@@ -171,7 +171,7 @@ svg {
   transform: translateY(1px);
 }
 .type > text:first-of-type {
-  fill: lightcoral;
+  fill: var(--icon-color);
 }
 
 .constructor:not(.highlight):not(.selected) > :is(path, polygon):first-child {
@@ -182,4 +182,10 @@ svg {
 }
 .method:not(.highlight):not(.selected) > :is(path, polygon):first-child {
   fill: var(--method-color);
+}
+
+.property > text:first-of-type {
+  font-weight: unset;
+  font-style: italic;
+  fill: var(--icon-color);
 }

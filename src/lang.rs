@@ -34,7 +34,7 @@ pub(crate) trait Language {
         let children = symbol
             .children
             .iter()
-            .filter(|symbol| self.filter_symbol(symbol))
+            .filter(|s| symbol.kind == SymbolKind::Interface || self.filter_symbol(s))
             .map(|symbol| self.symbol_repr(file_id, symbol))
             .collect();
 
@@ -54,6 +54,7 @@ pub(crate) trait Language {
             SymbolKind::Constant
             | SymbolKind::Variable
             | SymbolKind::Field
+            | SymbolKind::Property
             | SymbolKind::EnumMember => false,
             _ => true,
         }
@@ -100,6 +101,11 @@ pub(crate) trait Language {
             SymbolKind::Class => Style {
                 icon: Some('C'),
                 classes: CssClass::Cell | CssClass::Type,
+                ..Default::default()
+            },
+            SymbolKind::Property => Style {
+                icon: Some('p'),
+                classes: CssClass::Cell | CssClass::Property,
                 ..Default::default()
             },
             _ => Default::default(),
