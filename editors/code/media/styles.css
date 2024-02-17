@@ -38,11 +38,11 @@ svg {
 /* Cell */
 
 /* background */
-.cell :is(polygon, path):first-of-type {
+.cell > :is(polygon, path):first-of-type {
   fill: var(--node-color);
 }
 /* border */
-.cell :is(polygon, path):last-of-type {
+.cell > :is(polygon, path):last-of-type {
   stroke-width: 1.13pt;
 }
 
@@ -52,7 +52,7 @@ svg {
 .cell.selected > :is(polygon, path):first-of-type {
   fill: var(--selected-cell-color);
 }
-.cell.highlight path {
+.cell.highlight > path {
   stroke: var(--highlight-cell-color);
   fill: var(--highlight-cell-color);
 }
@@ -128,7 +128,7 @@ svg {
   stroke: black;
   stroke-width: 1.35pt;
 }
-.node polygon {
+.node > polygon {
   stroke: var(--node-content-color);
 }
 .node text {
@@ -151,11 +151,11 @@ svg {
 
 /* symbols */
 
-.module :is(path, polygon):first-child {
+.module > :is(path, polygon):first-child {
   fill: var(--module-color);
 }
 
-.interface :is(path, polygon):first-child {
+.interface > :is(path, polygon):first-child {
   fill: var(--interface-color);
 }
 .interface > :is(path, polygon):last-of-type {
@@ -164,22 +164,22 @@ svg {
   stroke-dasharray: 5, 3;
 }
 
-.type:not(.highlight) :is(path, polygon):first-child {
+.type:not(.highlight) > :is(path, polygon):first-child {
   fill: var(--type-color);
 }
-.type text {
+.type > text {
   transform: translateY(1px);
 }
-.type text:first-of-type {
+.type > text:first-of-type {
   fill: lightcoral;
 }
 
-.constructor:not(.highlight):not(.selected) :is(path, polygon):first-child {
+.constructor:not(.highlight):not(.selected) > :is(path, polygon):first-child {
   fill: var(--constructor-color);
 }
-.function:not(.highlight):not(.selected) :is(path, polygon):first-child {
+.function:not(.highlight):not(.selected) > :is(path, polygon):first-child {
   fill: var(--function-color);
 }
-.method:not(.highlight):not(.selected) :is(path, polygon):first-child {
+.method:not(.highlight):not(.selected) > :is(path, polygon):first-child {
   fill: var(--method-color);
 }
