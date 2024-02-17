@@ -6,7 +6,7 @@ import { readIgnores } from './utils/ignore';
 import { FileClassifier } from './utils/file-classifier';
 import { Generator } from './generator';
 import { CallGraphPanel } from './webview';
-import { languagesByExtension } from './utils/languages';
+import { getLanguages } from './utils/languages';
 
 export class CommandManager {
   private context: vscode.ExtensionContext;
@@ -14,9 +14,12 @@ export class CommandManager {
 	// TODO: listen to .gitignore file modifications
 	private ignores: Map<string, Ignore>;
 
+	private languages: Map<string, string>;
+
   public constructor(context: vscode.ExtensionContext) {
     this.context = context;
 		this.ignores = new Map();
+		this.languages = getLanguages();
   }
 
   public async generateCallGraph(contextSelection: vscode.Uri, allSelections: vscode.Uri[]) {
@@ -48,7 +51,7 @@ export class CommandManager {
 		}, (_, token) => {
 			token.onCancellationRequested(() => cancelled = true);
 
-			const classifer = new FileClassifier(root.uri.path, ig);
+			const classifer = new FileClassifier(root.uri.path, this.languages, ig);
 			return classifer.classifyFilesByLanguage(allSelections, token);
 		});
 
@@ -100,8 +103,7 @@ export class CommandManager {
 
 		const ig = await this.readIgnores(root);
 
-		const ext = extname(uri.path).substring(1);
-		const lang = languagesByExtension[ext];
+		const lang = this.languages.get(extname(uri.path)) ?? "";
 
 		const generator = new Generator(root.uri, lang);
 

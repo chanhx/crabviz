@@ -1,16 +1,17 @@
 import { workspace, CancellationToken, Uri, FileType } from "vscode";
 import * as path from "path";
 
-import { languagesByExtension } from "./languages";
 import { Ignore } from 'ignore';
 
 export class FileClassifier {
   private root: string;
+  private languages: Map<string, string>;
   private ig: Ignore;
   private files: Map<string, Uri[]>;
 
-  public constructor(root: string, ig: Ignore) {
+  public constructor(root: string, languages: Map<string, string>, ig: Ignore) {
     this.root = root;
+    this.languages = languages;
     this.ig = ig;
     this.files = new Map<string, Uri[]>();
   }
@@ -73,12 +74,12 @@ export class FileClassifier {
   }
 
   private addFile(uri: Uri): boolean {
-    const ext = path.extname(uri.path).substring(1);
+    const ext = path.extname(uri.path);
     if (ext.length <= 0) {
       return false;
     }
 
-    const lang = languagesByExtension[ext];
+    const lang = this.languages.get(ext);
     if (!lang) {
       return false;
     }

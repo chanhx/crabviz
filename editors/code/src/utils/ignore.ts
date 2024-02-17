@@ -15,6 +15,7 @@ const preIgnored = [
   '*.jpg',
   '*.gif',
   '*.png',
+  '*.svg',
 
   '*.csv',
   '*.json',
