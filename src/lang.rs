@@ -108,7 +108,11 @@ pub(crate) trait Language {
                 classes: CssClass::Cell | CssClass::Property,
                 ..Default::default()
             },
-            _ => Default::default(),
+            _ => Style {
+                rounded: true,
+                classes: CssClass::Cell.into(),
+                ..Default::default()
+            },
         }
     }
 
