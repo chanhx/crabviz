@@ -34,7 +34,7 @@ impl Dot {
         <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="8" CELLPADDING="4">
         <TR><TD WIDTH="230" BORDER="0" CELLPADDING="6" HREF="remove_me_url.title">{title}</TD></TR>
         {sections}
-        <TR><TD BORDER="0"></TD></TR>
+        <TR><TD CELLSPACING="0" HEIGHT="1" WIDTH="1" FIXEDSIZE="TRUE" STYLE="invis"></TD></TR>
         </TABLE>
     >];
                     "#,
@@ -120,7 +120,7 @@ digraph {{
             format!(
                 r#"
             <TR><TD BORDER="0" CELLPADDING="0">
-            <TABLE ID="{table_id}:{port}" CELLSPACING="4" CELLPADDING="4" CELLBORDER="1" {table_styles} BGCOLOR="green" {href}>
+            <TABLE ID="{table_id}:{port}" CELLSPACING="8" CELLPADDING="4" CELLBORDER="1" {table_styles} BGCOLOR="green" {href}>
             {}
             </TABLE>
             </TD></TR>
