@@ -103,6 +103,16 @@ pub(crate) trait Language {
                 classes: CssClass::Cell | CssClass::Type,
                 ..Default::default()
             },
+            SymbolKind::TypeParameter => Style {
+                icon: Some('T'),
+                classes: CssClass::Cell | CssClass::Type,
+                ..Default::default()
+            },
+            SymbolKind::Field => Style {
+                icon: Some('f'),
+                classes: CssClass::Cell | CssClass::Property,
+                ..Default::default()
+            },
             SymbolKind::Property => Style {
                 icon: Some('p'),
                 classes: CssClass::Cell | CssClass::Property,

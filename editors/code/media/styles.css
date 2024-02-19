@@ -184,7 +184,7 @@ svg {
   fill: var(--method-color);
 }
 
-.property > text:first-of-type {
+:is(.field, .property) > text:first-of-type {
   font-weight: unset;
   font-style: italic;
   fill: var(--icon-color);
