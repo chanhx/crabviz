@@ -25,7 +25,9 @@ export class Generator {
     files.sort((f1, f2) => f2.path.split('/').length - f1.path.split('/').length);
 
     const funcMap = new Map<string, Set<string>>(files.map(f => [f.path, new Set()]));
+
     let finishedCount = 0;
+    progress.report({ message: `${finishedCount} / ${files.length}` });
 
     for await (const file of files) {
       if (token.isCancellationRequested) {
