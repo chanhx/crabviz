@@ -30,6 +30,8 @@ const preIgnored = [
   '*.xml',
   '*.yaml',
   '*.yml',
+
+  'go.mod',
 ];
 
 export async function readIgnores(
