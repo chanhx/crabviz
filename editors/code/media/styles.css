@@ -52,9 +52,8 @@ svg {
 .cell.selected > :is(polygon, path):first-of-type {
   fill: var(--selected-cell-color);
 }
-.cell.highlight > path {
-  stroke: var(--highlight-cell-color);
-  fill: var(--highlight-cell-color);
+.cell.highlight > path:last-of-type {
+  stroke-dasharray: 10, 3, 5, 3;
 }
 
 /* Edge */
@@ -164,7 +163,7 @@ svg {
   stroke-dasharray: 5, 3;
 }
 
-.type:not(.highlight) > :is(path, polygon):first-child {
+.type > :is(path, polygon):first-child {
   fill: var(--type-color);
 }
 .type > text {
@@ -174,13 +173,13 @@ svg {
   fill: var(--icon-color);
 }
 
-.constructor:not(.highlight):not(.selected) > :is(path, polygon):first-child {
+.constructor:not(.selected) > :is(path, polygon):first-of-type {
   fill: var(--constructor-color);
 }
-.function:not(.highlight):not(.selected) > :is(path, polygon):first-child {
+.function:not(.selected) > :is(path, polygon):first-of-type {
   fill: var(--function-color);
 }
-.method:not(.highlight):not(.selected) > :is(path, polygon):first-child {
+.method:not(.selected) > :is(path, polygon):first-of-type {
   fill: var(--method-color);
 }
 
