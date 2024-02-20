@@ -77,11 +77,11 @@ svg {
 }
 
 .edge:hover path:not(.hover-path) {
-  stroke: var(--highlight-edge-color);
+  stroke: var(--hover-edge-color);
 }
 .edge:hover polygon {
-  stroke: var(--highlight-edge-color);
-  fill: var(--highlight-edge-color);
+  stroke: var(--hover-edge-color);
+  fill: var(--hover-edge-color);
 }
 
 .edge path.hover-path {
