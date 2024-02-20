@@ -122,7 +122,7 @@ svg {
 
 /* Node */
 
-.node > path:first-child {
+.node > path:first-of-type {
   fill: var(--node-color);
   stroke: black;
   stroke-width: 1.35pt;
@@ -134,7 +134,7 @@ svg {
   fill: var(--node-content-color);
 }
 
-.node.selected > path:first-child {
+.node.selected > path:first-of-type {
   stroke: var(--node-highlight-color);
   stroke-width: 2.25pt;
 }
@@ -150,11 +150,11 @@ svg {
 
 /* symbols */
 
-.module > :is(path, polygon):first-child {
+.module > :is(path, polygon):first-of-type {
   fill: var(--module-color);
 }
 
-.interface > :is(path, polygon):first-child {
+.interface > :is(path, polygon):first-of-type {
   fill: var(--interface-color);
 }
 .interface > :is(path, polygon):last-of-type {
@@ -163,7 +163,7 @@ svg {
   stroke-dasharray: 5, 3;
 }
 
-.type > :is(path, polygon):first-child {
+.type > :is(path, polygon):first-of-type {
   fill: var(--type-color);
 }
 .type > text {
