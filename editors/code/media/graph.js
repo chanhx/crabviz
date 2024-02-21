@@ -1,5 +1,12 @@
-const forEachSelectedChild = (parent, selector, fn) => {
-  parent.querySelectorAll(selector).forEach(fn);
+/**
+ * Apply function to each selected child
+ *
+ * @param {Element} parent
+ * @param {string} selectors
+ * @param {Function} fn
+ */
+const forEachSelectedChild = (parent, selectors, fn) => {
+  parent.querySelectorAll(selectors).forEach(fn);
 };
 
 const GraphElemType = {
@@ -9,16 +16,53 @@ const GraphElemType = {
 };
 
 class CallGraph {
+  /**
+   * The SVG element
+   * @type {SVGSVGElement}
+   */
   svg;
+
+  /**
+   * @type {NodeListOf<SVGGElement>}
+   */
   edges;
+
+  /**
+   * @type {NodeListOf<SVGGElement>}
+   */
   nodes;
 
+  /**
+   * @type {boolean}
+   */
   focusMode;
+
+  /**
+   * Focus element
+   *
+   * @type {SVGGElement}
+   */
   focus;
 
+  /**
+   * Incoming edges in focus mode
+   *
+   * @type {NodeListOf<SVGGElement>}
+   */
   incomings;
+
+  /**
+   * Outgoing edges in focus mode
+   *
+   * @type {NodeListOf<SVGGElement>}
+   */
   outgoings;
 
+  /**
+   * @constructor
+   * @param {SVGSVGElement} svg
+   * @param {boolean} focusMode
+   */
   constructor(svg, focusMode) {
     this.svg = svg;
     this.edges = svg.querySelectorAll("g.edge");
@@ -131,6 +175,9 @@ class CallGraph {
     });
   }
 
+  /**
+   * Deselect all elements
+   */
   reset() {
     this.nodes.forEach(node => {
       node.classList.remove("selected");
@@ -141,12 +188,18 @@ class CallGraph {
     this.edges.forEach(edge => edge.classList.remove("fade", "incoming", "outgoing", "selected"));
   };
 
+  /**
+   * @param {SVGGElement} edge
+   */
   onSelectEdge(edge) {
     this.edges.forEach(e => {
         e.classList.add(e === edge ? "selected" : "fade");
     });
   };
 
+  /**
+   * @param {SVGGElement} cell
+   */
   onSelectCell(cell) {
     if (!cell.classList.contains("clickable")) {
       return;
@@ -178,6 +231,9 @@ class CallGraph {
     cell.classList.add("selected");
   };
 
+  /**
+   * @param {SVGGElement} node
+   */
   onSelectNode(node) {
     const id = node.id;
 
@@ -201,6 +257,10 @@ class CallGraph {
     node.classList.add("selected");
   }
 
+  /**
+   * @param {SVGGElement} elem
+   * @returns {SVGGElement}
+   */
   findNearestGraphElem(elem) {
     while (elem && elem !== this.svg) {
       for (let i = 0; i < elem.classList.length; ++i) {
@@ -226,6 +286,10 @@ class CallGraph {
   // a -> b -> c -> a
   // focus: a
   // at present, when b or c is selected, the edges are not highlighted in right color to show that they are in recursion.
+
+  /**
+   * @param {string} cellId
+   */
   highlightEdgeInFocusMode(cellId) {
     let incomings = new Set();
     let outgoings = new Set();

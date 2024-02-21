@@ -15,6 +15,12 @@ function exportSVG() {
   });
 }
 
+/**
+ * Description placeholder
+ *
+ * @param {SVGSVGElement} original
+ * @param {SVGSVGElement} cloned
+ */
 function addInlineStyle(original, cloned) {
   const style = getComputedStyle(original);
 
