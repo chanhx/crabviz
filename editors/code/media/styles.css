@@ -47,10 +47,10 @@ svg {
 }
 
 .cell.clickable:not(.selected):not(:has(.clickable:hover)):hover > :is(polygon, path):first-of-type {
-  fill: var(--hover-cell-color);
+  fill: var(--cell-hover-color);
 }
 .cell.selected > :is(polygon, path):first-of-type {
-  fill: var(--selected-cell-color);
+  fill: var(--cell-selected-color);
 }
 .cell.highlight > path:last-of-type {
   stroke-dasharray: 10, 3, 5, 3;
@@ -76,11 +76,11 @@ svg {
 }
 
 .edge:hover path:not(.hover-path) {
-  stroke: var(--hover-edge-color);
+  stroke: var(--edge-hover-color);
 }
 .edge:hover polygon {
-  stroke: var(--hover-edge-color);
-  fill: var(--hover-edge-color);
+  stroke: var(--edge-hover-color);
+  fill: var(--edge-hover-color);
 }
 
 .edge path.hover-path {
@@ -89,35 +89,35 @@ svg {
 }
 
 .edge.selected path:not(.hover-path) {
-  stroke: var(--selected-edge-color);
+  stroke: var(--edge-selected-color);
 }
 .edge.selected polygon {
-  stroke: var(--selected-edge-color);
-  fill: var(--selected-edge-color);
+  stroke: var(--edge-selected-color);
+  fill: var(--edge-selected-color);
 }
 
 .incoming path:not(.hover-path) {
-  stroke: var(--incoming-edge-color);
+  stroke: var(--edge-incoming-color);
 }
 .incoming polygon {
-  stroke: var(--incoming-edge-color);
-  fill: var(--incoming-edge-color);
+  stroke: var(--edge-incoming-color);
+  fill: var(--edge-incoming-color);
 }
 
 .outgoing path:not(.hover-path) {
-  stroke: var(--outgoing-edge-color);
+  stroke: var(--edge-outgoing-color);
 }
 .outgoing polygon {
-  stroke: var(--outgoing-edge-color);
-  fill: var(--outgoing-edge-color);
+  stroke: var(--edge-outgoing-color);
+  fill: var(--edge-outgoing-color);
 }
 
 .incoming.outgoing path:not(.hover-path) {
-  stroke: var(--recurse-edge-color);
+  stroke: var(--edge-recursive-color);
 }
 .incoming.outgoing polygon {
-  stroke: var(--recurse-edge-color);
-  fill: var(--recurse-edge-color);
+  stroke: var(--edge-recursive-color);
+  fill: var(--edge-recursive-color);
 }
 
 /* Node */

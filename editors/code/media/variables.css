@@ -2,16 +2,15 @@
   --background-color: #f5fffa;
 
   --edge-color: #548f9e;
-  --hover-edge-color: #00bcd4;
-  --selected-edge-color: red;
+  --edge-hover-color: #00bcd4;
+  --edge-selected-color: red;
+  --edge-incoming-color: #698b69;
+  --edge-outgoing-color: #008acd;
+  --edge-recursive-color: black;
 
-  --hover-cell-color: #e0ffff;
-  --selected-cell-color: #e0ffff;
-  --highlight-cell-color: bisque;
-
-  --incoming-edge-color: #698b69;
-  --outgoing-edge-color: #008acd;
-  --recurse-edge-color: black;
+  --cell-hover-color: #e0ffff;
+  --cell-selected-color: #e0ffff;
+  --cell-highlight-color: bisque;
 
   --node-color: #f4f5f1;
   --node-content-color: black;
