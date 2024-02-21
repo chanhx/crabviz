@@ -124,8 +124,7 @@ svg {
 
 .node > path:first-of-type {
   fill: var(--node-color);
-  stroke: black;
-  stroke-width: 1.35pt;
+  filter: url(#shadow);
 }
 .node > polygon {
   stroke: var(--node-content-color);
