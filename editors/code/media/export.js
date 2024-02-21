@@ -11,7 +11,7 @@ function exportSVG() {
 
   vscode.postMessage({
     command: 'saveImage',
-    svg: cloned.outerHTML
+    svg: cloned.outerHTML.replaceAll("&nbsp;", "&#160;")
   });
 }
 
