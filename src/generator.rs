@@ -207,7 +207,7 @@ impl GraphGenerator {
                     .then_some(Edge {
                         from,
                         to,
-                        styles: EnumSet::new(),
+                        classes: EnumSet::new(),
                     })
                 })
             });
@@ -227,7 +227,7 @@ impl GraphGenerator {
                     cell_ids_ref.contains(&to).then_some(Edge {
                         from,
                         to,
-                        styles: EnumSet::new(),
+                        classes: EnumSet::new(),
                     })
                 })
             });
@@ -247,7 +247,7 @@ impl GraphGenerator {
                     cell_ids_ref.contains(&&from).then_some(Edge {
                         from,
                         to,
-                        styles: CssClass::Impl.into(),
+                        classes: CssClass::Impl.into(),
                     })
                 })
             });

@@ -201,7 +201,9 @@ class CallGraph {
    */
   onSelectEdge(edge) {
     this.edges.forEach(e => {
-        e.classList.add(e === edge ? "selected" : "fade");
+      if (e !== edge) {
+        e.classList.add("fade");
+      }
     });
   };
 

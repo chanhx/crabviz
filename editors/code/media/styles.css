@@ -58,64 +58,56 @@ svg {
 
 /* Edge */
 
-.impl path {
-  stroke-dasharray: 8, 3;
-}
-:is(.edge, .edge:hover, .edge.selected) .impl polygon {
-  stroke-width: 2;
-  fill: none;
-}
-
-.edge path {
+.edge > path {
   stroke: var(--edge-color);
   stroke-width: 3;
 }
-.edge polygon {
+.edge > polygon {
   stroke: var(--edge-color);
   fill: var(--edge-color);
 }
 
-.edge:hover path:not(.hover-path) {
+.edge:hover > path:not(.hover-path) {
   stroke: var(--edge-hover-color);
 }
-.edge:hover polygon {
+.edge:hover > polygon {
   stroke: var(--edge-hover-color);
   fill: var(--edge-hover-color);
 }
 
-.edge path.hover-path {
+.edge > path.hover-path {
   stroke: transparent;
   stroke-width: 15;
 }
 
-.edge.selected path:not(.hover-path) {
-  stroke: var(--edge-selected-color);
+.impl > path {
+  stroke-dasharray: 8, 3;
 }
-.edge.selected polygon {
-  stroke: var(--edge-selected-color);
-  fill: var(--edge-selected-color);
+.impl > polygon {
+  stroke-width: 2;
+  fill: none !important;
 }
 
-.incoming path:not(.hover-path) {
+.incoming > path:not(.hover-path) {
   stroke: var(--edge-incoming-color);
 }
-.incoming polygon {
+.incoming > polygon {
   stroke: var(--edge-incoming-color);
   fill: var(--edge-incoming-color);
 }
 
-.outgoing path:not(.hover-path) {
+.outgoing > path:not(.hover-path) {
   stroke: var(--edge-outgoing-color);
 }
-.outgoing polygon {
+.outgoing > polygon {
   stroke: var(--edge-outgoing-color);
   fill: var(--edge-outgoing-color);
 }
 
-.incoming.outgoing path:not(.hover-path) {
+.incoming.outgoing > path:not(.hover-path) {
   stroke: var(--edge-recursive-color);
 }
-.incoming.outgoing polygon {
+.incoming.outgoing > polygon {
   stroke: var(--edge-recursive-color);
   fill: var(--edge-recursive-color);
 }

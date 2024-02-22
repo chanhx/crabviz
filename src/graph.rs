@@ -22,7 +22,7 @@ pub trait GenerateSVG {
 pub struct Edge {
     pub from: (u32, u32, u32),
     pub to: (u32, u32, u32),
-    pub styles: EnumSet<CssClass>,
+    pub classes: EnumSet<CssClass>,
 }
 
 impl Hash for Edge {

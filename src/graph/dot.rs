@@ -151,7 +151,7 @@ digraph {{
                     r#"id="{}:{}_{} -> {}:{}_{}""#,
                     edge.from.0, edge.from.1, edge.from.2, edge.to.0, edge.to.1, edge.to.2,
                 ))
-                .chain(iter::once(Dot::css_classes_href(edge.styles)))
+                .chain(iter::once(Dot::css_classes(edge.classes)))
                 .filter(|s| !s.is_empty())
                 .collect::<Vec<_>>();
 
@@ -182,6 +182,21 @@ digraph {{
             })
             .collect::<Vec<_>>()
             .join("\n")
+    }
+
+    fn css_classes(classes: EnumSet<CssClass>) -> String {
+        if classes.is_empty() {
+            "".to_string()
+        } else {
+            format!(
+                r#"class="{}""#,
+                classes
+                    .iter()
+                    .map(|c| c.to_str())
+                    .collect::<Vec<_>>()
+                    .join(" ")
+            )
+        }
     }
 
     fn css_classes_href(classes: EnumSet<CssClass>) -> String {
