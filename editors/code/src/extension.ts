@@ -14,11 +14,13 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	let manager = new CommandManager(context);
 
-	context.subscriptions.push(vscode.commands.registerCommand('crabviz.generateCallGraph', manager.generateCallGraph.bind(manager)));
-	context.subscriptions.push(vscode.commands.registerTextEditorCommand('crabviz.generateFuncCallGraph', manager.generateFuncCallGraph.bind(manager)));
-	context.subscriptions.push(vscode.commands.registerCommand('crabviz.exportCallGraph', () => {
-		CallGraphPanel.currentPanel?.exportSVG();
-	}));
+	context.subscriptions.push(
+		vscode.commands.registerCommand('crabviz.generateCallGraph', manager.generateCallGraph.bind(manager)),
+		vscode.commands.registerTextEditorCommand('crabviz.generateFuncCallGraph', manager.generateFuncCallGraph.bind(manager)),
+		vscode.commands.registerCommand('crabviz.exportCallGraph', () => {
+			CallGraphPanel.currentPanel?.exportSVG();
+		}),
+	);
 }
 
 // This method is called when your extension is deactivated

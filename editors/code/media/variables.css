@@ -8,7 +8,7 @@
   --edge-recursive-color: black;
 
   --cell-hover-color: #e0ffff;
-  --cell-selected-color: #e0ffff;
+  --cell-selected-color: color-mix(in srgb, var(--cell-hover-color), #bce);
   --cell-highlight-color: bisque;
 
   --node-color: #f4f5f1;

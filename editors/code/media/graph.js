@@ -134,7 +134,7 @@ class CallGraph {
 
   addGraphicalObjects() {
     let defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
-    defs.innerHTML = '<filter id="shadow"><feDropShadow dx="0" dy="0" stdDeviation="5" flood-opacity="0.5"></filter>';
+    defs.innerHTML = '<filter id="shadow"><feDropShadow dx="0" dy="0" stdDeviation="4" flood-opacity="0.5"></filter>';
 
     this.svg.appendChild(defs);
   }
