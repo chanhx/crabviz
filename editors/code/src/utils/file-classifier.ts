@@ -49,21 +49,19 @@ export class FileClassifier {
         return;
       }
 
-      const filePath = path.join(dir.path, entry[0]);
-      const fileType = entry[1];
+      const uri = Uri.joinPath(dir, entry[0]);
 
-      if (this.ig.ignores(path.relative(this.root, filePath))) {
+      if (this.ig.ignores(path.relative(this.root, uri.path))) {
         continue;
       }
 
+      const fileType = entry[1];
       const isDirectory = (fileType & FileType.Directory) === FileType.Directory;
       const isFile = (fileType & FileType.File) === FileType.File;
 
       if (!isDirectory && !isFile) {
         continue;
       }
-
-      const uri = Uri.parse(filePath);
 
       if (isDirectory) {
         await this.classifyFilesInDirectory(uri, token);
