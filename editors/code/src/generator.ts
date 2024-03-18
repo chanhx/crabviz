@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { graphviz } from '@hpcc-js/wasm';
+import { instance as vizInstance } from '@viz-js/viz';
 
 import { retryCommand } from './utils/command';
 import { GraphGenerator } from '../crabviz';
@@ -7,6 +7,9 @@ import { Ignore } from 'ignore';
 import * as path from "path";
 
 const FUNC_KINDS: readonly vscode.SymbolKind[] = [vscode.SymbolKind.Function, vscode.SymbolKind.Method, vscode.SymbolKind.Constructor];
+
+const viz = vizInstance();
+const renderOptions = {format: "svg"};
 
 export class Generator {
   private root: string;
@@ -100,7 +103,7 @@ export class Generator {
 
     const dot = this.inner.generate_dot_source();
 
-    return graphviz.dot(dot);
+    return await viz.then(viz => viz.renderString(dot, renderOptions));
   }
 
   async generateFuncCallGraph(uri: vscode.Uri, anchor: vscode.Position, ig: Ignore): Promise<string | null> {
@@ -146,7 +149,7 @@ export class Generator {
 
     const dot = this.inner.generate_dot_source();
 
-    return graphviz.dot(dot);
+    return await viz.then(viz => viz.renderString(dot, renderOptions));
   }
 
   filterSymbols(symbols: vscode.DocumentSymbol[], funcsPos: vscode.Range[], i = 0): vscode.DocumentSymbol[] {
