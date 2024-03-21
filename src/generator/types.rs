@@ -45,7 +45,7 @@ impl LocationId for SymbolLocation {
 impl LocationId for CallHierarchyItem {
     fn location_id(&self, files: &HashMap<String, FileOutline>) -> Option<(u32, u32, u32)> {
         Some((
-            files.get(self.uri.path())?.id,
+            files.get(&self.uri.path)?.id,
             self.selection_range.start.line,
             self.selection_range.start.character,
         ))

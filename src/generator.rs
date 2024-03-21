@@ -133,9 +133,7 @@ impl GraphGenerator {
         let location = SymbolLocation::new(file_path, &position);
         let implementations = locations
             .into_iter()
-            .map(|location| {
-                SymbolLocation::new(location.uri.path().to_string(), &location.range.start)
-            })
+            .map(|location| SymbolLocation::new(location.uri.path, &location.range.start))
             .collect();
         self.interfaces.insert(location, implementations);
     }
@@ -188,8 +186,7 @@ impl GraphGenerator {
                     (cell_ids_ref.contains(&from)
                         || inserted_symbols_ref.borrow().contains(&from)
                         || {
-                            let path = call.from.uri.path();
-                            let file = files.get(path)? as *const FileOutline;
+                            let file = files.get(&call.from.uri.path)? as *const FileOutline;
 
                             let updated = unsafe {
                                 self.try_insert_symbol(
@@ -199,7 +196,9 @@ impl GraphGenerator {
                             };
 
                             if updated {
-                                updated_files_ref.borrow_mut().insert(path.to_string());
+                                updated_files_ref
+                                    .borrow_mut()
+                                    .insert(call.from.uri.path.clone());
                                 inserted_symbols_ref.borrow_mut().insert(from);
                             }
                             updated
@@ -380,7 +379,6 @@ impl GraphGenerator {
                         range: item.range,
                         selection_range: item.selection_range,
                         children,
-                        deprecated: None,
                     },
                 );
             }

@@ -35,7 +35,6 @@ fn nested_function() {
             detail: None,
             kind: SymbolKind::Function,
             tags: None,
-            deprecated: None,
             range: parent_range,
             selection_range: parent_range,
             children: vec![DocumentSymbol {
@@ -43,7 +42,6 @@ fn nested_function() {
                 detail: None,
                 kind: SymbolKind::Function,
                 tags: None,
-                deprecated: None,
                 range: child_range,
                 selection_range: child_range,
                 children: vec![],
