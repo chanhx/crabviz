@@ -111,7 +111,6 @@ export class CallGraphPanel {
 			graph.activate();
 
 			panzoom(graph.svg, {
-				maxZoom: 10,
 				minZoom: 1,
 				smoothScroll: false,
 				zoomDoubleClickSpeed: 1
