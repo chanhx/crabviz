@@ -11,13 +11,15 @@ const FUNC_KINDS: readonly vscode.SymbolKind[] = [vscode.SymbolKind.Function, vs
 const viz = vizInstance();
 const renderOptions = {format: "svg"};
 
+const isWindows = process.platform === 'win32';
+
 export class Generator {
   private root: string;
   private inner: GraphGenerator;
 
   public constructor(root: vscode.Uri, lang: string) {
-    this.root = root.path;
-    this.inner = new GraphGenerator(root.path, lang);
+    this.root = normalizedPath(root.path);
+    this.inner = new GraphGenerator(this.root, lang);
   }
 
   public async generateCallGraph(
@@ -27,7 +29,7 @@ export class Generator {
   ): Promise<string> {
     files.sort((f1, f2) => f2.path.split('/').length - f1.path.split('/').length);
 
-    const funcMap = new Map<string, Set<string>>(files.map(f => [f.path, new Set()]));
+    const funcMap = new Map<string, Set<string>>(files.map(f => [normalizedPath(f.path), new Set()]));
 
     let finishedCount = 0;
     progress.report({ message: `${finishedCount} / ${files.length}` });
@@ -44,7 +46,9 @@ export class Generator {
         continue;
       }
 
-      if (!this.inner.add_file(file.path, symbols)) {
+      const filePath = normalizedPath(file.path);
+
+      if (!this.inner.add_file(filePath, symbols)) {
         finishedCount += 1;
         progress.report({ message: `${finishedCount} / ${files.length}`, increment: 100 / files.length });
         continue;
@@ -58,7 +62,7 @@ export class Generator {
 
           const symbolStart = symbol.selectionRange.start;
 
-          if (FUNC_KINDS.includes(symbol.kind) && !hasFunc(funcMap, file.path, symbolStart)) {
+          if (FUNC_KINDS.includes(symbol.kind) && !hasFunc(funcMap, filePath, symbolStart)) {
             let items: vscode.CallHierarchyItem[];
             try {
               items = await vscode.commands.executeCommand<vscode.CallHierarchyItem[]>('vscode.prepareCallHierarchy', file, symbolStart);
@@ -86,7 +90,7 @@ export class Generator {
                 } else {
                   locations = result as vscode.Location[];
                 }
-                this.inner.add_interface_implementations(file.path, symbol.selectionRange.start, locations);
+                this.inner.add_interface_implementations(filePath, symbol.selectionRange.start, locations);
               })
               .then(undefined, err => {
                 console.log(err);
@@ -140,7 +144,7 @@ export class Generator {
       const funcs = file.sortedFuncs().filter(rng => !rng.isEmpty);
       symbols = this.filterSymbols(symbols, funcs);
 
-      this.inner.add_file(file.uri.path, symbols);
+      this.inner.add_file(normalizedPath(file.uri.path), symbols);
     }
 
     for await (const item of items) {
@@ -175,12 +179,12 @@ export class Generator {
         const symbolStart = item.selectionRange.start;
         this.inner.add_incoming_calls(item.uri.path, symbolStart, calls);
 
-        funcMap.get(item.uri.path)?.add(`${symbolStart}`);
+        funcMap.get(item.uri.path)?.add(keyFromPosition(symbolStart));
 
         calls = calls
           .filter(call => {
             const funcs = funcMap.get(call.from.uri.path);
-            return funcs !== undefined && !funcs.has(`${call.from.selectionRange.start}`);
+            return funcs !== undefined && !funcs.has(keyFromPosition(call.from.selectionRange.start));
           });
 
         for await (const call of calls) {
@@ -273,7 +277,7 @@ class VisitedFile {
   }
 
   visitFunc(rng: vscode.Range, direction: FuncCallDirection) {
-    let key = `${rng.start}`;
+    let key = keyFromPosition(rng.start);
     let val = this.funcs.get(key);
 
     if (!val) {
@@ -296,5 +300,16 @@ class VisitedFile {
 };
 
 function hasFunc(funcMap: Map<string, Set<string>>, filePath: string, position: vscode.Position): boolean {
-  return funcMap.get(filePath)?.has(`${position}`) ?? false;
+  return funcMap.get(filePath)?.has(keyFromPosition(position)) ?? false;
+}
+
+function keyFromPosition(pos: vscode.Position): string {
+  return `${pos.line} ${pos.character}`;
+}
+
+// In Windows, the drive letter cases are not consistent in paths returned from APIs and commands.
+// According to the docs, we should use `fsPath` rather than `path` for consistency, but there would be some other issues (in rust part) if so.
+// So here we normalize `path` to upper-case drive letters.
+function normalizedPath(path: string): string {
+  return isWindows ? path.replace(/^\/\w+(?=:)/, drive => drive.toUpperCase()) : path;
 }
