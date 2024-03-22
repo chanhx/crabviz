@@ -156,21 +156,29 @@ export class Generator {
     return await viz.then(viz => viz.renderString(dot, renderOptions));
   }
 
-  filterSymbols(symbols: vscode.DocumentSymbol[], funcsPos: vscode.Range[], i = 0): vscode.DocumentSymbol[] {
-    return symbols.filter(symbol => {
-      const keep = i < funcsPos.length && symbol.range.contains(funcsPos[i]);
-
-      if (keep) {
-        if (symbol.children.length > 0) {
-          symbol.children = this.filterSymbols(symbol.children, funcsPos, i);
-          i += symbol.children.length > 0 ? symbol.children.length : 1;
-        } else {
-          i += 1;
+  filterSymbols(symbols: vscode.DocumentSymbol[], funcs: vscode.Range[], ctx = { i: 0 }): vscode.DocumentSymbol[] {
+    return symbols
+      .sort((s1, s2) => s1.selectionRange.start.compareTo(s2.selectionRange.start))
+      .filter(symbol => {
+        const keep = ctx.i < funcs.length && symbol.range.contains(funcs[ctx.i]);
+        if (!keep) {
+          return keep;
         }
-      }
 
-      return keep;
-    });
+        if (symbol.selectionRange.isEqual(funcs[ctx.i])) {
+          ctx.i += 1;
+          if (ctx.i === funcs.length || !symbol.range.contains(funcs[ctx.i])) {
+            symbol.children = [];
+            return keep;
+          }
+        }
+
+        if (symbol.children.length > 0) {
+          symbol.children = this.filterSymbols(symbol.children, funcs, ctx);
+        }
+
+        return keep;
+      });
   }
 
   async resolveCallsInFiles(item: vscode.CallHierarchyItem, funcMap: Map<string, Set<string>>) {
@@ -288,7 +296,7 @@ class VisitedFile {
   }
 
   hasVisitedFunc(pos: vscode.Position, direction: FuncCallDirection): boolean {
-    return ((this.funcs.get(`${pos}`)?.[1] ?? 0) & direction) === direction;
+    return ((this.funcs.get(keyFromPosition(pos))?.[1] ?? 0) & direction) === direction;
   }
 
   sortedFuncs(): vscode.Range[] {
