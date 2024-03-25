@@ -90,6 +90,11 @@ export class Generator {
                 } else {
                   locations = result as vscode.Location[];
                 }
+
+                if (isWindows) {
+                  locations.forEach(l => l.uri = l.uri.with({ path: normalizedPath(l.uri.path )}));
+                }
+
                 this.inner.add_interface_implementations(filePath, symbol.selectionRange.start, locations);
               })
               .then(undefined, err => {
@@ -126,7 +131,7 @@ export class Generator {
     }
 
     for await (const item of items) {
-      files.set(item.uri.path, new VisitedFile(item.uri));
+      files.set(normalizedPath(item.uri.path), new VisitedFile(item.uri));
 
       await this.resolveIncomingCalls(item, files, ig);
       await this.resolveOutgoingCalls(item, files, ig);
@@ -148,7 +153,7 @@ export class Generator {
     }
 
     for await (const item of items) {
-      this.inner.highlight(item.uri.path, item.selectionRange.start);
+      this.inner.highlight(normalizedPath(item.uri.path), item.selectionRange.start);
     }
 
     const dot = this.inner.generate_dot_source();
@@ -184,10 +189,14 @@ export class Generator {
   async resolveCallsInFiles(item: vscode.CallHierarchyItem, funcMap: Map<string, Set<string>>) {
     await vscode.commands.executeCommand<vscode.CallHierarchyIncomingCall[]>('vscode.provideIncomingCalls', item)
       .then(async calls => {
+        if (isWindows) {
+          calls.forEach(call => call.from.uri = call.from.uri.with({ path: normalizedPath(call.from.uri.path )}));
+        }
         const symbolStart = item.selectionRange.start;
-        this.inner.add_incoming_calls(item.uri.path, symbolStart, calls);
 
-        funcMap.get(item.uri.path)?.add(keyFromPosition(symbolStart));
+        const itemNormalizedPath = normalizedPath(item.uri.path);
+        this.inner.add_incoming_calls(itemNormalizedPath, symbolStart, calls);
+        funcMap.get(itemNormalizedPath)?.add(keyFromPosition(symbolStart));
 
         calls = calls
           .filter(call => {
@@ -207,8 +216,13 @@ export class Generator {
   async resolveIncomingCalls(item: vscode.CallHierarchyItem, funcMap: Map<string, VisitedFile>, ig: Ignore) {
     await vscode.commands.executeCommand<vscode.CallHierarchyIncomingCall[]>('vscode.provideIncomingCalls', item)
       .then(async calls => {
-        this.inner.add_incoming_calls(item.uri.path, item.selectionRange.start, calls);
-        funcMap.get(item.uri.path)!.visitFunc(item.selectionRange, FuncCallDirection.Incoming);
+        if (isWindows) {
+          calls.forEach(call => call.from.uri = call.from.uri.with({ path: normalizedPath(call.from.uri.path )}));
+        }
+
+        const itemNormalizedPath = normalizedPath(item.uri.path);
+        this.inner.add_incoming_calls(itemNormalizedPath, item.selectionRange.start, calls);
+        funcMap.get(itemNormalizedPath)!.visitFunc(item.selectionRange, FuncCallDirection.Incoming);
 
         calls = calls
           .filter(call => {
@@ -236,8 +250,13 @@ export class Generator {
   async resolveOutgoingCalls(item: vscode.CallHierarchyItem, funcMap: Map<string, VisitedFile>, ig: Ignore) {
     await vscode.commands.executeCommand<vscode.CallHierarchyOutgoingCall[]>('vscode.provideOutgoingCalls', item)
       .then(async calls => {
-        this.inner.add_outgoing_calls(item.uri.path, item.selectionRange.start, calls);
-        funcMap.get(item.uri.path)!.visitFunc(item.selectionRange, FuncCallDirection.Outgoing);
+        if (isWindows) {
+          calls.forEach(call => call.to.uri = call.to.uri.with({ path: normalizedPath(call.to.uri.path )}));
+        }
+
+        const itemNormalizedPath = normalizedPath(item.uri.path);
+        this.inner.add_outgoing_calls(itemNormalizedPath, item.selectionRange.start, calls);
+        funcMap.get(itemNormalizedPath)!.visitFunc(item.selectionRange, FuncCallDirection.Outgoing);
 
         calls = calls
           .filter(call => {
