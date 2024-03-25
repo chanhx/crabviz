@@ -42,8 +42,8 @@ export async function readIgnores(
   );
 
   const rulePromises = ignores.map(async (ignore) => {
-    const dir = path.dirname(ignore.path);
-    const relativePath = path.relative(folder.uri.path, dir);
+    const dir = path.posix.dirname(ignore.path);
+    const relativePath = path.posix.relative(folder.uri.path, dir);
 
     return await workspace.fs.readFile(ignore).then((content) =>
       content
@@ -54,7 +54,7 @@ export async function readIgnores(
           if (rule.startsWith("/")) {
             rule = rule.slice(1);
           }
-          return path.join(relativePath, rule);
+          return path.posix.join(relativePath, rule);
         })
     );
   });

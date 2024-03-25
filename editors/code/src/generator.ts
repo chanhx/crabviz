@@ -231,7 +231,7 @@ export class Generator {
             let file = funcMap.get(uri.path);
             if (!file) {
               file = new VisitedFile(uri);
-              file.skip = ig.ignores(path.relative(this.root, uri.path)) || this.inner.should_filter_out_file(uri.path);
+              file.skip = ig.ignores(path.posix.relative(this.root, uri.path)) || this.inner.should_filter_out_file(uri.path);
               funcMap.set(uri.path, file);
             }
 
@@ -269,7 +269,7 @@ export class Generator {
             let file = funcMap.get(uri.path);
             if (!file) {
               file = new VisitedFile(uri);
-              file.skip = ig.ignores(path.relative(this.root, uri.path)) || this.inner.should_filter_out_file(uri.path);
+              file.skip = ig.ignores(path.posix.relative(this.root, uri.path)) || this.inner.should_filter_out_file(uri.path);
               funcMap.set(uri.path, file);
             }
 

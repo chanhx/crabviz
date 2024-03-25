@@ -24,7 +24,7 @@ export class FileClassifier {
       const fileType = (await workspace.fs.stat(uri)).type;
 
       if ((fileType & FileType.Directory) === FileType.Directory) {
-        const relativePath = path.relative(this.root, uri.path);
+        const relativePath = path.posix.relative(this.root, uri.path);
 
         if (relativePath.length > 0 && this.ig.ignores(relativePath)) {
           continue;
@@ -51,7 +51,7 @@ export class FileClassifier {
 
       const uri = Uri.joinPath(dir, entry[0]);
 
-      if (this.ig.ignores(path.relative(this.root, uri.path))) {
+      if (this.ig.ignores(path.posix.relative(this.root, uri.path))) {
         continue;
       }
 
