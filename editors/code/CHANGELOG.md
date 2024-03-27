@@ -6,6 +6,22 @@
 
 * Error in language detection ([#25](https://github.com/chanhx/crabviz/issues/25))
 
+## 0.4.0 (2024.3.27)
+
+### Improvements
+
+* New color scheme
+* Add icons on cells to distinguish between enum, struct and class
+* Show progress when generating call graph for selected files
+* Allow cancellations when generating call graphs for selected files
+* Check git ignore rules in function call graph generation
+* Make interface cells clickable
+
+### Fixed
+
+* Function call graph generation error when involving recursive functions
+* Call graph generation errors on Windows
+
 ## 0.3.1 (2023.12.24)
 
 ### Fixed
