@@ -1,38 +1,26 @@
 # Crabviz
 
-A static code analysis tool that generates interactive call graph.
-
-## Introdution
-
-Crabviz is based on the Langauge Server Protocol,
-as long as you have the corresponding language server installed,
-you can generate call graph with Crabviz for your project.
+Crabviz is a [LSP](https://microsoft.github.io/language-server-protocol/)-based call graph generator. It leverages the Language Server Protocol to generate interactive call graphs, helps you visually explore source code.
 
 ## Features
 
-* Show types, methods, functions and interfaces, grouped by file
-* Display function calling relationships and interface implementation relationships
-* Analyze selected folders and files, or a selected function
-* Export call graphs to svg files
+* Workable for various programming languages
+* Highlight on click
+* Two kinds of graphs
+
+   You can generate a call graph for selected files to get an overview, or a selected function to track the call hierarchy.
+* Export call graphs as SVG
 
 ## Preview
 
-![preview1](https://user-images.githubusercontent.com/20551552/242812058-60584f59-a8f0-4a56-90eb-373c3f3b8cd5.gif)
+![preview](https://raw.githubusercontent.com/chanhx/assets/main/crabviz/preview.gif)
 
-![preview2](https://user-images.githubusercontent.com/20551552/287503577-1f0a4155-313c-44cd-a4e3-a8b0ce786eca.gif)
+## Install
 
-## Editors
+Since Crabviz utilizes the capabilities of language servers, it is better suited as an IDE/editor extension than a standalone command line tool.
 
-Because Crabviz utilizes the capabilities of LSP server, it is better suited as an IDE/editor extension instead of a standalone command line tool.
-
-It is currently available in [VS Code](editors/code/), and PRs for other editors are welcome.
-
-## TODO
-
-* Collapse folder
-* Beautify UI
+It is currently available on [VS Code](https://marketplace.visualstudio.com/items?itemName=chanhx.crabviz), and PRs for other editors are welcome.
 
 ## Credits
 
-crabviz is inspired by [graphql-voyager](https://github.com/APIs-guru/graphql-voyager) and [
-go-callvis](https://github.com/ofabry/go-callvis)
+Crabviz is inspired by [graphql-voyager](https://github.com/graphql-kit/graphql-voyager) and [go-callvis](https://github.com/ondrajz/go-callvis).
