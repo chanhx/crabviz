@@ -222,7 +222,7 @@ export class Generator {
 
         const itemNormalizedPath = normalizedPath(item.uri.path);
         this.inner.add_incoming_calls(itemNormalizedPath, item.selectionRange.start, calls);
-        funcMap.get(itemNormalizedPath)!.visitFunc(item.selectionRange, FuncCallDirection.Incoming);
+        funcMap.get(itemNormalizedPath)!.visitFunc(item.selectionRange, FuncCallDirection.INCOMING);
 
         calls = calls
           .filter(call => {
@@ -235,7 +235,7 @@ export class Generator {
               funcMap.set(uri.path, file);
             }
 
-            return !file.skip && !file.hasVisitedFunc(call.from.selectionRange.start, FuncCallDirection.Incoming);
+            return !file.skip && !file.hasVisitedFunc(call.from.selectionRange.start, FuncCallDirection.INCOMING);
           });
 
         for await (const call of calls) {
@@ -256,7 +256,7 @@ export class Generator {
 
         const itemNormalizedPath = normalizedPath(item.uri.path);
         this.inner.add_outgoing_calls(itemNormalizedPath, item.selectionRange.start, calls);
-        funcMap.get(itemNormalizedPath)!.visitFunc(item.selectionRange, FuncCallDirection.Outgoing);
+        funcMap.get(itemNormalizedPath)!.visitFunc(item.selectionRange, FuncCallDirection.OUTGOING);
 
         calls = calls
           .filter(call => {
@@ -273,7 +273,7 @@ export class Generator {
               funcMap.set(uri.path, file);
             }
 
-            return !file.skip && !file.hasVisitedFunc(call.to.selectionRange.start, FuncCallDirection.Outgoing);
+            return !file.skip && !file.hasVisitedFunc(call.to.selectionRange.start, FuncCallDirection.OUTGOING);
           });
 
         for await (const call of calls) {
@@ -287,9 +287,9 @@ export class Generator {
 }
 
 enum FuncCallDirection {
-  Incoming = 1 << 1,
-  Outgoing = 1 << 2,
-  Bidirection = Incoming | Outgoing,
+  INCOMING = 1 << 1,
+  OUTGOING = 1 << 2,
+  BIDIRECTION = INCOMING | OUTGOING,
 }
 
 class VisitedFile {

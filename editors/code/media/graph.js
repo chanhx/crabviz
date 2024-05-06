@@ -9,11 +9,15 @@ const forEachSelectedChild = (parent, selectors, fn) => {
   parent.querySelectorAll(selectors).forEach(fn);
 };
 
-const GraphElemType = {
+/**
+ * @enum { number }
+ */
+// eslint-disable-next-line @typescript-eslint/naming-convention
+const GraphElemType = Object.freeze({
   NODE: 0,
   CELL: 1,
   EDGE: 2,
-};
+});
 
 class CallGraph {
   /**
