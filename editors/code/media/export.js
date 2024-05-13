@@ -1,53 +1,23 @@
-const vscode = acquireVsCodeApi();
-
 function exportSVG() {
-  const original = document.getElementsByTagName("svg")[0];
-  const cloned = original.cloneNode(true);
+  const svg = document.querySelector("svg").cloneNode(true);
 
-  addInlineStyle(original, cloned);
+  svg.appendChild(document.getElementById("crabviz_style").cloneNode(true));
+  svg.insertAdjacentHTML(
+    "beforeend",
+    "<style>:is(.cell, .edge) { pointer-events: none; }</style>"
+  );
 
-  cloned.removeAttribute('width');
-  cloned.removeAttribute("height");
-
-  vscode.postMessage({
-    command: 'saveImage',
-    svg: cloned.outerHTML.replaceAll("&nbsp;", "&#160;")
+  acquireVsCodeApi().postMessage({
+    command: 'saveSVG',
+    svg: svg.outerHTML.replaceAll("&nbsp;", "&#160;")
   });
-}
-
-/**
- * Description placeholder
- *
- * @param {SVGSVGElement} original
- * @param {SVGSVGElement} cloned
- */
-function addInlineStyle(original, cloned) {
-  const style = getComputedStyle(original);
-
-  for (const prop of style) {
-    cloned.style[prop] = style.getPropertyValue(prop);
-  }
-
-  // recursively add inline styles
-
-  const children = original.children;
-  if (children <= 0) {
-    return;
-  }
-  const clonedChildren = cloned.children;
-
-  for (let i = 0, len = children.length; i < len; ++i) {
-    const elem = children[i];
-    const clonedElem = clonedChildren[i];
-    addInlineStyle(elem, clonedElem);
-  }
 }
 
 window.addEventListener('message', (e) => {
   const message = e.data;
 
   switch (message.command) {
-    case 'export':
+    case 'exportSVG':
         exportSVG();
         break;
   }

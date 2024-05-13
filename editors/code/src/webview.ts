@@ -27,7 +27,7 @@ export class CallGraphPanel {
 		this._panel.webview.onDidReceiveMessage(
 			message => {
 				switch (message.command) {
-					case 'saveImage':
+					case 'saveSVG':
 						this.saveSVG(message.svg);
 
 						break;
@@ -72,56 +72,48 @@ export class CallGraphPanel {
 	public showCallGraph(svg: string, focusMode: boolean) {
 		const resourceUri = vscode.Uri.joinPath(this._extensionUri, 'media');
 
-		const variables = 'variables.css';
-		const variablesCssPath = vscode.Uri.joinPath(resourceUri, variables);
-		const stylesPath = vscode.Uri.joinPath(resourceUri, 'styles.css');
-		const graphJsPath = vscode.Uri.joinPath(resourceUri, 'graph.js');
-		const panZoomJsPath = vscode.Uri.joinPath(resourceUri, 'panzoom.min.js');
-		const exportJsPath = vscode.Uri.joinPath(resourceUri, 'export.js');
-
-		const webview = this._panel.webview;
-		const variablesCssUri = webview.asWebviewUri(variablesCssPath);
-		const stylesUri = webview.asWebviewUri(stylesPath);
-		const graphJsUri = webview.asWebviewUri(graphJsPath);
-		const panZoomJsUri = webview.asWebviewUri(panZoomJsPath);
-		const exportJsUri = webview.asWebviewUri(exportJsPath);
+		const filePromises = ['variables.css', 'styles.css', 'graph.js', 'panzoom.min.js', 'export.js'].map(fileName =>
+			vscode.workspace.fs.readFile(vscode.Uri.joinPath(resourceUri, fileName))
+		);
 
 		CallGraphPanel.currentPanel = this;
 
 		const nonce = getNonce();
 
-		this._panel.webview.html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-		<meta charset="UTF-8">
-		<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; img-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<link rel="stylesheet" href="${variablesCssUri}">
-		<link rel="stylesheet" href="${stylesUri}">
-		<script nonce="${nonce}" src="${panZoomJsUri}"></script>
-		<script nonce="${nonce}" src="${exportJsUri}"></script>
-		<script nonce="${nonce}" src="${graphJsUri}"></script>
-		<title>crabviz</title>
-</head>
-<body data-vscode-context='{ "preventDefaultContextMenuItems": true }'>
-		${svg}
+		Promise.all(filePromises).then(([cssVariables, cssStyles, ...scripts]) => {
+			this._panel.webview.html = `<!DOCTYPE html>
+			<html lang="en">
+			<head>
+					<meta charset="UTF-8">
+					<meta http-equiv="Content-Security-Policy" content="script-src 'nonce-${nonce}';">
+					<meta name="viewport" content="width=device-width, initial-scale=1.0">
+					<style id="crabviz_style">
+						${cssVariables.toString()}
+						${cssStyles.toString()}
+					</style>
+					${scripts.map((s) => `<script nonce="${nonce}">${s.toString()}</script>`)}
+					<title>crabviz</title>
+			</head>
+			<body data-vscode-context='{ "preventDefaultContextMenuItems": true }'>
+					${svg}
 
-		<script nonce="${nonce}">
-			const graph = new CallGraph(document.querySelector("svg"), ${focusMode});
-			graph.activate();
+					<script nonce="${nonce}">
+						const graph = new CallGraph(document.querySelector("svg"), ${focusMode});
+						graph.activate();
 
-			panzoom(graph.svg, {
-				minZoom: 1,
-				smoothScroll: false,
-				zoomDoubleClickSpeed: 1
-			});
-		</script>
-</body>
-</html>`;
+						panzoom(graph.svg, {
+							minZoom: 1,
+							smoothScroll: false,
+							zoomDoubleClickSpeed: 1
+						});
+					</script>
+			</body>
+			</html>`;
+		});
 	}
 
 	public exportSVG() {
-		this._panel.webview.postMessage({ command: 'export' });
+		this._panel.webview.postMessage({ command: 'exportSVG' });
 	}
 
 	saveSVG(svg: string) {
