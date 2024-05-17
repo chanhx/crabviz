@@ -34,8 +34,8 @@
         "title": "Crabviz: Generate Function Call Graph"
       },
       {
-        "command": "crabviz.exportCallGraph",
-        "title": "Export Call Graph"
+        "command": "crabviz.save",
+        "title": "Save Call Graph As ..."
       }
     ],
     "menus": {
@@ -49,7 +49,7 @@
           "when": "never"
         },
         {
-          "command": "crabviz.exportCallGraph",
+          "command": "crabviz.save",
           "when": "never"
         }
       ],
@@ -68,7 +68,7 @@
       ],
       "webview/context": [
         {
-          "command": "crabviz.exportCallGraph",
+          "command": "crabviz.save",
           "when": "webviewId == 'crabviz.callgraph'"
         }
       ]

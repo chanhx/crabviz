@@ -1,4 +1,4 @@
-function exportSVG() {
+function exportSVG(uri) {
   const svg = document.querySelector("svg").cloneNode(true);
 
   svg.appendChild(document.getElementById("crabviz_style").cloneNode(true));
@@ -9,6 +9,7 @@ function exportSVG() {
 
   acquireVsCodeApi().postMessage({
     command: 'saveSVG',
+    uri: uri,
     svg: svg.outerHTML.replaceAll("&nbsp;", "&#160;")
   });
 }
@@ -18,7 +19,7 @@ window.addEventListener('message', (e) => {
 
   switch (message.command) {
     case 'exportSVG':
-        exportSVG();
+        exportSVG(message.uri);
         break;
   }
 });

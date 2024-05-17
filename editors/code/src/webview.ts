@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { extname } from "path";
 
 export class CallGraphPanel {
 	public static readonly viewType = 'crabviz.callgraph';
@@ -28,7 +29,7 @@ export class CallGraphPanel {
 			message => {
 				switch (message.command) {
 					case 'saveSVG':
-						this.saveSVG(message.svg);
+						this.writeFile(vscode.Uri.from(message.uri), message.svg);
 
 						break;
 				}
@@ -112,30 +113,35 @@ export class CallGraphPanel {
 		});
 	}
 
-	public exportSVG() {
-		this._panel.webview.postMessage({ command: 'exportSVG' });
-	}
-
-	saveSVG(svg: string) {
-		const writeData = Buffer.from(svg, 'utf8');
-
+	public save() {
 		vscode.window.showSaveDialog({
-			saveLabel: "export",
-			filters: { 'Images': ['svg'] },
-		}).then((fileUri) => {
-			if (fileUri) {
-				try {
-					vscode.workspace.fs.writeFile(fileUri, writeData)
-						.then(() => {
-							console.log("File Saved");
-						}, (err : any) => {
-							vscode.window.showErrorMessage(`Error on writing file: ${err}`);
-						});
-				} catch (err) {
-					vscode.window.showErrorMessage(`Error on writing file: ${err}`);
+			saveLabel: "Save",
+			filters: {
+				'HTML': ['html'],
+				'SVG': ['svg'],
+			}
+		}).then((uri) => {
+			if (uri) {
+				switch (extname(uri.path)) {
+					case '.html': {
+						this.writeFile(uri, this._panel.webview.html);
+						break;
+					}
+					case '.svg': {
+						this._panel.webview.postMessage({ command: 'exportSVG', uri: uri });
+						break;
+					}
+					default: break;
 				}
 			}
 		});
+	}
+
+	writeFile(uri: vscode.Uri, content: string) {
+		vscode.workspace.fs.writeFile(uri, Buffer.from(content, 'utf8'))
+			.then(null, (reason : any) => {
+				vscode.window.showErrorMessage(`Error on writing file: ${reason}`);
+			});
 	}
 }
 
