@@ -16,12 +16,13 @@ export class CallGraphPanel {
 
 		const panel = vscode.window.createWebviewPanel(CallGraphPanel.viewType, `Crabviz #${CallGraphPanel.num}`, vscode.ViewColumn.One, {
 			localResourceRoots: [
-				vscode.Uri.joinPath(this._extensionUri, 'media')
+				vscode.Uri.joinPath(this._extensionUri, 'assets'),
+				vscode.Uri.joinPath(this._extensionUri, 'out'),
 			],
 			enableScripts: true
 		});
 
-		panel.iconPath = vscode.Uri.joinPath(this._extensionUri, 'media', 'icon.svg');
+		panel.iconPath = vscode.Uri.joinPath(this._extensionUri, 'assets', 'icon.svg');
 
 		this._panel = panel;
 
@@ -71,9 +72,10 @@ export class CallGraphPanel {
 	}
 
 	public showCallGraph(svg: string, focusMode: boolean) {
-		const resourceUri = vscode.Uri.joinPath(this._extensionUri, 'media');
+		const resourceUri = vscode.Uri.joinPath(this._extensionUri, 'assets');
+		const webviewUri = this._panel.webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'out', 'webview', 'webview.js'));
 
-		const filePromises = ['variables.css', 'styles.css', 'graph.js', 'panzoom.min.js', 'export.js'].map(fileName =>
+		const filePromises = ['variables.css', 'styles.css', 'toolbar.css', 'graph.js', 'svg-pan-zoom.min.js', 'export.js'].map(fileName =>
 			vscode.workspace.fs.readFile(vscode.Uri.joinPath(resourceUri, fileName))
 		);
 
@@ -81,7 +83,7 @@ export class CallGraphPanel {
 
 		const nonce = getNonce();
 
-		Promise.all(filePromises).then(([cssVariables, cssStyles, ...scripts]) => {
+		Promise.all(filePromises).then(([cssVariables, cssStyles, cssToolbar, ...scripts]) => {
 			this._panel.webview.html = `<!DOCTYPE html>
 			<html lang="en">
 			<head>
@@ -91,21 +93,29 @@ export class CallGraphPanel {
 					<style id="crabviz_style">
 						${cssVariables.toString()}
 						${cssStyles.toString()}
+						${cssToolbar.toString()}
 					</style>
-					${scripts.map((s) => `<script nonce="${nonce}">${s.toString()}</script>`)}
+					<script type="module" nonce="${nonce}" src="${webviewUri}"></script>
+					${scripts.map((s) => `<script nonce="${nonce}">${s.toString()}</script>`).join('\n')}
 					<title>crabviz</title>
 			</head>
 			<body data-vscode-context='{ "preventDefaultContextMenuItems": true }'>
+					<div id="crabviz_toolbar">
+						<vscode-text-field id="crabviz_toolbar_field" readonly=true></vscode-text-field>
+						<vscode-button>Go To Definition</vscode-button>
+						<vscode-button>Save</vscode-button>
+					</div>
+
+					<div id="crabviz_svg">
 					${svg}
+					</div>
 
 					<script nonce="${nonce}">
-						const graph = new CallGraph(document.querySelector("svg"), ${focusMode});
+						const graph = new CallGraph(document.querySelector("#crabviz_svg svg"), ${focusMode});
 						graph.activate();
 
-						panzoom(graph.svg, {
-							minZoom: 1,
-							smoothScroll: false,
-							zoomDoubleClickSpeed: 1
+						svgPanZoom(graph.svg, {
+							dblClickZoomEnabled: false,
 						});
 					</script>
 			</body>

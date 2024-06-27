@@ -9,14 +9,23 @@ body {
   width: 100%;
   height: 100%;
   padding: 0;
+
+  display: flex;
+  flex-direction: column;
 }
 
-body,
-svg {
-  width: 100%;
-  height: 100%;
+#crabviz_svg {
+  flex-grow: 1;
+  min-height: 0;
+
   background-color: var(--background-color);
 }
+
+#crabviz_svg svg {
+  width: 100%;
+  height: 100%;
+}
+
 #graph0 > polygon:first-of-type {
   fill: var(--background-color);
 }

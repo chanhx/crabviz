@@ -104,6 +104,7 @@
   },
   "dependencies": {
     "@viz-js/viz": "^3.4.0",
+    "@vscode/webview-ui-toolkit": "^1.4.0",
     "ignore": "^5.3.0"
   }
 }

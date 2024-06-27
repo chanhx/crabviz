@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { instance as vizInstance } from '@viz-js/viz';
 
 import { retryCommand } from './utils/command';
-import { GraphGenerator } from '../crabviz';
+import { GraphGenerator } from '../out/crabviz';
 import { Ignore } from 'ignore';
 import * as path from "path";
 

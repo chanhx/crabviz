@@ -1,0 +1,17 @@
+#crabviz_toolbar {
+  height: 38px;
+  padding: 0 20% 0 20%;
+
+  flex-shrink: 0;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+
+  border-bottom: 1px solid rgba(0, 0, 0, 0.8);
+}
+
+#crabviz_toolbar_field {
+  flex-grow: 1;
+}
