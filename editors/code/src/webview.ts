@@ -29,9 +29,11 @@ export class CallGraphPanel {
 		this._panel.webview.onDidReceiveMessage(
 			message => {
 				switch (message.command) {
+					case 'save':
+						this.save();
+						break;
 					case 'saveSVG':
 						this.writeFile(vscode.Uri.from(message.uri), message.svg);
-
 						break;
 				}
 			},
@@ -75,7 +77,7 @@ export class CallGraphPanel {
 		const resourceUri = vscode.Uri.joinPath(this._extensionUri, 'assets');
 		const webviewUri = this._panel.webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'out', 'webview', 'webview.js'));
 
-		const filePromises = ['variables.css', 'styles.css', 'toolbar.css', 'graph.js', 'svg-pan-zoom.min.js', 'export.js'].map(fileName =>
+		const filePromises = ['variables.css', 'styles.css', 'toolbar.css', 'graph.js', 'svg-pan-zoom.min.js'].map(fileName =>
 			vscode.workspace.fs.readFile(vscode.Uri.joinPath(resourceUri, fileName))
 		);
 
@@ -90,20 +92,20 @@ export class CallGraphPanel {
 					<meta charset="UTF-8">
 					<meta http-equiv="Content-Security-Policy" content="script-src 'nonce-${nonce}';">
 					<meta name="viewport" content="width=device-width, initial-scale=1.0">
+					<title>crabviz</title>
 					<style id="crabviz_style">
 						${cssVariables.toString()}
 						${cssStyles.toString()}
 						${cssToolbar.toString()}
 					</style>
-					<script type="module" nonce="${nonce}" src="${webviewUri}"></script>
 					${scripts.map((s) => `<script nonce="${nonce}">${s.toString()}</script>`).join('\n')}
-					<title>crabviz</title>
+					<script type="module" nonce="${nonce}" src="${webviewUri}"></script>
 			</head>
 			<body data-vscode-context='{ "preventDefaultContextMenuItems": true }'>
 					<div id="crabviz_toolbar">
 						<vscode-text-field id="crabviz_toolbar_field" readonly=true></vscode-text-field>
 						<vscode-button>Go To Definition</vscode-button>
-						<vscode-button>Save</vscode-button>
+						<vscode-button id="crabviz_save_button">Save</vscode-button>
 					</div>
 
 					<div id="crabviz_svg">

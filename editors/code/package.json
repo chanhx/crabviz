@@ -32,10 +32,6 @@
       {
         "command": "crabviz.generateFuncCallGraph",
         "title": "Crabviz: Generate Function Call Graph"
-      },
-      {
-        "command": "crabviz.save",
-        "title": "Save Call Graph As ..."
       }
     ],
     "menus": {
@@ -46,10 +42,6 @@
         },
         {
           "command": "crabviz.generateFuncCallGraph",
-          "when": "never"
-        },
-        {
-          "command": "crabviz.save",
           "when": "never"
         }
       ],
@@ -64,12 +56,6 @@
         {
           "command": "crabviz.generateCallGraph",
           "group": "crabviz"
-        }
-      ],
-      "webview/context": [
-        {
-          "command": "crabviz.save",
-          "when": "webviewId == 'crabviz.callgraph'"
         }
       ]
     }
@@ -90,6 +76,7 @@
     "@types/mocha": "^10.0.6",
     "@types/node": "18.x",
     "@types/vscode": "~1.83.0",
+    "@types/vscode-webview": "^1.57.5",
     "@typescript-eslint/eslint-plugin": "^7.7.1",
     "@typescript-eslint/parser": "^7.7.1",
     "@vscode/test-electron": "^2.3.9",
