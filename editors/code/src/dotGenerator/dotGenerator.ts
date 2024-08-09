@@ -1,8 +1,8 @@
 
+import { FileOutline, locationIdHierarchyItem, SymbolLocation } from './types';
+import { DefaultLang } from './lang';
 import { Cell, CssClass, Edge, Subgraph, TableNode } from './graph';
 import { Dot } from './dot';
-import { FileOutline, locationIdHierarchyItem, SymbolLocation } from './types';
-import { DefaultLang, Language } from './lang';
 import * as vscode from 'vscode';
 import * as path from 'path';
 
@@ -95,7 +95,7 @@ export class GraphGeneratorRust {
     // Files are grouped into clusters for each directory
     const files = this.files;
 
-    // TODO: it's better to construct tables before fetching call hierarchy, so that we can skip the filtered out symbols.
+    // Create table for each file, containing a hierarchy of cells and their children
     const tables: [number, TableNode][] = Array.from(files.values()).map(file => {
       const table = this.lang.fileRepr(file);
       const cells = this.highlights.get(file.id);
@@ -106,16 +106,18 @@ export class GraphGeneratorRust {
     });
 
     // Collect all symbol locations for reference
-    //const cellIds = new Set<[number, number, number]>(); // Array type does not work for sets because items are object references
+    // NOTE: Array type does not work for sets because items are object references during comparison. Same for insertedSymbols
+    //const cellIds = new Set<[number, number, number]>();
     const cellIds = new Set<string>();
     tables.forEach(([tid, tbl]) => {
       tbl.sections.forEach(cell => this.collectCellIds(tid, cell, cellIds));
     });
 
+    // Track files updated
     const updatedFiles = new Set<string>();
-    //const insertedSymbols = new Set<[number, number, number]>();
     const insertedSymbols = new Set<string>();
 
+    // Build edges for incoming calls
     const incomingCalls = Array.from(this.incomingCalls.entries()).flatMap(([callee, callers]) => {
       const to = callee.locationId(files);
       console.log('Incoming call to:', to);
@@ -128,16 +130,16 @@ export class GraphGeneratorRust {
         // another approach would be to modify edges to make them start from the outter functions, which is not so accurate.
 
         //const from = call.from.locationId(files);
-        const from = locationIdHierarchyItem(call.from, call.from.uri.path, files);
-        if (from) {
+        const fromLocation = locationIdHierarchyItem(call.from, call.from.uri.path, files);
+        if (fromLocation) {
           const fileOutline = files.get(call.from.uri.path);
           if (fileOutline) {
-            updated = cellIds.has(from.toString()) || insertedSymbols.has(from.toString()) || this.tryInsertSymbol(call.from, fileOutline);
+            updated = cellIds.has(fromLocation.toString()) || insertedSymbols.has(fromLocation.toString()) || this.tryInsertSymbol(call.from, fileOutline);
             if (updated) {
               updatedFiles.add(call.from.uri.path);
-              insertedSymbols.add(from.toString());
+              insertedSymbols.add(fromLocation.toString());
 
-              return new Edge(from, to, []);
+              return new Edge(fromLocation, to, []);
             }
           }
         }
@@ -146,6 +148,7 @@ export class GraphGeneratorRust {
       }).filter(edge => edge !== null);
     });
 
+    // Build edges for outgoing calls
     const outgoingCalls = Array.from(this.outgoingCalls.entries()).flatMap(([caller, callees]) => {
       const from = caller.locationId(files);
       if (!from || !cellIds.has(from.toString())) return [];
@@ -161,6 +164,7 @@ export class GraphGeneratorRust {
       }).filter(edge => edge !== null);
     });
 
+    // Build edges for implementations
     const implementations = Array.from(this.interfaces.entries()).flatMap(([interfaceLoc, implementations]) => {
       const to = interfaceLoc.locationId(files);
       if (!to || !cellIds.has(to.toString())) return [];
@@ -195,8 +199,10 @@ export class GraphGeneratorRust {
       }
     });
 
+    // Define subgraphs
     const subgraphs = this.subgraphs(files.values());
 
+    // Generate DOT
     return Dot.generateDotSourceString(tables.map(([_, tbl]) => tbl), edges, subgraphs);
   }
 
@@ -267,7 +273,7 @@ export class GraphGeneratorRust {
           }
           isSubsymbol = true;
 
-          symbols = symbols[i - 1].children;
+          symbols = symbols[i - 1].children; // TODO Ensure overwrite is intended
           continue;
         }
       }
@@ -286,13 +292,12 @@ export class GraphGeneratorRust {
           item.name,
           item.detail || 'No detail',
           item.kind,
-          //item.tags,
           item.range,
           item.selectionRange
         );
 
         symbolNew.children = children;
-        symbols.splice(i, 0, symbolNew);
+        symbols.splice(i, 0, symbolNew); // TODO Ensure overwrite is intended
       }
 
       return isSubsymbol;

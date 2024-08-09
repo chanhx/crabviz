@@ -43,7 +43,7 @@ export class Generator {
     let finishedCount = 0;
     progress.report({ message: `${finishedCount} / ${files.length}` });
 
-    // Unique functions in each file
+    // Collect unique functions in each file to be processed
     const funcMap = new Map<string, Set<string>>(files.map(f => [normalizedPath(f.path), new Set()]));
 
     // Define symbol lookup by files, indexed numerically from 1
@@ -100,9 +100,12 @@ export class Generator {
               continue;
             }
 
-            console.log('Symbol call hierarchy items:', items);
+            console.log('\nSymbol call hierarchy items:', items.length);
+            if (items.length > 0) {
+              console.log('Symbol call hierarchy item:', items[0]);
+            }
 
-            // Multiple callhierarchies can exist because of overloaded functions/methods, and inheritance/polymorphicsm
+            // Multiple call hierarchies can exist because of overloaded functions/methods, and inheritance/polymorphicsm
             for (const item of items) {
               await this.resolveCallsInFiles(item, funcMap);
             }
@@ -257,14 +260,14 @@ export class Generator {
   async resolveCallsInFiles(item: vscode.CallHierarchyItem, funcMap: Map<string, Set<string>>) {
     await vscode.commands.executeCommand<vscode.CallHierarchyIncomingCall[]>('vscode.provideIncomingCalls', item)
       .then(async calls => {
-        // Fix windows paths
+        // Fix windows path
         if (isWindows) {
           calls.forEach(call => call.from.uri = call.from.uri.with({ path: normalizedPath(call.from.uri.path )}));
         }
 
         const itemNormalizedPath = normalizedPath(item.uri.path);
 
-        // Mark that I processed this symbol location
+        // Mark that this symbol location was processed
         const symbolStart = item.selectionRange.start;
         funcMap.get(itemNormalizedPath)?.add(keyFromPosition(symbolStart));
 
@@ -272,7 +275,7 @@ export class Generator {
         this.inner.add_incoming_calls(itemNormalizedPath, symbolStart, calls);
         this.innerRust.add_incoming_calls(itemNormalizedPath, symbolStart, calls);
 
-         // Recursively follow call chain (in files that have already been processed?)
+         // Recursively follow call chain in files to be processed
         calls = calls
           .filter(call => {
             const funcs = funcMap.get(call.from.uri.path);
