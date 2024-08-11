@@ -16,10 +16,10 @@ digraph {
   ];
 
   
-    "1" [id="1", label=<
-        <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="8" CELLPADDING="4">
-        <TR><TD WIDTH="230" BORDER="0" CELLPADDING="6" HREF="remove_me_url.title">database.service.ts</TD></TR>
-        
+"1" [id="1", label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="8" CELLPADDING="4">
+    <TR><TD WIDTH="230" BORDER="0" CELLPADDING="6" HREF="remove_me_url.title">database.service.ts</TD></TR>
+    
         <TR><TD BORDER="0" CELLPADDING="0">
         <TABLE ID="1:7_10" CELLSPACING="8" CELLPADDING="4" CELLBORDER="1"  STYLE="ROUNDED" BGCOLOR="green" href="remove_me_url.cell.interface.clickable">
              <TR><TD PORT="7_10" BORDER="0" >Dictionary</TD></TR>
@@ -138,15 +138,15 @@ digraph {
         </TABLE>
         </TD></TR>
       
-        <TR><TD CELLSPACING="0" HEIGHT="1" WIDTH="1" FIXEDSIZE="TRUE" STYLE="invis"></TD></TR>
-        </TABLE>
-    >];
-        
+    <TR><TD CELLSPACING="0" HEIGHT="1" WIDTH="1" FIXEDSIZE="TRUE" STYLE="invis"></TD></TR>
+    </TABLE>
+>];
 
-    "2" [id="2", label=<
-        <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="8" CELLPADDING="4">
-        <TR><TD WIDTH="230" BORDER="0" CELLPADDING="6" HREF="remove_me_url.title">topic.service.ts</TD></TR>
-        
+
+"2" [id="2", label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="8" CELLPADDING="4">
+    <TR><TD WIDTH="230" BORDER="0" CELLPADDING="6" HREF="remove_me_url.title">topic.service.ts</TD></TR>
+    
         <TR><TD BORDER="0" CELLPADDING="0">
         <TABLE ID="2:9_13" CELLSPACING="8" CELLPADDING="4" CELLBORDER="1"   BGCOLOR="green" href="remove_me_url.cell.type">
              <TR><TD PORT="9_13" BORDER="0" ><B>C</B>  TopicService</TD></TR>
@@ -176,10 +176,10 @@ digraph {
         </TABLE>
         </TD></TR>
       
-        <TR><TD CELLSPACING="0" HEIGHT="1" WIDTH="1" FIXEDSIZE="TRUE" STYLE="invis"></TD></TR>
-        </TABLE>
-    >];
-        
+    <TR><TD CELLSPACING="0" HEIGHT="1" WIDTH="1" FIXEDSIZE="TRUE" STYLE="invis"></TD></TR>
+    </TABLE>
+>];
+
 
   
         subgraph "cluster_/functions/src/services" {

@@ -1,13 +1,5 @@
-/**
- * @author github.com/tintinweb
- * @license GPLv3
- *
-  * */
-
-/** imports */
 import * as vscode from "vscode";
 
-/** globals */
 export const languageId = "dot";
 export const docSelector = {
   language: languageId,
@@ -15,7 +7,7 @@ export const docSelector = {
 export const fileExtension = ".dot";
 
 export function extensionConfig() {
-  return vscode.workspace.getConfiguration("graphviz-interactive-preview");
+  return vscode.workspace.getConfiguration("codevisual");
 }
 
 export function extensionBaseConfig(id: string) {
@@ -23,5 +15,5 @@ export function extensionBaseConfig(id: string) {
 }
 
 export function extension() {
-  return vscode.extensions.getExtension("tintinweb.graphviz-interactive-preview");
+  return vscode.extensions.getExtension("atomic.codevisual");
 }

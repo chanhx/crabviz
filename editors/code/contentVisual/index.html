@@ -390,7 +390,10 @@
                                 // I guess: TODO: report which node was clicked
                                 node: DomToJsonAttribs(this),
                             }
-                        })
+                        });
+
+                        // Test
+                        vscode.postMessage({command: 'renderAgain', value: ''});
                     })
                     gv.nodes().dblclick(function () {
                         vscode.postMessage({

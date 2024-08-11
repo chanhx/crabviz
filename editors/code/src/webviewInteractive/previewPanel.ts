@@ -1,12 +1,7 @@
-/**
- * @author github.com/tintinweb
- * @license GPLv3
- *
-* */
 import * as vscode from "vscode";
 import * as settings from "../settings";
-
 import { DiagnosticCollection, languages } from "vscode";
+
 const diagnosticCollection: DiagnosticCollection = languages.createDiagnosticCollection();
 
 export default class PreviewPanel {
@@ -198,7 +193,7 @@ export default class PreviewPanel {
           this.restartRender();
           vscode.window.showWarningMessage("Graphviz render lock timed out! Maybe change the settings.", "Settings").then((answer) => {
             if (answer === "Settings") {
-              vscode.commands.executeCommand("workbench.action.openSettings", "graphviz-interactive-preview.renderLockAdditionalTimeout");
+              vscode.commands.executeCommand("workbench.action.openSettings", "codevisual.renderLockAdditionalTimeout");
             }
           });
         },

@@ -1,30 +1,24 @@
-/**
- * @author github.com/tintinweb
- * @license GPLv3
- *
-* */
-
-/** imports */
 import * as vscode from "vscode";
 import { Utils } from "vscode-uri";
 //import { TextEncoder } from "text-encoding";
 import { isObject } from "lodash";
 import PreviewPanel from "./previewPanel";
 import prepareHTML from "./prepareHTML";
+import { CommandManager } from '../command-manager';
 
 const webviewPanelContent = require("../../contentVisual/index.html").default;
 
-/** global vars */
-
-/** classdecs */
 
 export default class InteractiveWebviewGenerator {
   private context: vscode.ExtensionContext;
+  private manager!: CommandManager;
 
   private webviewPanels: Map<String, PreviewPanel>;
 
-  constructor(context: vscode.ExtensionContext) {
+  constructor(context: vscode.ExtensionContext, commandManager: CommandManager) {
     this.context = context;
+    this.manager = commandManager;
+
     this.webviewPanels = new Map();
   }
 
@@ -152,35 +146,39 @@ export default class InteractiveWebviewGenerator {
     console.log(`Message received from the webview: ${message.command}`);
 
     switch (message.command) {
-    case "onRenderFinished":
-      previewPanel.onRenderFinished(message.value.err);
-      break;
-    case "onPageLoaded":
-      previewPanel.onPageLoaded();
-      break;
-    case "message":
-      if (message.value.type === "error") {
-        vscode.window.showErrorMessage(message.value.data);
-      } else {
-        vscode.window.showInformationMessage(message.value.data);
-      }
-      break;
-    case "onClick":
-      // not implemented
-      // console.debug(message);
-      previewPanel.handleMessage(message); // just forward the event for now
-      break;
-    case "onDblClick":
-      // not implemented
-      // console.log("dblclick --> navigate to code location");
-      previewPanel.handleMessage(message); // just forward the event for now
-      break;
-    case "saveAs":
-      this.saveFile(message.value.data, message.value.type);
-      break;
-    default:
-      previewPanel.handleMessage(message);
-                // forward unhandled messages to previewpanel
+      case 'renderAgain' :
+        this.manager.updateCallGraph();
+        break;
+
+      case "onRenderFinished":
+        previewPanel.onRenderFinished(message.value.err);
+        break;
+      case "onPageLoaded":
+        previewPanel.onPageLoaded();
+        break;
+      case "message":
+        if (message.value.type === "error") {
+          vscode.window.showErrorMessage(message.value.data);
+        } else {
+          vscode.window.showInformationMessage(message.value.data);
+        }
+        break;
+      case "onClick":
+        // not implemented
+        // console.debug(message);
+        previewPanel.handleMessage(message); // just forward the event for now
+        break;
+      case "onDblClick":
+        // not implemented
+        // console.log("dblclick --> navigate to code location");
+        previewPanel.handleMessage(message); // just forward the event for now
+        break;
+      case "saveAs":
+        this.saveFile(message.value.data, message.value.type);
+        break;
+      default:
+        previewPanel.handleMessage(message);
+                  // forward unhandled messages to previewpanel
     }
   }
 

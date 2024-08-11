@@ -88,10 +88,12 @@ export class Generator {
           // The symbol start location is the location of its identifier
           const symbolStart = symbol.selectionRange.start;
           const symbolKindName = getSymbolKindLabel(symbol.kind);
-          console.log(`Symbol in ${fileName}: ${symbol.name} (${symbolKindName}) at location ${symbolStart.line}, ${symbolStart.character}`);
+          //console.log(`Symbol in ${fileName}: ${symbol.name} (${symbolKindName}) at location ${symbolStart.line}, ${symbolStart.character}`);
             
           // Process unique functions and interfaces
           if (FUNC_KINDS.includes(symbol.kind) && !hasFunc(funcMap, filePath, symbolStart)) {
+            //console.log(`Symbol FUNCTION in ${fileName}: ${symbol.name} (${symbolKindName}) at location ${symbolStart.line}, ${symbolStart.character}`);
+          
             let items: vscode.CallHierarchyItem[];
             try {
               items = await vscode.commands.executeCommand<vscode.CallHierarchyItem[]>('vscode.prepareCallHierarchy', file, symbolStart);
@@ -100,10 +102,10 @@ export class Generator {
               continue;
             }
 
-            console.log('\nSymbol call hierarchy items:', items.length);
-            if (items.length > 0) {
-              console.log('Symbol call hierarchy item:', items[0]);
-            }
+            // console.log('\nSymbol call hierarchy items:', items.length);
+            // if (items.length > 0) {
+            //   console.log('Symbol call hierarchy item:', items[0]);
+            // }
 
             // Multiple call hierarchies can exist because of overloaded functions/methods, and inheritance/polymorphicsm
             for (const item of items) {
@@ -157,6 +159,19 @@ export class Generator {
       progress.report({ message: `${finishedCount} / ${files.length}`, increment: 100 / files.length });
     }
 
+    const dot = this.getDot();
+    const dotRendered = await viz.then(viz => viz.renderString(dot, renderOptions));
+
+    return [dot, dotRendered, symbolsByFileId];
+  }
+
+  public getDot(isTest: boolean = false): string {
+    if (isTest) {
+      this.innerRust.testTransition = true;
+    } else {
+      this.innerRust.testTransition = false;
+    }
+
     const dotTranslated = this.innerRust.generate_dot_source();
     const dot = this.inner.generate_dot_source();
 
@@ -178,9 +193,7 @@ export class Generator {
       console.log('Error:', e);
     }
 
-    const dotRendered = await viz.then(viz => viz.renderString(dot, renderOptions));
-
-    return [dotTranslated, dotRendered, symbolsByFileId];
+    return dotTranslated;
   }
 
   async generateFuncCallGraph(uri: vscode.Uri, anchor: vscode.Position, ig: Ignore): Promise<string | null> {

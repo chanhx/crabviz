@@ -10,25 +10,21 @@ function escapeHtml(s: string): string {
 
 const EMPTY_STRING = "";
 
+//      .filter(node => !node.isCollapsed)
 export class Dot {
-  static generateDotSourceString(
-    tables: TableNode[],
-    edges: Edge[],
-    subgraphs: Subgraph[]
-  ): string {
-    const tablesStr = tables
-      .map(table => {
+  static generateDotSourceString(tables: TableNode[], edges: Edge[], subgraphs: Subgraph[]): string {
+    const tablesStr = tables.map(table => {
         return `
-    "${table.id}" [id="${table.id}", label=<
-        <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="8" CELLPADDING="4">
-        <TR><TD WIDTH="230" BORDER="0" CELLPADDING="6" HREF="remove_me_url.title">${table.title}</TD></TR>
-        ${table.sections.map(node => Dot.processCell(table.id, node)).join("\n")}
-        <TR><TD CELLSPACING="0" HEIGHT="1" WIDTH="1" FIXEDSIZE="TRUE" STYLE="invis"></TD></TR>
-        </TABLE>
-    >];
-        `;
-      })
-      .join("\n");
+"${table.id}" [id="${table.id}", label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="8" CELLPADDING="4">
+    <TR><TD WIDTH="230" BORDER="0" CELLPADDING="6" HREF="remove_me_url.title">${table.title}</TD></TR>
+    ${table.sections
+
+      .map(node => Dot.processCell(table.id, node)).join("\n")}
+    <TR><TD CELLSPACING="0" HEIGHT="1" WIDTH="1" FIXEDSIZE="TRUE" STYLE="invis"></TD></TR>
+    </TABLE>
+>];
+`     ;}).join("\n");
 
     return `
 digraph {
@@ -66,6 +62,7 @@ digraph {
     const port = `${cell.rangeStart[0]}_${cell.rangeStart[1]}`;
 
     // A cell is either a single table row (when it has no children), or a table row containing an embedded table (when it has children)
+    //          .filter(item => !item.isCollapsed)
     if (cell.children.length === 0) {
       return `     <TR><TD PORT="${port}" ID="${tableId}:${port}" ${styles} ${Dot.cssClassesHref(cell.style.classes)}>${title}</TD></TR>`;
     } else {
@@ -77,7 +74,9 @@ digraph {
       return `
         <TR><TD BORDER="0" CELLPADDING="0">
         <TABLE ID="${tableId}:${port}" CELLSPACING="8" CELLPADDING="4" CELLBORDER="1" ${tableStyles} BGCOLOR="green" ${Dot.cssClassesHref(cell.style.classes)}>
-        ${[dotCell, ...cell.children.map(item => Dot.processCell(tableId, item))].join("\n")}
+        ${[dotCell, ...cell.children
+
+          .map(item => Dot.processCell(tableId, item))].join("\n")}
         </TABLE>
         </TD></TR>
       `;

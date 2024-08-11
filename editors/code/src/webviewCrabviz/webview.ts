@@ -98,7 +98,7 @@ export class CallGraphPanel {
 		}
 	}
 
-	public showCallGraph(svg: string, focusMode: boolean, symbolLookup: SymbolsByFileId) {
+	public showCallGraphCrabviz(svg: string, focusMode: boolean, symbolLookup: SymbolsByFileId) {
 		const resourceUri = vscode.Uri.joinPath(this._extensionUri, 'contentCrab');
 
 		this.symbolLookup = symbolLookup;

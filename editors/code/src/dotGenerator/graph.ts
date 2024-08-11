@@ -38,6 +38,7 @@ export class Cell {
   title: string;
   style: Style;
   children: Cell[];
+  isCollapsed: boolean;
 
   constructor(rangeStart: [number, number], rangeEnd: [number, number], title: string, style: Style, children: Cell[]) {
     this.rangeStart = rangeStart;
@@ -45,6 +46,7 @@ export class Cell {
     this.title = title;
     this.style = style;
     this.children = children;
+    this.isCollapsed = false;
   }
 
   highlight(cells: Set<[number, number]>) {

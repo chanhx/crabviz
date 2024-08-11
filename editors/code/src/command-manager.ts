@@ -16,23 +16,21 @@ import * as settings from "./settings";
 export class CommandManager {
   private context: vscode.ExtensionContext;
 
-	// TODO: listen to .gitignore file modifications
 	private ignores: Map<string, Ignore>;
-
 	private languages: Map<string, string>;
-
-  private graphvizView: InteractiveWebviewGenerator;
 
   // Originally, viz-js was used to render the DOT to static SVG before building the Crabviz webview page
   // Now the DOT is rendered to SVG inside the webview using d3-graphviz in the webview page taken from the project vscode-interactive-graphviz
   private isRenderSvg = false;
+  private graphvizView: InteractiveWebviewGenerator;
+  private generator!: Generator;
 
   public constructor(context: vscode.ExtensionContext) {
     this.context = context;
 		this.ignores = new Map();
 		this.languages = getLanguages();
 
-    this.graphvizView = new InteractiveWebviewGenerator(context);
+    this.graphvizView = new InteractiveWebviewGenerator(context, this);
   }
 
   public async handleCallGraph(contextSelection: vscode.Uri, allSelections: vscode.Uri[]) {
@@ -56,7 +54,6 @@ export class CommandManager {
 		}
 
 		// classify files by programming language
-
 		const files = await vscode.window.withProgress({
 			location: vscode.ProgressLocation.Notification,
 			title: "Detecting project languages",
@@ -96,80 +93,87 @@ export class CommandManager {
 		}, (progress, token) => {
 			token.onCancellationRequested(() => cancelled = true);
 
-      // Generate DOT and static SVG
-			const generator = new Generator(root.uri, lang);
-			return generator.generateCallGraph(files.get(lang)!, progress, token);
+      // Generate DOT
+			this.generator = new Generator(root.uri, lang);
+			return this.generator.generateCallGraph(files.get(lang)!, progress, token);
 		})
 		.then(([dot, svg, symbolLookup]) => {
 			if (cancelled) { return; }
 
-			// Render graph in viewview
       if (this.isRenderSvg) {
         // Render static SVG in crabviz panel
         const panel = new CallGraphPanel(this.context.extensionUri);
-        panel.showCallGraph(svg, false, symbolLookup);
+        panel.showCallGraphCrabviz(svg, false, symbolLookup);
       } else {
-        // Generate SVG in panel in interactive panel
-        const args =  {};
-        const options : {
-          document?: vscode.TextDocument,
-          uri?: vscode.Uri,
-          content?: string,
-          // eslint-disable-next-line no-unused-vars
-          callback?: (panel: PreviewPanel) => void,
-          allowMultiplePanels?: boolean,
-          title?: string,
-          search?: any,
-          displayColumn?: vscode.ViewColumn | {
-            viewColumn: vscode.ViewColumn;
-            preserveFocus?: boolean | undefined;
-          }
-        } = {};
-
-        if (!options.content
-          && !options.document
-          && !options.uri
-          && vscode.window.activeTextEditor?.document) {
-          options.document = vscode.window.activeTextEditor.document;
-        }
-
-        if (!options.uri && options.document) {
-          options.uri = options.document.uri;
-        }
-
-        if (typeof options.displayColumn === "object" && options.displayColumn.preserveFocus === undefined) {
-          options.displayColumn.preserveFocus = settings.extensionConfig().get("preserveFocus"); // default to user settings
-        }
-
-        const execute = (o:any) => { 
-          this.graphvizView.revealOrCreatePreview(
-            o.displayColumn,
-            o.uri,
-            o)
-          .then((webpanel: PreviewPanel) => {
-            // trigger dot render on page load success
-            // just in case webpanel takes longer to load, wait for page
-            // to ping back and perform action
-            // eslint-disable-next-line no-param-reassign
-            webpanel.waitingForRendering = o.content;
-            // eslint-disable-next-line no-param-reassign
-            webpanel.search = o.search;
-
-            // allow caller to handle messages by providing them with the newly created webpanel
-            // e.g. caller can override webpanel.handleMessage = function(message){};
-            if (o.callback) {
-              o.callback(webpanel);
-            }
-          });
-        };
-
-        // Set content and render
-        options.content = dot;
-        execute(options);
+        this.showCallGraphInteractive(dot);
       }
 		});
 	}
 
+  public async updateCallGraph() {
+    const isTest = true;
+    const dot = this.generator.getDot(isTest);
+    this.showCallGraphInteractive(dot);
+  }
+
+  public showCallGraphInteractive(dot: string) {
+    // Render graph in interactive viewview
+    const options : {
+      document?: vscode.TextDocument,
+      uri?: vscode.Uri,
+      content?: string,
+      callback?: (panel: PreviewPanel) => void,
+      allowMultiplePanels?: boolean,
+      title?: string,
+      search?: any,
+      displayColumn?: vscode.ViewColumn | {
+        viewColumn: vscode.ViewColumn;
+        preserveFocus?: boolean | undefined;
+      }
+    } = {};
+
+    if (!options.content
+      && !options.document
+      && !options.uri
+      && vscode.window.activeTextEditor?.document) {
+      options.document = vscode.window.activeTextEditor.document;
+    }
+
+    if (!options.uri && options.document) {
+      options.uri = options.document.uri;
+    }
+
+    if (typeof options.displayColumn === "object" && options.displayColumn.preserveFocus === undefined) {
+      options.displayColumn.preserveFocus = settings.extensionConfig().get("preserveFocus"); // default to user settings
+    }
+
+    const execute = (o:any) => { 
+      this.graphvizView.revealOrCreatePreview(
+        o.displayColumn,
+        o.uri,
+        o)
+      .then((webpanel: PreviewPanel) => {
+        // trigger dot render on page load success
+        // just in case webpanel takes longer to load, wait for page
+        // to ping back and perform action
+        // eslint-disable-next-line no-param-reassign
+        webpanel.waitingForRendering = o.content;
+        // eslint-disable-next-line no-param-reassign
+        webpanel.search = o.search;
+
+        // allow caller to handle messages by providing them with the newly created webpanel
+        // e.g. caller can override webpanel.handleMessage = function(message){};
+        if (o.callback) {
+          o.callback(webpanel);
+        }
+      });
+    };
+
+    // Set content and render
+    options.content = dot;
+    execute(options);
+  }
+  
   public async handleCallGraphForFunction(editor: vscode.TextEditor) {
 		const uri = editor.document.uri;
 		const anchor = editor.selection.start;
@@ -181,13 +185,13 @@ export class CommandManager {
 
 		const lang = this.languages.get(extname(uri.path)) ?? "";
 
-		const generator = new Generator(root.uri, lang);
+		this.generator = new Generator(root.uri, lang);
 
 		vscode.window.withProgress({
 			location: vscode.ProgressLocation.Window,
 			title: "Visual: Generating call graph",
 		}, _ => {
-			return generator.generateFuncCallGraph(uri, anchor, ig);
+			return this.generator.generateFuncCallGraph(uri, anchor, ig);
 		})
 		.then(svg => {
 			if (!svg) {
@@ -196,7 +200,7 @@ export class CommandManager {
 			}
 
 			const panel = new CallGraphPanel(this.context.extensionUri);
-			panel.showCallGraph(svg, true, {});
+			panel.showCallGraphCrabviz(svg, true, {});
 		});
 	}
 

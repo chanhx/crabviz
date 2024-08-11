@@ -18,6 +18,8 @@ export class GraphGeneratorRust {
   highlights: Map<number, Set<[number, number]>>;
   lang: DefaultLang;
 
+  testTransition = false;
+
   constructor(root: string, lang: string) {
     this.root = root;
     this.files = new Map<string, FileOutline>();
@@ -95,7 +97,7 @@ export class GraphGeneratorRust {
     // Files are grouped into clusters for each directory
     const files = this.files;
 
-    // Create table for each file, containing a hierarchy of cells and their children
+    // Create a table for each file containing a hierarchy of cells and their children
     const tables: [number, TableNode][] = Array.from(files.values()).map(file => {
       const table = this.lang.fileRepr(file);
       const cells = this.highlights.get(file.id);
@@ -113,14 +115,14 @@ export class GraphGeneratorRust {
       tbl.sections.forEach(cell => this.collectCellIds(tid, cell, cellIds));
     });
 
-    // Track files updated
+    // Track files updated during edge construction
     const updatedFiles = new Set<string>();
     const insertedSymbols = new Set<string>();
 
     // Build edges for incoming calls
     const incomingCalls = Array.from(this.incomingCalls.entries()).flatMap(([callee, callers]) => {
       const to = callee.locationId(files);
-      console.log('Incoming call to:', to);
+      //console.log('Incoming call to:', to);
       if (!to || !cellIds.has(to.toString())) return [];
 
       return callers.map(call => {
@@ -202,10 +204,23 @@ export class GraphGeneratorRust {
     // Define subgraphs
     const subgraphs = this.subgraphs(files.values());
 
+    // Test: Collapse nodes
+    if (this.testTransition) {
+      const tableNode = tables[0][1];
+      const section = tableNode.sections.find(s => s.title == 'DatabaseService');
+      if (section) {
+        for (const child of section.children) {
+          if (!child.title.match(/delete/)) {
+            child.isCollapsed = true;
+          }
+        }
+      }
+    }
+
     // Generate DOT
     return Dot.generateDotSourceString(tables.map(([_, tbl]) => tbl), edges, subgraphs);
   }
-
+  
   subgraphs(files: Iterable<FileOutline>): Subgraph[] {
     // Create a subgraph for each directory level
     const dirs = new Map<string, string[]>();
