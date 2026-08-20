@@ -138,7 +138,7 @@ export class CallGraphPanel {
         }
 
         vscode.workspace.fs
-          .writeFile(uri, Buffer.from(content, "utf8"))
+          .writeFile(uri, new TextEncoder().encode(content))
           .then(null, (reason: any) => {
             vscode.window.showErrorMessage(`Error on writing file: ${reason}`);
           });

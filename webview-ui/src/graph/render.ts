@@ -102,7 +102,7 @@ export async function renderSVG(
 
   const fadedLayer = document.createElementNS(namespaceURI, "g");
   fadedLayer.id = "faded-group";
-  svg.getElementById("graph0").appendChild(fadedLayer);
+  svg.getElementById("graph0")!.appendChild(fadedLayer);
 
   const defs = document.createElementNS(namespaceURI, "defs");
   defs.innerHTML = `<filter id="shadow"><feDropShadow dx="0" dy="0" stdDeviation="4" flood-opacity="0.5"></filter>
@@ -113,7 +113,7 @@ export async function renderSVG(
   svg.appendChild(defs);
 
   if (focus) {
-    svg.getElementById(focus).classList.add("highlight");
+    svg.getElementById(focus)?.classList.add("highlight");
   }
 
   return svg;

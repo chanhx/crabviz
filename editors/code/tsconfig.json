@@ -6,6 +6,7 @@
 			"ES2022",
 			"DOM"
 		],
+		"types": ["node", "mocha"],
 		"sourceMap": true,
 		"rootDir": "src",
 		"strict": true   /* enable all strict type-checking options */

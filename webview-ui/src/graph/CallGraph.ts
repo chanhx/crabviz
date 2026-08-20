@@ -112,8 +112,8 @@ export class CallGraph {
   }
 
   public resetStyles() {
-    const g0 = this.svg.getElementById("graph0");
-    const fadedGroup = this.svg.getElementById("faded-group");
+    const g0 = this.svg.getElementById("graph0")!;
+    const fadedGroup = this.svg.getElementById("faded-group")!;
 
     this.selectedElem?.closest(".selected")?.classList.remove("selected");
     g0.querySelectorAll(":scope > .edge").forEach((edge) =>
@@ -121,12 +121,12 @@ export class CallGraph {
     );
 
     const firstNode = g0.querySelector(".node");
-    for (const cluster of fadedGroup.querySelectorAll(".cluster")) {
+    fadedGroup.querySelectorAll(".cluster").forEach((cluster) => {
       g0.insertBefore(cluster, firstNode);
-    }
-    for (const node of fadedGroup.querySelectorAll(".node")) {
+    });
+    fadedGroup.querySelectorAll(".node").forEach((node) => {
       g0.insertBefore(node, firstNode);
-    }
+    });
 
     // faded edges
     g0.append(...fadedGroup.childNodes);
@@ -252,8 +252,8 @@ export class CallGraph {
   }
 
   onSelectEdge(edge: SVGElement) {
-    const g0 = this.svg.getElementById("graph0");
-    const fadedGroup = this.svg.getElementById("faded-group");
+    const g0 = this.svg.getElementById("graph0")!;
+    const fadedGroup = this.svg.getElementById("faded-group")!;
 
     fadedGroup.append(...this.edges);
     g0.appendChild(edge);
@@ -283,7 +283,7 @@ export class CallGraph {
   }
 
   highlightEdges(judge: (edge: SVGGElement) => [boolean, boolean]) {
-    const fadedGroup = this.svg.getElementById("faded-group");
+    const fadedGroup = this.svg.getElementById("faded-group")!;
 
     for (const edge of this.edges) {
       const [incoming, outgoing] = judge(edge);
@@ -304,7 +304,7 @@ export class CallGraph {
     if (!kept) {
       kept = new Set();
     }
-    const fadedGroup = this.svg.getElementById("faded-group");
+    const fadedGroup = this.svg.getElementById("faded-group")!;
 
     for (const edge of this.edges) {
       if (edge.parentElement === fadedGroup) {

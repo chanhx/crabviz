@@ -9,16 +9,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@viz-js/viz": "^3.9.0",
-    "open-props": "^1.7.10",
-    "panzoom": "^9.4.3",
-    "solid-js": "^1.9.7",
-    "virtua": "^0.39.0"
+    "@viz-js/viz": "^3.29.0",
+    "open-props": "^1.7.23",
+    "panzoom": "^9.4.4",
+    "solid-js": "^1.9.15",
+    "virtua": "^0.50.3"
   },
   "devDependencies": {
-    "postcss-jit-props": "^1.0.15",
-    "typescript": "^5.5.3",
-    "vite": "^7.0.6",
-    "vite-plugin-solid": "^2.11.8"
+    "postcss-jit-props": "^1.0.16",
+    "typescript": "^6.0.3",
+    "vite": "^8.2.2",
+    "vite-plugin-solid": "^2.11.14"
   }
 }

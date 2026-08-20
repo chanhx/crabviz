@@ -3,7 +3,7 @@
 'use strict';
 
 const path = require('path');
-const WasmPackPlugin = require("@wasm-tool/wasm-pack-plugin");
+const WasmPackPlugin = require('@wasm-tool/wasm-pack-plugin');
 const WebpackShellPluginNext = require('webpack-shell-plugin-next');
 
 //@ts-check
