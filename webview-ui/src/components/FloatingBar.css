@@ -1,36 +1,27 @@
 @layer components.has-deps {
-  :where(.combo-box) {
-    --height: 40px;
-    --border-radius: calc(var(--height) / 2);
+  .floating-bar {
+    --height: 56px;
+
+    position: fixed;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
 
     height: var(--height);
-    width: 360px;
-    border: 1px var(--blue-2) solid;
-    border-radius: var(--border-radius);
+    border-radius: calc(var(--height) / 2);
+    padding-left: 9px;
+    padding-right: 9px;
+    filter: drop-shadow(0 0 2px);
 
-    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
 
-    button {
-      flex: 0 0 auto;
-    }
+    background: #f6f8fa;
 
-    .select-btn {
-      height: 100%;
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding-left: 1rem;
-      padding-right: 10px;
-
-      background: transparent;
-
-      user-select: none;
-
-      svg {
-        width: 20px;
-        height: 20px;
-      }
+    .button:hover:has(.popover:hover) {
+      --_bg-color: var(--_bg-default-color);
     }
 
     .option {
@@ -54,22 +45,27 @@
           --bg-color: var(--function-bg-color);
           --border-color: var(--function-border-color);
         }
+
         &.method {
           --bg-color: var(--method-bg-color);
           --border-color: var(--method-border-color);
         }
+
         &.interface {
           --bg-color: var(--interface-bg-color);
           --border-color: var(--interface-border-color);
         }
+
         &.constructor {
           --bg-color: var(--constructor-bg-color);
           --border-color: var(--constructor-border-color);
         }
+
         &.module {
           --bg-color: var(--module-bg-color);
           --border-color: var(--module-border-color);
         }
+
         &:where(.class, .struct, .enum) {
           --bg-color: var(--struct-bg-color);
           --border-color: var(--struct-border-color);
@@ -93,68 +89,79 @@
       }
     }
 
-    .bar {
+    .search {
       display: flex;
       align-items: center;
 
-      height: 100%;
-
-      .button {
-        --_margin: 5px;
-
-        --_min-height: calc(var(--height) - var(--_margin) * 2);
-        --_border-radius: calc(var(--_min-height) / 2);
-
-        width: var(--_min-height);
-        height: var(--_min-height);
-        border: 1px solid var(--blue-4);
-        margin: var(--_margin);
-
-        padding-block: 0;
-        padding-inline: 0;
-      }
-
-      .option {
+      &>.option {
         flex-grow: 1;
 
         &:hover {
           background: inherit;
         }
       }
-    }
 
-    .popover {
-      display: flex;
-      flex-direction: column;
-      justify: stretch;
-      align-items: center;
-      gap: 8px;
+      .popover {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
 
-      input {
-        height: 2.2rem;
-        width: 98%;
-        padding-left: 0.8rem;
-        border-radius: 0.7rem;
-        color: black;
-        background: inherit;
-        outline: 1.5px solid var(--blue-2);
+        width: 320px;
 
-        &:focus {
-          outline: 2px solid var(--blue-3) !important;
+        input {
+          height: 2.2rem;
+          width: 98%;
+          padding-left: 0.8rem;
+          border-radius: 0.7rem;
+          color: black;
+          background: inherit;
+          outline: 1.5px solid var(--blue-2);
+
+          &:focus {
+            outline: 2px solid var(--blue-3) !important;
+          }
+        }
+
+        .option-list {
+          width: 100%;
+          max-height: calc(6 * var(--option-height));
+          overflow-y: scroll;
+
+          .prompt {
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+          }
         }
       }
+    }
 
-      .option-list {
-        width: 100%;
-        max-height: calc(6 * var(--option-height));
-        overflow-y: scroll;
 
-        .prompt {
-          height: 26px;
+    .save-btn {
+      position: relative;
+
+      .popover {
+        width: 120px;
+
+        .option-list {
           display: flex;
-          align-items: center;
-          justify-content: center;
-          user-select: none;
+          flex-direction: column;
+          align-items: stretch;
+          justify-content: start;
+
+          label {
+            color: lightgray;
+            text-align: left;
+            padding-left: 0.75rem;
+          }
+
+          .option {
+            display: flex;
+            align-items: center;
+          }
         }
       }
     }

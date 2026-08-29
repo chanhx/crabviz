@@ -5,7 +5,7 @@ import { Graph } from "./graph/types";
 import "./styles/main.css";
 import "./App.css";
 
-import Topbar from "./components/Topbar";
+import FloatingBar from "./components/FloatingBar";
 import GraphViewport from "./components/GraphViewport";
 
 const App: Component<{
@@ -27,12 +27,8 @@ const App: Component<{
 
   return (
     <>
-      <div id="topbar">
-        <Topbar focus={props.focus != null} />
-      </div>
-      <div id="container">
-        <GraphViewport graph={props.graph} root={props.root} focus={focus} />
-      </div>
+      <GraphViewport graph={props.graph} root={props.root} focus={focus} />
+      <FloatingBar focus={props.focus != null} />
     </>
   );
 };

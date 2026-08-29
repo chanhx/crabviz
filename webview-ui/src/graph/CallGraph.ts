@@ -89,16 +89,25 @@ export class CallGraph {
 
   createPanZoomState() {
     const g0 = this.svg.querySelector<SVGElement>("#graph0")!;
-    const pz = createPanZoom(g0, {
-      smoothScroll: false,
-      autocenter: true,
-    });
-
-    const { x, y, scale } = structuredClone(pz.getTransform());
     const cRect = g0.getBoundingClientRect();
     const cx = cRect.x + cRect.width / 2;
     const cy = cRect.y + cRect.height / 2;
     const sRect = this.svg.getBoundingClientRect();
+
+    // topPadding = floating bar height + the spaces on upper and lower sides
+    const topPadding = 88;
+    const scaleX = innerWidth / this.width;
+    const scaleY = (innerHeight - topPadding) / this.height;
+    const initialZoom = Math.min(scaleX, scaleY);
+
+    const pz = createPanZoom(g0, {
+      smoothScroll: false,
+      initialX: innerWidth / 2,
+      initialY: (innerHeight + this.height * initialZoom) / 2 - topPadding,
+      initialZoom: initialZoom,
+    });
+
+    const { x, y, scale } = structuredClone(pz.getTransform());
 
     return {
       pz,
@@ -228,7 +237,7 @@ export class CallGraph {
       const map = inout[i];
       const highlightEdges = highlights[i];
 
-      for (let newEdges = map.get(cellId) ?? []; newEdges.length > 0; ) {
+      for (let newEdges = map.get(cellId) ?? []; newEdges.length > 0;) {
         newEdges = newEdges.flatMap((edge) => {
           highlightEdges.add(edge);
 

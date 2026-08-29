@@ -4,18 +4,4 @@
 
   width: 100%;
   height: 100%;
-
-  display: flex;
-  flex-direction: column;
-  justify-content: stretch;
-  align-items: stretch;
-}
-
-#topbar {
-  flex-shrink: 0;
-}
-
-#container {
-  flex-grow: 1;
-  min-height: 0;
 }

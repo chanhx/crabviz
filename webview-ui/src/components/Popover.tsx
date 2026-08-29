@@ -1,39 +1,42 @@
-import { ParentComponent, Show, Signal } from "solid-js";
-import { Portal } from "solid-js/web";
+import { createEffect, on, ParentComponent, Show } from "solid-js";
 
 import "./Popover.css";
 
 const Popover: ParentComponent<{
-  signal: Signal<boolean>;
-  onHide?: () => void;
+  show: () => boolean;
+  hide: () => void;
 }> = (props) => {
-  const [show, setShow] = props.signal;
-  const onHide = props.onHide;
+  const { show, hide } = props;
+  let ref!: HTMLDivElement;
+  let triggerClick = false;
+
+  const handleClick = (e: PointerEvent) => {
+    // the first click is the click on the trigger element, skip it
+    if (!triggerClick) {
+      triggerClick = true;
+      return;
+    }
+
+    if (ref && e.target instanceof Element && !ref.contains(e.target)) {
+      triggerClick = false;
+      hide();
+    }
+  };
+
+  createEffect(on(show, (isShow) => {
+    if (isShow) {
+      window.addEventListener("click", handleClick);
+    } else {
+      window.removeEventListener("click", handleClick);
+      triggerClick = false;
+    }
+  }));
 
   return (
     <Show when={show()}>
-      <Portal>
-        <div
-          style={{
-            "background-color": "transparent",
-            position: "absolute",
-            top: 0,
-            height: "100vh",
-            width: "100vw",
-          }}
-          onClick={() => {
-            onHide && onHide();
-            setShow(false);
-          }}
-        ></div>
-      </Portal>
-
       <div
         class="popover"
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-        }}
+        ref={ref}
       >
         {props.children}
       </div>
